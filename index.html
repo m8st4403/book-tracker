@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827"><title>本棚スケジュール</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f5f7;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;padding-bottom:80px}
+header{background:#fff;position:sticky;top:0;z-index:5;padding:14px 16px;border-bottom:1px solid #ddd}h1{font-size:20px;margin:0}.sub{font-size:12px;color:#6b7280}
+main{max-width:800px;margin:auto;padding:12px}.card{background:#fff;border-radius:16px;padding:15px;margin:10px 0;box-shadow:0 1px 3px #0001}
+input,button{font:inherit}input{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:12px}button{padding:11px 13px;border:0;border-radius:12px;background:#111827;color:white;font-weight:700}.secondary{background:#e5e7eb;color:#111827}.danger{background:#fee2e2;color:#991b1b}
+.row{display:flex;gap:8px}.row>*{flex:1}.title{font-weight:800;font-size:17px}.meta,.muted{font-size:13px;color:#6b7280}.book{display:flex;gap:12px}.cover{width:62px;height:88px;object-fit:cover;border-radius:8px;background:#eee}.badge{font-size:11px;padding:4px 7px;border-radius:99px;background:#eef2ff;color:#3730a3;display:inline-block;margin-top:5px}.actions{margin-top:9px;display:flex;gap:6px;flex-wrap:wrap}
+section{display:none}section.active{display:block}nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;display:flex;z-index:9}nav button{flex:1;background:none;color:#6b7280;border-radius:0;font-size:12px}nav .active{color:#111827}
+.result{border-top:1px solid #eee;padding:10px 0}.hidden{display:none}.check{display:flex;gap:8px;padding:8px 0;border-top:1px solid #eee}.check input{width:auto}
+#scanner{display:none;position:fixed;inset:0;background:#000;z-index:20;padding:18px;color:white}.video{width:100%;height:65%;object-fit:cover;border-radius:18px;margin-top:35px}.scanbox{position:absolute;left:10%;right:10%;top:28%;height:25%;border:3px solid white;border-radius:16px}
+</style></head>
+<body>
+<header><h1>📚 本棚スケジュール</h1><div class="sub">書籍管理プロトタイプ v2</div></header>
+<main>
+<section id="shelf" class="active">
+<div class="card"><div class="title">本を追加</div><p class="muted">ISBN、作品タイトル＋巻数、バーコードのどれからでも登録できます。</p>
+<div class="row"><input id="isbn" inputmode="numeric" placeholder="ISBN-13 / ISBN-10"><button id="scan">📷 スキャン</button></div>
+<button id="isbnSearch" style="width:100%;margin-top:8px">ISBNで検索</button>
+<hr>
+<div class="row"><input id="work" placeholder="作品タイトル（例：名探偵コナン）"><input id="vol" inputmode="numeric" placeholder="巻数"></div>
+<button id="workSearch" style="width:100%;margin-top:8px">作品＋巻数から検索</button>
+<div id="addResults"></div></div>
+<div class="card"><div class="title">蔵書</div><div id="myBooks"></div></div>
+</section>
+
+<section id="search">
+<div class="card"><div class="title">🔎 横断検索</div><p class="muted">作品タイトルまたは作家名で検索できます。</p>
+<div class="row"><input id="query" placeholder="作品名 / 作家名"><button id="searchBtn">検索</button></div></div>
+<div id="searchResults"></div>
+</section>
+
+<section id="authors">
+<div class="card"><div class="title">✍️ 作家から探す</div><p class="muted">作家名を入力すると、その作家の出版物と自分の蔵書をまとめて表示します。</p>
+<div class="row"><input id="author" placeholder="作家名"><button id="authorBtn">検索</button></div></div>
+<div id="authorResults"></div>
+</section>
+
+<section id="calendar">
+<div class="card"><div class="title">🗓 発売予定カレンダー</div><p class="muted">登録した本に紐付く発売予定を一覧表示します。</p><button id="ics" style="width:100%">iPhoneカレンダー用ICSを書き出す</button></div>
+<div class="card"><div id="events"></div></div>
+</section>
+</main>
+<nav><button class="active" data-s="shelf">📚 本棚</button><button data-s="search">🔎 検索</button><button data-s="authors">✍️ 作家</button><button data-s="calendar">🗓 カレンダー</button></nav>
+
+<div id="scanner"><button id="closeScan" class="secondary" style="float:right">閉じる</button><video id="video" class="video" playsinline muted></video><div class="scanbox"></div><p style="text-align:center">ISBNバーコードを枠に合わせてください</p></div>
+
+<script src="https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js"></script>
+<script>
+const KEY="books_v2";let books=JSON.parse(localStorage.getItem(KEY)||"[]"),reader=null;
+const $=x=>document.getElementById(x), esc=x=>String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+const norm=x=>String(x||"").replace(/[-\\s]/g,"").toUpperCase();
+function valid13(s){if(!/^97[89]\\d{10}$/.test(s))return false;let n=0;for(let i=0;i<13;i++)n+=+s[i]*(i%2?3:1);return n%10===0}
+function i10to13(s){if(!/^\\d{9}[\\dX]$/.test(s))return null;let c="978"+s.slice(0,9),n=0;for(let i=0;i<12;i++)n+=+c[i]*(i%2?3:1);return c+((10-n%10)%10)}
+function save(){localStorage.setItem(KEY,JSON.stringify(books));render()}
+function bookFromGoogle(v,isbnHint=""){let x=v.volumeInfo||{};return {id:v.id,isbn:isbnHint||((x.industryIdentifiers||[]).find(a=>a.type==="ISBN_13")||{}).identifier||"",title:x.title||"",subtitle:x.subtitle||"",author:(x.authors||[]).join(" / "),publisher:x.publisher||"",date:x.publishedDate||"",series:x.seriesInfo?.shortSeriesBookTitle||"",cover:x.imageLinks?.thumbnail||"",owned:false,upcoming:[]}}
+async function google(q,max=40){let r=await fetch("https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent(q)+"&maxResults="+max+"&orderBy=newest");if(!r.ok)throw Error("検索に失敗しました");return (await r.json()).items||[]}
+async function openbd(isbn){try{let r=await fetch("https://api.openbd.jp/v1/get?isbn="+isbn);let a=await r.json();let x=a?.[0];if(!x)return null;let s=x.summary||{},d=x.onix?.DescriptiveDetail||{};return {isbn:s.isbn||isbn,title:s.title||"",author:s.author||"",publisher:s.publisher||"",date:s.pubdate||"",series:d.Collection?.TitleDetail?.TitleText?.content||"",cover:s.cover||"",owned:false,upcoming:[]}}catch(e){return null}}
+async function fetchUpcoming(b){try{let items=await google('inauthor:"'+(b.author.split(" / ")[0]||b.title)+'"',40);let today=new Date().toISOString().slice(0,10);return items.map(v=>bookFromGoogle(v)).filter(x=>x.date>=today&&x.isbn&&x.title&&x.isbn!==b.isbn).slice(0,10)}catch(e){return[]}}
+function card(b,add=true){return `<div class="card"><div class="book">${b.cover?`<img class="cover" src="${esc(b.cover)}">`:`<div class="cover"></div>`}<div><div class="title">${esc(b.title)}${b.subtitle?" — "+esc(b.subtitle):""}</div><div class="meta">${esc(b.author)}</div><div class="meta">${esc(b.publisher)} ${esc(b.date)}</div><div class="meta">ISBN ${esc(b.isbn||"未取得")}</div>${b.series?`<span class="badge">シリーズ: ${esc(b.series)}</span>`:""}${add?`<div class="actions"><button onclick='addBook(${JSON.stringify(b).replace(/'/g,"&#39;")})'>蔵書に登録</button></div>`:""}</div></div></div>`}
+window.addBook=b=>{if(!b.isbn){alert("ISBNが取得できないため、この版は登録できません。");return}if(!books.some(x=>x.isbn===b.isbn)){b.owned=true;books.push(b);save();alert("登録しました")}else alert("すでに登録されています")}
+function render(){ $("myBooks").innerHTML=books.length?books.map(b=>card(b,false)).join(""):"<p class='muted'>蔵書はありません。</p>";let es=[];books.forEach(b=>(b.upcoming||[]).forEach(e=>es.push({...e,base:b.title})));es.sort((a,b)=>a.date.localeCompare(b.date));$("events").innerHTML=es.length?es.map(e=>`<div class="result"><b>${esc(e.date)}</b>　${esc(e.title)}<div class="muted">${esc(e.base)}</div></div>`).join(""):"<p class='muted'>発売予定はありません。</p>"}
+$("isbnSearch").onclick=async()=>{let s=norm($("isbn").value);if(/^\\d{9}[\\dX]$/.test(s))s=i10to13(s);if(!valid13(s)){alert("正しいISBNを入力してください");return} $("addResults").innerHTML="<p class='muted'>検索中…</p>";let b=await openbd(s);if(!b){let it=await google("isbn:"+s,5);b=it[0]?bookFromGoogle(it[0],s):null}if(!b){$("addResults").innerHTML="<p class='muted'>見つかりませんでした。</p>";return}b.upcoming=await fetchUpcoming(b);$("addResults").innerHTML=card(b)}
+$("workSearch").onclick=async()=>{let q=$("work").value.trim(),v=$("vol").value.trim();if(!q){alert("作品タイトルを入力してください");return}$("addResults").innerHTML="<p class='muted'>検索中…</p>";let items=await google("intitle:"+q+(v?" "+v:""),40);let list=items.map(x=>bookFromGoogle(x)).filter(x=>!v||new RegExp("(^|\\\\D)"+v+"(\\\\D|$)").test(x.title));$("addResults").innerHTML=list.length?list.slice(0,12).map(card).join(""):"<p class='muted'>候補が見つかりませんでした。</p>"}
+$("searchBtn").onclick=async()=>{let q=$("query").value.trim();if(!q)return;$("searchResults").innerHTML="<div class='card'>検索中…</div>";let items=await google(q,40);$("searchResults").innerHTML=items.length?items.map(card).join(""):"<div class='card muted'>結果なし</div>"}
+$("authorBtn").onclick=async()=>{let q=$("author").value.trim();if(!q)return;$("authorResults").innerHTML="<div class='card'>検索中…</div>";let items=await google("inauthor:"+q,40),pub=items.map(bookFromGoogle);let owned=books.filter(b=>(b.author||"").includes(q));$("authorResults").innerHTML=`<div class="card"><div class="title">この作家の蔵書（${owned.length}冊）</div>${owned.length?owned.map(b=>card(b,false)).join(""):"<p class='muted'>まだ蔵書はありません。</p>"}</div><div class="card"><div class="title">出版物（検索結果 ${pub.length}件）</div>${pub.map(card).join("")}</div>`}
+$("ics").onclick=()=>{let l=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//BookShelf//JP//"];books.forEach((b,i)=>(b.upcoming||[]).forEach((e,j)=>{if(/^\\d{4}-\\d{2}-\\d{2}$/.test(e.date))l.push("BEGIN:VEVENT","UID:"+i+"-"+j+"@bookshelf","DTSTART:"+e.date.replaceAll("-","")+"T090000","SUMMARY:"+e.title+" 発売予定","DESCRIPTION:"+b.title+" / "+e.isbn,"END:VEVENT")}));l.push("END:VCALENDAR");let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([l.join("\\r\\n")],{type:"text/calendar"}));a.download="book-release.ics";a.click()}
+$("scan").onclick=async()=>{ $("scanner").style.display="block";try{reader=new ZXingBrowser.BrowserMultiFormatReader();await reader.decodeFromConstraints({video:{facingMode:"environment"}},$("video"),(r)=>{if(r){$("isbn").value=r.getText();stop();$("isbnSearch").click()}})}catch(e){alert("カメラを起動できませんでした")}}
+function stop(){try{reader?.reset()}catch(e){}$("video").srcObject?.getTracks().forEach(t=>t.stop());$("scanner").style.display="none"}$("closeScan").onclick=stop;
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll("section").forEach(x=>x.classList.remove("active"));$(b.dataset.s).classList.add("active")});render();
+</script></body></html>
