@@ -1,6 +1,11 @@
 <!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#111827"><title>本棚スケジュール v4.1</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#f5f5f7;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;padding-bottom:72px}header{background:#fff;padding:14px 16px;position:sticky;top:0;z-index:5;border-bottom:1px solid #ddd}main{max-width:800px;margin:auto;padding:12px;touch-action:pan-y;min-height:calc(100vh - 150px)}section{display:none}section.active{display:block}.card{background:#fff;border-radius:16px;padding:15px;margin:10px 0;box-shadow:0 1px 3px #0001}.muted{font-size:13px;color:#6b7280}.row{display:flex;gap:8px}.row>*{flex:1}input{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:11px;font:inherit}button{font:inherit;padding:11px 13px;border:0;border-radius:11px;background:#111827;color:white;font-weight:700}.secondary{background:#e5e7eb;color:#111827}.clearwrap{position:relative}.clearwrap input{padding-right:42px}.clearbtn{position:absolute;right:5px;top:5px;width:34px;height:34px;padding:0;border-radius:50%;background:#e5e7eb;color:#555;display:none}.book{display:flex;gap:12px}.cover{width:68px;height:96px;object-fit:cover;border-radius:8px;background:#eee}.title{font-weight:800;font-size:16px}.actions{margin-top:8px}nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;display:flex;z-index:10}nav button{flex:1;background:#fff;color:#666;border-radius:0;font-size:13px;padding:10px 3px;min-height:68px}nav button.active{color:#111;font-weight:800;font-size:14px}.monthbar{display:flex;align-items:center;justify-content:space-between}.monthbar button{min-width:42px}.calhead{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;color:#777;font-size:11px;margin-top:12px}.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:5px}.day{min-height:58px;background:#f8f8fa;border:1px solid #eee;border-radius:8px;padding:4px}.day.empty{background:transparent;border:0}.day button{background:transparent;color:#111;padding:0;width:100%;height:100%;text-align:left}.today{border:2px solid #111}.selected{box-shadow:inset 0 0 0 2px #777}.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#111;margin:3px 2px}.selectbar{display:flex;align-items:center;gap:8px;position:sticky;top:58px;background:#fff;padding:8px 0;z-index:2;border-bottom:1px solid #eee}.selectbar button{font-size:12px}.check{width:26px;height:26px}.selectline{display:flex;gap:10px;align-items:flex-start}.selectline .content{flex:1}.event{padding:10px 0;border-top:1px solid #eee}.release{font-weight:800}.error{background:#fee2e2;color:#991b1b;padding:10px;border-radius:10px}.ok{background:#ecfdf5;color:#166534;padding:10px;border-radius:10px}#scanner{display:none;position:fixed;inset:0;background:#000;color:white;z-index:20;padding:16px}#video{width:100%;height:70%;object-fit:cover;margin-top:35px;border-radius:16px}
+</style><style>
+.similar-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.similar-grid label{border:1px solid #ddd;border-radius:12px;padding:10px}
+.similar-grid input{width:24px;height:24px;vertical-align:middle}
+.check{width:26px;height:26px}
 </style></head><body>
 <header><b>📚 本棚スケジュール v4.1</b><div class="muted">フリック対応・429対策・一括選択対応</div></header>
 <main id="content">
@@ -8,7 +13,21 @@
 <div class="row"><div class="clearwrap"><input id="isbn" inputmode="numeric" placeholder="978-4-09-861040-3"><button class="clearbtn" data-clear="isbn">×</button></div><button id="scan">📷 スキャン</button></div><button id="isbnSearch" style="width:100%;margin-top:8px">ISBNで検索</button>
 <hr><div class="row"><div class="clearwrap"><input id="work" placeholder="作品タイトル"><button class="clearbtn" data-clear="work">×</button></div><div class="clearwrap"><input id="vol" inputmode="numeric" placeholder="巻数"><button class="clearbtn" data-clear="vol">×</button></div></div><button id="workSearch" style="width:100%;margin-top:8px">作品＋巻数から検索</button><div id="addResults"></div></div></section>
 <section id="library"><div class="card"><b>📚 蔵書</b><p class="muted">作品名・作家名・ISBNで部分一致検索。</p><div class="clearwrap"><input id="libraryFilter" placeholder="作品名 / 作家名 / ISBN"><button class="clearbtn" data-clear="libraryFilter">×</button></div><div id="myBooks"></div></div></section>
-<section id="search"><div class="card"><b>🔎 書籍検索</b><div class="row"><div class="clearwrap"><input id="query" placeholder="作品名 / ISBN / 作家名"><button class="clearbtn" data-clear="query">×</button></div><button id="searchBtn">検索</button></div></div><div id="searchResults"></div></section>
+<section id="search"><div class="card"><b>🔎 書籍検索</b><div class="row"><div class="clearwrap"><input id="query" placeholder="作品名 / ISBN / 作家名"><button class="clearbtn" data-clear="query">×</button></div><button id="searchBtn">検索</button></div></div><div id="searchResults"></div><div class="card" id="similarBox">
+<h3>🔎 類似作品を探す</h3>
+<p class="muted">絵・ストーリーなど、条件を選んで類似作品を探します。</p>
+<div class="similar-grid">
+<label><input type="checkbox" value="art" checked> 🎨 絵・作画</label>
+<label><input type="checkbox" value="story" checked> 📖 ストーリー</label>
+<label><input type="checkbox" value="genre"> 🏷 ジャンル</label>
+<label><input type="checkbox" value="author"> ✍️ 作家・作風</label>
+<label><input type="checkbox" value="setting"> 🌍 舞台・世界観</label>
+<label><input type="checkbox" value="tone"> 🎭 雰囲気</label>
+</div>
+<button id="similarBtn" style="width:100%">選択条件で類似作品を検索</button>
+<div id="similarResults"></div>
+</div>
+</section>
 <section id="authors"><div class="card"><b>✍️ 作家検索</b><div class="row"><div class="clearwrap"><input id="author" placeholder="作家名"><button class="clearbtn" data-clear="author">×</button></div><button id="authorBtn">検索</button></div></div><div id="authorResults"></div></section>
 <section id="calendar"><div class="card"><div class="monthbar"><button id="prevMonth" class="secondary">‹</button><b id="monthTitle"></b><button id="nextMonth" class="secondary">›</button></div><p class="muted">● 蔵書・作家連動の発売予定</p><div class="calhead"><div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div></div><div id="calendarGrid" class="calgrid"></div><button id="ics" style="width:100%;margin-top:12px">iPhoneカレンダー用ICS</button></div><div class="card"><b id="selectedDateTitle">日付を選択してください</b><div id="selectedEvents" class="muted" style="margin-top:8px">カレンダーの日をタップしてください。</div></div></section>
 </main>
@@ -42,6 +61,16 @@ function gbook(v,hint=""){let x=v.volumeInfo||{},ids=x.industryIdentifiers||[];l
 async function openbd(isbn){try{let a=await getJSON("https://api.openbd.jp/v1/get?isbn="+isbn),x=a?.[0],s=x?.summary||{};return x?{isbn:s.isbn||isbn,title:s.title||"",author:s.author||"",publisher:s.publisher||"",date:s.pubdate||"",cover:s.cover||"",upcoming:[]}:null}catch(e){return null}}
 async function isbnLookup(isbn){let b=await openbd(isbn);if(b?.title)return b;let a=(await getJSON("https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent("isbn:"+isbn)+"&maxResults=20&country=JP")).items||[];let exact=a.map(x=>gbook(x)).find(x=>norm(x.isbn)==isbn);if(exact?.title)return exact;if(a[0])return gbook(a[0],isbn);a=(await getJSON("https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent('"'+isbn+'"')+"&maxResults=20&country=JP")).items||[];exact=a.map(x=>gbook(x)).find(x=>norm(x.isbn)==isbn);if(exact?.title)return exact;throw Error("このISBNに一致する書誌情報が見つかりませんでした。")}
 async function searchGoogle(q){let a=(await getJSON("https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent(q)+"&maxResults=40&country=JP&langRestrict=ja")).items||[];let z=q.toLowerCase();return a.sort((x,y)=>{let xt=(x.volumeInfo?.title||"").toLowerCase(),yt=(y.volumeInfo?.title||"").toLowerCase();return (xt.includes(z)?0:1)-(yt.includes(z)?0:1)})}
+function releaseTime(b){const t=Date.parse(b.date||"");return Number.isNaN(t)?0:t}
+function volumeNo(b){const m=(b.title||"").match(/(?:第\s*)?(\d+)\s*(?:巻|集)/i);return m?parseInt(m[1],10):0}
+function sortBooks(a,mode){return [...a].sort((x,y)=>mode==="release-desc"?releaseTime(y)-releaseTime(x):mode==="release-asc"?releaseTime(x)-releaseTime(y):mode==="volume-desc"?volumeNo(y)-volumeNo(x):volumeNo(x)-volumeNo(y))}
+const sortState={};
+function renderSelectableResults(id,arr){
+ window[id+"Data"]=arr;
+ $(id).innerHTML=(arr.length?`<div class="selectbar"><label><input class="check selectAll"> 全選択</label><button onclick="bulkAdd('${id}')">選択した本を一括登録</button><button onclick="cycleSort('${id}')">↕ 並べ替え</button></div>`:"")+arr.map((x,i)=>card(x,true,"result",i)).join("")||"結果なし";
+ $(id).querySelector(".selectAll")?.addEventListener("change",e=>$(id).querySelectorAll(".selectBook").forEach(x=>x.checked=e.target.checked));
+}
+function cycleSort(id){const modes=["release-desc","release-asc","volume-desc","volume-asc"];sortState[id]=((sortState[id]??0)+1)%4;renderSelectableResults(id,sortBooks(window[id+"Data"]||[],modes[sortState[id]]))}
 function card(book,add=true,mode="result",index=-1){
  let safe=JSON.stringify(book).replace(/</g,"\\u003c").replace(/'/g,"&#39;");
  let chk=`<input class="check selectBook" type="checkbox" data-index="${index}" aria-label="選択">`;
@@ -55,7 +84,7 @@ function renderResults(id,items){
  $(id).querySelector(".selectAll")?.addEventListener("change",e=>$(id).querySelectorAll(".selectBook").forEach(x=>x.checked=e.target.checked));
 }
 window.bulkAdd=id=>{let arr=window[id+"Data"]||[];let ids=[...$(id).querySelectorAll(".selectBook:checked")].map(x=>+x.dataset.index);if(!ids.length){alert("登録する本を選択してください");return}let n=0;ids.map(i=>arr[i]).filter(Boolean).forEach(x=>{if(!books.some(b=>norm(b.isbn)==norm(x.isbn))){books.push(x);n++}});localStorage.setItem(KEY,JSON.stringify(books));render();alert(n+"冊を登録しました（重複は除外）")};
-$("workSearch").onclick=async()=>{let q=$("work").value.trim();if(!q)return;$("addResults").innerHTML="検索中…";try{renderResults("addResults",await searchGoogle("intitle:"+q+" "+$("vol").value))}catch(e){$("addResults").innerHTML=esc(e.message)}};
+$("workSearch").onclick=async()=>{let q=$("work").value.trim(),v=$("vol").value.trim();if(!q)return;$("addResults").innerHTML="検索中…";try{let arr=(await searchGoogle("intitle:"+q+(v?" "+v:""))).map(gbook);arr=arr.filter((x,i,a)=>i===a.findIndex(y=>norm(y.isbn)===norm(x.isbn)&&norm(x.isbn)));if(!v)arr=sortBooks(arr,"release-desc");renderSelectableResults("addResults",arr)}catch(e){$("addResults").innerHTML=esc(e.message)}};
 $("searchBtn").onclick=async()=>{let q=$("query").value.trim();if(!q)return;$("searchResults").innerHTML="検索中…";try{renderResults("searchResults",await searchGoogle(q))}catch(e){$("searchResults").innerHTML=esc(e.message)}};
 $("authorBtn").onclick=async()=>{let q=$("author").value.trim();if(!q)return;$("authorResults").innerHTML="検索中…";try{renderResults("authorResults",await searchGoogle("inauthor:"+q))}catch(e){$("authorResults").innerHTML=esc(e.message)}}
 let calDate=new Date();calDate.setDate(1);let selectedDate=null;
@@ -79,11 +108,10 @@ $("ics").onclick=()=>{let l=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//BookShel
 async function scan(){if(!navigator.mediaDevices?.getUserMedia){alert("HTTPSのSafariで開いてください。");return}$("scanner").style.display="block";try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}},audio:false});$("video").srcObject=stream;await $("video").play();if("BarcodeDetector" in window){let d=new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e"]});timer=setInterval(async()=>{try{let c=(await d.detect($("video")))[0];if(c?.rawValue){$("isbn").value=c.rawValue;stopScan();$("isbnSearch").click()}}catch(e){}},500)}else $("scanStatus").textContent="カメラは起動しました。このSafariでは自動読取に非対応です。ISBNを手入力してください。"}catch(e){$("scanStatus").innerHTML="カメラを起動できませんでした。Safariのサイト設定でカメラを許可してください。"}}
 function stopScan(){if(timer)clearInterval(timer);timer=null;if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;$("video").srcObject=null;$("scanner").style.display="none"}
 $("scan").onclick=scan;$("closeScan").onclick=stopScan;
-// 画面全体の左右フリックでタブ切替
-(function(){
- const ids=["add","library","search","authors","calendar"];let sx=0,sy=0;
- document.addEventListener("touchstart",e=>{if(e.touches.length===1){sx=e.touches[0].clientX;sy=e.touches[0].clientY}},{passive:true});
- document.addEventListener("touchend",e=>{let dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;if(Math.abs(dx)<65||Math.abs(dx)<Math.abs(dy)*1.15)return;let cur=ids.findIndex(id=>$(id).classList.contains("active")),next=Math.max(0,Math.min(ids.length-1,cur+(dx<0?1:-1)));if(next===cur)return;document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));$(ids[next]).classList.add("active");document.querySelectorAll("#bottomNav button").forEach(b=>b.classList.toggle("active",b.dataset.s===ids[next]));window.scrollTo({top:0,behavior:"smooth"})},{passive:true});
-})();
+// 画面全体の左右フリック：端から端まで循環
+(function(){const ids=["add","library","search","authors","calendar"];let sx=0,sy=0;
+document.addEventListener("touchstart",e=>{if(e.touches.length===1){sx=e.touches[0].clientX;sy=e.touches[0].clientY}},{passive:true});
+document.addEventListener("touchend",e=>{const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.15)return;const cur=ids.findIndex(id=>$(id).classList.contains("active"));const next=(cur+(dx<0?1:-1)+ids.length)%ids.length;document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));$(ids[next]).classList.add("active");document.querySelectorAll("#bottomNav button").forEach(x=>x.classList.toggle("active",x.dataset.s===ids[next]));window.scrollTo({top:0,behavior:"smooth"})},{passive:true});})();
+async function findSimilarWorks(){const q=($("query").value||$("work").value||"").trim();if(!q){alert("作品名を入力してください。");return}const c=[...document.querySelectorAll("#similarBox input:checked")].map(x=>x.value);if(!c.length){alert("条件を1つ以上選択してください。");return}$("similarResults").innerHTML="検索中…";try{const base=(await searchGoogle(q)).map(gbook)[0]||{};const terms=[];if(c.includes("story")||c.includes("setting")||c.includes("tone"))terms.push(q);if(c.includes("art")||c.includes("author"))terms.push(base.author||"");if(c.includes("genre"))terms.push(q);let arr=(await searchGoogle([...new Set(terms.filter(Boolean))].join(" "))).map(gbook).filter(x=>norm(x.title)!==norm(base.title));window.similarResultsData=arr;$("similarResults").innerHTML=(arr.length?`<div class="selectbar"><label><input class="check similarAll"> 全選択</label><button onclick="bulkAdd('similarResults')">選択した本を一括登録</button></div>`:"")+arr.map((x,i)=>card(x,true,"similar",i)).join("")||"候補なし";$("similarResults").querySelector(".similarAll")?.addEventListener("change",e=>$("similarResults").querySelectorAll(".selectBook").forEach(x=>x.checked=e.target.checked))}catch(e){$("similarResults").innerHTML=esc(e.message)}}$("similarBtn")?.addEventListener("click",findSimilarWorks);
 render();
 </script></body></html>
