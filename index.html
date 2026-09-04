@@ -7,35 +7,10 @@
 .similar-grid input{width:24px;height:24px;vertical-align:middle}
 .check{width:26px;height:26px}
 </style>
-<style id="v44-patch">
-/* 入力欄の見切れ防止 */
-input, select, textarea { box-sizing:border-box; }
-input[type="text"], input[type="search"], input[type="number"], textarea {
-  max-width:100%;
-}
-.v44-input-row { display:flex; align-items:center; gap:6px; width:100%; }
-.v44-input-row > input, .v44-input-row > textarea { flex:1 1 auto; min-width:0; }
-.v44-clear { flex:0 0 42px; min-width:42px; min-height:42px; padding:8px; }
-.v44-isbn-input { min-width:15em !important; }
-@media(max-width:600px){
-  .v44-isbn-input { width:100%; min-width:0 !important; }
-}
-/* 詳細ページ風のボトムシート */
-.v44-detail-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center}
-.v44-detail-sheet{width:100%;max-width:760px;max-height:90vh;overflow:auto;background:var(--bg,#fff);color:var(--text,#222);border-radius:20px 20px 0 0;padding:18px;box-shadow:0 -8px 30px rgba(0,0,0,.2)}
-.v44-detail-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.v44-detail-grid{display:grid;grid-template-columns:120px 1fr;gap:16px;margin-top:14px}
-.v44-detail-cover{width:120px;max-height:180px;object-fit:contain;border-radius:8px;background:#eee}
-.v44-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
-.v44-actions a,.v44-actions button{min-height:44px}
-.v44-related{margin-top:20px}
-.v44-related-list{display:grid;gap:8px}
-.v44-related-item{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid #ddd;border-radius:10px;background:inherit;text-align:left}
-.v44-related-item img{width:48px;height:68px;object-fit:cover;border-radius:4px;background:#eee}
-.v44-multi-isbn{margin-top:8px;font-size:12px;opacity:.72}
-</style>
-
-</head><body>
+<style id="v44-fixed-css">
+.clearwrap{display:flex;align-items:center;gap:6px;width:100%;}.clearwrap input{min-width:0;flex:1 1 auto;}.clearbtn{flex:0 0 42px;min-width:42px;min-height:42px;}#isbn{min-width:0;width:100%;}#work,#query,#author,#libraryFilter{min-width:0;width:100%;}@media(max-width:600px){#isbn{font-size:16px;}}
+.booktap{cursor:pointer}.detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.detail-actions a,.detail-actions button{min-height:44px}.detail-related{margin-top:18px}.detail-related-item{display:flex;gap:10px;align-items:center;width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;background:inherit;text-align:left}.detail-related-item img{width:48px;height:68px;object-fit:cover}.detail-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);display:none;align-items:flex-end}.detail-sheet{background:var(--bg,#fff);color:var(--text,#222);width:100%;max-width:760px;max-height:90vh;overflow:auto;margin:auto;padding:18px;border-radius:20px 20px 0 0}.detail-head{display:flex;justify-content:space-between;align-items:center}.detail-grid{display:grid;grid-template-columns:120px 1fr;gap:16px;margin-top:12px}.detail-cover{width:120px;max-height:180px;object-fit:contain}.multi-isbn-hint{font-size:12px;opacity:.7;margin-top:5px}.multi-isbn-results{display:grid;gap:8px;margin-top:10px}.multi-isbn-item{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid #ddd;border-radius:10px}.multi-isbn-item img{width:44px;height:62px;object-fit:cover}
+</style></head><body>
 <header><b>📚 本棚スケジュール v4.1</b><div class="muted">フリック対応・429対策・一括選択対応</div></header>
 <main id="content">
 <section id="add" class="active"><div class="card"><b>➕ 本を追加</b><p class="muted">ISBN-10/13、ハイフン、全角数字に対応。</p>
@@ -102,11 +77,23 @@ function renderSelectableResults(id,arr){
 function cycleSort(id){const modes=["release-desc","release-asc","volume-desc","volume-asc"];sortState[id]=((sortState[id]??0)+1)%4;renderSelectableResults(id,sortBooks(window[id+"Data"]||[],modes[sortState[id]]))}
 function card(book,add=true,mode="result",index=-1){
  let safe=JSON.stringify(book).replace(/</g,"\\u003c").replace(/'/g,"&#39;");
+ let detail=JSON.stringify(book).replace(/</g,"\\u003c").replace(/'/g,"&#39;");
  let chk=`<input class="check selectBook" type="checkbox" data-index="${index}" aria-label="選択">`;
- return `<div class="card"><div class="selectline">${chk}<div class="content"><div class="book">${book.cover?`<img class="cover" src="${esc(book.cover)}">`:"<div class='cover'></div>"}<div><div class="title">${esc(book.title)}</div><div class="muted">${esc(book.author)}</div><div class="muted">${esc(book.publisher)} ${esc(book.date)}</div><div class="muted">ISBN ${esc(book.isbn||"")}</div>${add?`<div class="actions"><button onclick='addBook(${safe})'>蔵書に登録</button></div>`:""}</div></div></div></div></div>`;
+ return `<div class="card booktap" data-book='${detail}'><div class="selectline">${chk}<div class="content"><div class="book">${book.cover?`<img class="cover" src="${esc(book.cover)}">`:`<div class='cover'></div>`}<div><div class="title">${esc(book.title)}</div><div class="muted">${esc(book.author)}</div><div class="muted">${esc(book.publisher)} ${esc(book.date)}</div><div class="muted">ISBN ${esc(book.isbn||"")}</div><div class="actions"><button type="button" onclick='event.stopPropagation();openBookDetail(${safe})'>詳細を見る</button>${add?`<button onclick='event.stopPropagation();addBook(${safe})'>蔵書に登録</button>`:""}</div></div></div></div></div></div>`;
 }
 window.addBook=b=>{if(!books.some(x=>norm(x.isbn)==norm(b.isbn))){books.push(b);localStorage.setItem(KEY,JSON.stringify(books));render();alert("登録しました")}else alert("すでに登録されています")}
-$("isbnSearch").onclick=async()=>{let s=norm($("isbn").value);if(valid10(s))s=to13(s);if(!valid13(s)){$("addResults").innerHTML='<div class="error">ISBN-10またはISBN-13を入力してください。</div>';return}$("addResults").innerHTML="検索中…";try{let one=await isbnLookup(s);window.addResultsData=[one];$("addResults").innerHTML='<div class="selectbar"><label><input class="check selectAll"> 選択</label><button onclick="bulkAdd(\'addResults\')">一括登録</button></div>'+card(one,true,"result",0);$("addResults").querySelector(".selectAll").onchange=e=>$("addResults").querySelector(".selectBook").checked=e.target.checked}catch(e){$("addResults").innerHTML='<div class="error">'+esc(e.message)+'<br>作品名＋巻数検索も試してください。</div>'}}
+$("isbnSearch").onclick=async()=>{
+ let raw=$("isbn").value||"";
+ let list=(raw.match(/(?:97[89][\d\-\s]{10,20}|\d{9}[\dXx])/g)||[]).map(norm).filter(Boolean);
+ if(!list.length){$("addResults").innerHTML='<div class="error">ISBN-10またはISBN-13を入力してください。複数冊は改行・空白・カンマ区切りでも入力できます。</div>';return}
+ list=[...new Set(list.map(x=>valid10(x)?to13(x):x))].filter(valid13).slice(0,30);
+ $("addResults").innerHTML="検索中…"; let found=[];
+ for(const isbn of list){try{found.push(await isbnLookup(isbn))}catch(e){}}
+ window.addResultsData=found;
+ if(!found.length){$("addResults").innerHTML='<div class="error">一致する書籍が見つかりませんでした。</div>';return}
+ $("addResults").innerHTML=`<div class="selectbar"><label><input class="check selectAll"> 全選択</label><button onclick="bulkAdd('addResults')">選択した本を一括登録</button></div>`+found.map((x,i)=>card(x,true,"result",i)).join("");
+ $("addResults").querySelector(".selectAll").onchange=e=>$("addResults").querySelectorAll(".selectBook").forEach(x=>x.checked=e.target.checked);
+}
 function renderResults(id,items){
  let arr=items.map(gbook); window[id+"Data"]=arr;
  $(id).innerHTML=(arr.length?`<div class="selectbar"><label><input class="check selectAll" data-target="${id}"> 全選択</label><button onclick="bulkAdd('${id}')">選択した本を一括登録</button></div>`:"")+arr.map((x,i)=>card(x,true,"result",i)).join("")||"結果なし";
@@ -138,175 +125,19 @@ async function scan(){if(!navigator.mediaDevices?.getUserMedia){alert("HTTPSのS
 function stopScan(){if(timer)clearInterval(timer);timer=null;if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;$("video").srcObject=null;$("scanner").style.display="none"}
 $("scan").onclick=scan;$("closeScan").onclick=stopScan;
 // 画面全体の左右フリック：端から端まで循環
-(function(){const ids=["add","library","search","authors","calendar"];let sx=0,sy=0;
-document.addEventListener("touchstart",e=>{if(e.touches.length===1){sx=e.touches[0].clientX;sy=e.touches[0].clientY}},{passive:true});
-document.addEventListener("touchend",e=>{const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.15)return;const cur=ids.findIndex(id=>$(id).classList.contains("active"));const next=(cur+(dx<0?1:-1)+ids.length)%ids.length;document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));$(ids[next]).classList.add("active");document.querySelectorAll("#bottomNav button").forEach(x=>x.classList.toggle("active",x.dataset.s===ids[next]));window.scrollTo({top:0,behavior:"smooth"})},{passive:true});})();
+(function(){const ids=["add","library","search","authors","calendar"];let sx=0,sy=0,tracking=false,start=null;
+function setTab(id){document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));$(id).classList.add("active");document.querySelectorAll("#bottomNav button").forEach(x=>x.classList.toggle("active",x.dataset.s===id));window.scrollTo({top:0,behavior:"smooth"})}
+function inCal(el){return !!el?.closest?.("#calendar,#calendarGrid,.calgrid")};
+document.addEventListener("touchstart",e=>{if(e.touches.length!==1)return;let t=e.touches[0];if(t.clientY<innerHeight*.5){tracking=false;return}tracking=true;sx=t.clientX;sy=t.clientY;start=e.target},{passive:true});
+document.addEventListener("touchend",e=>{if(!tracking)return;tracking=false;let t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;if(Math.abs(dx)<65||Math.abs(dx)<Math.abs(dy)*1.2)return;if(inCal(start)){if(dx<0)$("nextMonth").click();else $("prevMonth").click();return}let cur=ids.findIndex(id=>$(id).classList.contains("active"));setTab(ids[(cur+(dx<0?1:-1)+ids.length)%ids.length]);},{passive:true});})();
 async function findSimilarWorks(){const q=($("query").value||$("work").value||"").trim();if(!q){alert("作品名を入力してください。");return}const c=[...document.querySelectorAll("#similarBox input:checked")].map(x=>x.value);if(!c.length){alert("条件を1つ以上選択してください。");return}$("similarResults").innerHTML="検索中…";try{const base=(await searchGoogle(q)).map(gbook)[0]||{};const terms=[];if(c.includes("story")||c.includes("setting")||c.includes("tone"))terms.push(q);if(c.includes("art")||c.includes("author"))terms.push(base.author||"");if(c.includes("genre"))terms.push(q);let arr=(await searchGoogle([...new Set(terms.filter(Boolean))].join(" "))).map(gbook).filter(x=>norm(x.title)!==norm(base.title));window.similarResultsData=arr;$("similarResults").innerHTML=(arr.length?`<div class="selectbar"><label><input class="check similarAll"> 全選択</label><button onclick="bulkAdd('similarResults')">選択した本を一括登録</button></div>`:"")+arr.map((x,i)=>card(x,true,"similar",i)).join("")||"候補なし";$("similarResults").querySelector(".similarAll")?.addEventListener("change",e=>$("similarResults").querySelectorAll(".selectBook").forEach(x=>x.checked=e.target.checked))}catch(e){$("similarResults").innerHTML=esc(e.message)}}$("similarBtn")?.addEventListener("click",findSimilarWorks);
+/* v4.4 書籍詳細・蔵書から関連検索 */
+const detailOverlay=document.createElement("div");detailOverlay.className="detail-overlay";detailOverlay.innerHTML='<div class="detail-sheet"><div class="detail-head"><h2 id="detailTitle">書籍詳細</h2><button class="clearbtn" id="detailClose">×</button></div><div id="detailBody"></div></div>';document.body.appendChild(detailOverlay);
+function amazonUrl(b){return "https://www.amazon.co.jp/s?k="+encodeURIComponent(b.isbn||b.title||"")}
+window.openBookDetail=function(b){let d=b||{},desc=d.description||"紹介文は取得できませんでした。",cover=d.cover||"";$("detailTitle").textContent=d.title||"書籍詳細";$("detailBody").innerHTML=`<div class="detail-grid"><div>${cover?`<img class="detail-cover" src="${esc(cover)}">`:""}</div><div><p><b>著者：</b>${esc(d.author||"")}</p><p><b>出版社：</b>${esc(d.publisher||"")}</p><p><b>発売日：</b>${esc(d.date||"")}</p><p><b>ISBN：</b>${esc(d.isbn||"")}</p></div></div><div class="detail-actions"><a href="${amazonUrl(d)}" target="_blank" rel="noopener">Amazonで探す</a>${d.publisher?`<a href="https://www.google.com/search?q=${encodeURIComponent(d.publisher+" "+d.title)}" target="_blank" rel="noopener">出版社を探す</a>`:""}<button type="button" id="detailRelated">関連書籍を検索</button></div><div><h3>紹介</h3><p>${esc(desc).replace(/\n/g,"<br>")}</p></div><div id="detailRelatedBox" class="detail-related"></div>`;detailOverlay.style.display="flex";$("detailRelated").onclick=()=>searchRelatedFromBook(d)};
+$("detailClose").onclick=()=>detailOverlay.style.display="none";detailOverlay.onclick=e=>{if(e.target===detailOverlay)detailOverlay.style.display="none"};
+async function searchRelatedFromBook(b){let box=$("detailRelatedBox");box.innerHTML="<h3>関連書籍</h3><p>検索中…</p>";let q=b.author?"inauthor:"+b.author:b.title;try{let arr=(await searchGoogle(q)).map(gbook).filter(x=>norm(x.title)!==norm(b.title)).slice(0,10);box.innerHTML=arr.length?"<h3>関連書籍</h3>"+arr.map(x=>`<button class="detail-related-item" type="button"><span><b>${esc(x.title)}</b><br><small>${esc(x.author)}</small></span></button>`).join(""):"<p>関連書籍が見つかりませんでした。</p>";box.querySelectorAll("button").forEach((el,i)=>el.onclick=()=>openBookDetail(arr[i]))}catch(e){box.innerHTML="<p>関連書籍の検索に失敗しました。</p>"}}
+
 render();
 </script>
-<script id="v44-patch-js">
-(function(){
-  "use strict";
-  const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  const enc=s=>encodeURIComponent(s||'');
-
-  /* 1. 入力欄にクリアボタン。ISBNは複数入力にも対応 */
-  function enhanceInputs(){
-    document.querySelectorAll('input[type="text"],input[type="search"],input[type="number"],textarea').forEach(input=>{
-      if(input.dataset.v44Enhanced) return;
-      input.dataset.v44Enhanced="1";
-      const meta=((input.placeholder||'')+' '+(input.id||'')+' '+(input.name||'')).toLowerCase();
-      const isISBN=meta.includes('isbn');
-      const row=document.createElement('div'); row.className='v44-input-row';
-      input.parentNode.insertBefore(row,input); row.appendChild(input);
-      if(isISBN) input.classList.add('v44-isbn-input');
-      const clear=document.createElement('button');
-      clear.type='button'; clear.className='v44-clear'; clear.textContent='×'; clear.title='入力をクリア';
-      clear.onclick=()=>{input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));input.focus();};
-      row.appendChild(clear);
-
-      if(isISBN){
-        const hint=document.createElement('div');
-        hint.className='v44-multi-isbn';
-        hint.textContent='複数冊は改行・スペース・カンマ区切りで入力できます（最大30冊）';
-        row.parentNode.appendChild(hint);
-      }
-    });
-  }
-
-  /* 2. 書籍詳細 */
-  const overlay=document.createElement('div');
-  overlay.className='v44-detail-overlay';
-  overlay.innerHTML='<div class="v44-detail-sheet" role="dialog" aria-modal="true"><div class="v44-detail-head"><h2 id="v44d-title">書籍詳細</h2><button id="v44d-close" class="v44-clear">×</button></div><div id="v44d-body"></div></div>';
-  document.addEventListener('DOMContentLoaded',()=>document.body.appendChild(overlay));
-  function closeDetail(){overlay.style.display='none'}
-  function firstISBN(book){
-    const ids=book.industryIdentifiers||book.volumeInfo?.industryIdentifiers||[];
-    return (ids.find(x=>x.type==='ISBN_13')||ids.find(x=>x.type==='ISBN_10')||ids[0]||{}).identifier||book.isbn||'';
-  }
-  window.v44OpenDetail=function(book){
-    const v=book.volumeInfo||book;
-    const title=v.title||'書籍詳細', authors=v.authors||[], publisher=v.publisher||'';
-    const isbn=firstISBN(book), img=v.imageLinks?.thumbnail||book.image||'';
-    const desc=v.description||'紹介文は取得できませんでした。';
-    const amazon='https://www.amazon.co.jp/s?k='+enc(isbn||title);
-    const publisherSearch='https://www.google.com/search?q='+enc((publisher+' '+title).trim());
-    overlay.querySelector('#v44d-title').textContent=title;
-    overlay.querySelector('#v44d-body').innerHTML=
-      '<div class="v44-detail-grid"><div>'+ (img?'<img class="v44-detail-cover" src="'+esc(img)+'" alt="">':'') +
-      '</div><div><div><b>著者：</b>'+esc(authors.join('、'))+'</div><div><b>出版社：</b>'+esc(publisher)+'</div><div><b>発売日：</b>'+esc(v.publishedDate||'')+'</div>'+
-      (isbn?'<div><b>ISBN：</b>'+esc(isbn)+'</div>':'')+'</div></div>'+
-      '<div class="v44-actions">'+
-      '<a class="btn" href="'+amazon+'" target="_blank" rel="noopener">Amazonで探す</a>'+
-      (publisher?'<a class="btn" href="'+publisherSearch+'" target="_blank" rel="noopener">出版社を探す</a>':'')+
-      '<button class="btn" type="button" id="v44-related-btn">関連書籍を検索</button></div>'+
-      '<div style="margin-top:16px"><b>紹介</b><p>'+esc(desc).replace(/\n/g,'<br>')+'</p></div>'+
-      '<div id="v44-related" class="v44-related"></div>';
-    overlay.style.display='flex';
-    overlay.querySelector('#v44d-close').onclick=closeDetail;
-    overlay.querySelector('#v44-related-btn').onclick=()=>v44Related(book);
-  };
-  overlay.addEventListener('click',e=>{if(e.target===overlay)closeDetail()});
-  window.v44Related=async function(book){
-    const box=document.getElementById('v44-related'); if(!box)return;
-    box.innerHTML='<h3>関連書籍</h3><p>検索中…</p>';
-    const v=book.volumeInfo||book, title=v.title||'', author=(v.authors||[])[0]||'';
-    const queries=[];
-    if(author) queries.push('inauthor:'+author);
-    if(title) queries.push(title.split(/[\s　:：]+/).slice(0,5).join(' '));
-    let items=[];
-    for(const q of queries){
-      try{
-        const r=await fetch('https://www.googleapis.com/books/v1/volumes?q='+encodeURIComponent(q)+'&maxResults=12&langRestrict=ja');
-        const d=await r.json();
-        items.push(...(d.items||[]));
-      }catch(_){}
-      if(items.length>=12)break;
-    }
-    const seen=new Set(), filtered=[];
-    items.forEach(x=>{
-      const t=x.volumeInfo?.title||'', id=x.id||t;
-      if(!seen.has(id)&&t!==title){seen.add(id);filtered.push(x)}
-    });
-    if(!filtered.length){box.innerHTML='<h3>関連書籍</h3><p>関連書籍を見つけられませんでした。</p>';return}
-    box.innerHTML='<h3>関連書籍</h3><div class="v44-related-list">'+filtered.slice(0,10).map((x,i)=>{
-      const vv=x.volumeInfo||{}, img=vv.imageLinks?.thumbnail||'';
-      return '<button type="button" class="v44-related-item" data-i="'+i+'">'+(img?'<img src="'+esc(img)+'" alt="">':'')+
-        '<span><b>'+esc(vv.title||'')+'</b><br><small>'+esc((vv.authors||[]).join('、'))+'</small></span></button>';
-    }).join('')+'</div>';
-    box.querySelectorAll('[data-i]').forEach((el,i)=>el.onclick=()=>v44OpenDetail(filtered[i]));
-  };
-
-  /* 3. 検索結果/蔵書カードをタップすると詳細を開く */
-  document.addEventListener('click',e=>{
-    const el=e.target.closest('[data-book],[data-isbn],[data-book-id],[data-volume-id],.book-card,.book-item,.result-item');
-    if(!el||e.target.closest('button,a,input,label,select'))return;
-    let b=null;
-    try{if(el.dataset.book)b=JSON.parse(el.dataset.book)}catch(_){}
-    if(!b)b={title:el.dataset.title||el.querySelector('.title,h3,h4,strong')?.textContent||'',isbn:el.dataset.isbn||'',authors:(el.dataset.author||'').split(/[、,]/).filter(Boolean),publisher:el.dataset.publisher||'',publishedDate:el.dataset.published||''};
-    if(b.title||b.isbn)v44OpenDetail(b);
-  });
-
-  /* 4. 複数ISBN検索ボタンを既存ISBN欄の直下へ */
-  function addMultiISBN(){
-    document.querySelectorAll('input.v44-isbn-input').forEach(input=>{
-      if(input.dataset.v44MultiAdded)return;
-      input.dataset.v44MultiAdded='1';
-      const btn=document.createElement('button');
-      btn.type='button'; btn.className='btn'; btn.textContent='複数ISBNを検索'; btn.style.marginTop='8px';
-      input.parentNode.parentNode.appendChild(btn);
-      btn.onclick=async()=>{
-        const isbns=(input.value.match(/(?:97[89]\d{10}|\d{9}[\dXx])/g)||[]).map(s=>s.replace(/[^0-9Xx]/g,''));
-        if(!isbns.length){alert('ISBNを入力してください');return}
-        let box=input.parentNode.parentNode.querySelector('.v44-isbn-results');
-        if(!box){box=document.createElement('div');box.className='v44-related-list v44-isbn-results';input.parentNode.parentNode.appendChild(box)}
-        box.innerHTML='<p>検索中…</p>';
-        const found=[];
-        for(const isbn of isbns.slice(0,30)){
-          try{
-            const r=await fetch('https://www.googleapis.com/books/v1/volumes?q=isbn:'+encodeURIComponent(isbn)+'&maxResults=1&langRestrict=ja');
-            const d=await r.json(), x=d.items?.[0];
-            if(x)found.push(x);
-          }catch(_){}
-        }
-        if(!found.length){box.innerHTML='<p>見つかりませんでした。</p>';return}
-        box.innerHTML=found.map((x,i)=>{
-          const v=x.volumeInfo||{}, img=v.imageLinks?.thumbnail||'';
-          return '<button type="button" class="v44-related-item" data-m="'+i+'">'+(img?'<img src="'+esc(img)+'" alt="">':'')+
-            '<span><b>'+esc(v.title||'')+'</b><br><small>'+esc((v.authors||[]).join('、'))+'</small></span></button>';
-        }).join('');
-        box.querySelectorAll('[data-m]').forEach((el,i)=>el.onclick=()=>v44OpenDetail(found[i]));
-      };
-    });
-  }
-
-  /* 5. フリックは画面下半分だけ。カレンダー内は月移動 */
-  let sx=0,sy=0,active=false,startEl=null;
-  function calHit(el){return !!el?.closest?.('#calendar,.calendar,.calendar-grid,.calendar-container,[data-calendar]')}
-  document.addEventListener('touchstart',e=>{
-    const t=e.touches[0]; if(!t)return;
-    if(t.clientY<innerHeight*0.5){active=false;return}
-    active=true;sx=t.clientX;sy=t.clientY;startEl=e.target;
-  },{passive:true});
-  document.addEventListener('touchend',e=>{
-    if(!active)return;active=false;
-    const t=e.changedTouches[0]; if(!t)return;
-    const dx=t.clientX-sx,dy=t.clientY-sy;
-    if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.2)return;
-    if(calHit(startEl)||calHit(e.target)){
-      if(typeof window.changeMonth==='function')window.changeMonth(dx<0?1:-1);
-      else if(dx<0&&typeof window.nextMonth==='function')window.nextMonth();
-      else if(dx>0&&typeof window.prevMonth==='function')window.prevMonth();
-      else document.dispatchEvent(new CustomEvent('v44CalendarSwipe',{detail:{direction:dx<0?'next':'prev'}}));
-      return;
-    }
-    document.dispatchEvent(new CustomEvent('v44TabSwipe',{detail:{direction:dx<0?'next':'prev'} }));
-  },{passive:true});
-
-  document.addEventListener('DOMContentLoaded',()=>{enhanceInputs();addMultiISBN();});
-  const mo=new MutationObserver(()=>{enhanceInputs();addMultiISBN()});
-  mo.observe(document.documentElement,{childList:true,subtree:true});
-})();
-</script>
-
 </body></html>
