@@ -1,4 +1,4 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#111827"><title>本棚スケジュール v4.5.0</title>
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#111827"><title>本棚スケジュール v4.5.1</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#f5f5f7;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;padding-bottom:72px}header{background:#fff;padding:14px 16px;position:sticky;top:0;z-index:5;border-bottom:1px solid #ddd}main{max-width:800px;margin:auto;padding:12px;touch-action:pan-y;min-height:calc(100vh - 150px)}section{display:none}section.active{display:block}.card{background:#fff;border-radius:16px;padding:15px;margin:10px 0;box-shadow:0 1px 3px #0001}.muted{font-size:13px;color:#6b7280}.row{display:flex;gap:8px}.row>*{flex:1}input{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:11px;font:inherit}button{font:inherit;padding:11px 13px;border:0;border-radius:11px;background:#111827;color:white;font-weight:700}.secondary{background:#e5e7eb;color:#111827}.clearwrap{position:relative}.clearwrap input{padding-right:42px}.clearbtn{position:absolute;right:5px;top:5px;width:34px;height:34px;padding:0;border-radius:50%;background:#e5e7eb;color:#555;display:none}.book{display:flex;gap:12px}.cover{width:68px;height:96px;object-fit:cover;border-radius:8px;background:#eee}.title{font-weight:800;font-size:16px}.actions{margin-top:8px}nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;display:flex;z-index:10}nav button{flex:1;background:#fff;color:#666;border-radius:0;font-size:13px;padding:10px 3px;min-height:68px}nav button.active{color:#111;font-weight:800;font-size:14px}.monthbar{display:flex;align-items:center;justify-content:space-between}.monthbar button{min-width:42px}.calhead{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;color:#777;font-size:11px;margin-top:12px}.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:5px}.day{min-height:58px;background:#f8f8fa;border:1px solid #eee;border-radius:8px;padding:4px}.day.empty{background:transparent;border:0}.day button{background:transparent;color:#111;padding:0;width:100%;height:100%;text-align:left}.today{border:2px solid #111}.selected{box-shadow:inset 0 0 0 2px #777}.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#111;margin:3px 2px}.selectbar{display:flex;align-items:center;gap:8px;position:sticky;top:58px;background:#fff;padding:8px 0;z-index:2;border-bottom:1px solid #eee}.selectbar button{font-size:12px}.check{width:26px;height:26px}.selectline{display:flex;gap:10px;align-items:flex-start}.selectline .content{flex:1}.event{padding:10px 0;border-top:1px solid #eee}.release{font-weight:800}.error{background:#fee2e2;color:#991b1b;padding:10px;border-radius:10px}.ok{background:#ecfdf5;color:#166534;padding:10px;border-radius:10px}#scanner{display:none;position:fixed;inset:0;background:#000;color:white;z-index:20;padding:16px}#video{width:100%;height:70%;object-fit:cover;margin-top:35px;border-radius:16px}
 .series-group{border:1px solid #e5e7eb;border-radius:14px;margin:10px 0;overflow:hidden}.series-group summary{list-style:none;cursor:pointer;padding:13px 14px;background:rgba(127,127,127,.06);display:flex;justify-content:space-between;align-items:center}.series-group summary::-webkit-details-marker{display:none}.series-books{padding:0 8px}.series-books .card{margin:8px 0}.series-books .card:first-child{margin-top:8px}</style><style>
@@ -84,8 +84,73 @@ input,textarea,select{background:var(--surface)!important;color:var(--app-text)!
 .offline-note{padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--primary) 8%,var(--surface));color:var(--app-text);font-size:.9em}.backup-row{display:flex;gap:8px;flex-wrap:wrap}.backup-row button{flex:1 1 140px}.toggle-row{display:flex!important;align-items:center;gap:8px;padding:10px;border:1px solid color-mix(in srgb,var(--app-text) 12%,transparent);border-radius:12px;color:var(--app-text)!important}.toggle-row input{width:22px;height:22px;flex:0 0 auto}
 body.theme-dark .home-stat{background:color-mix(in srgb,var(--primary) 12%,var(--surface))!important}body.theme-dark .home-welcome{background:var(--surface)!important}body.theme-dark .error{background:#3b1f24!important;color:#fecaca!important}body.theme-dark .ok{background:#153b28!important;color:#bbf7d0!important}
 </style>
+
+<style id="v451-fix-css">
+/* v4.5.1 visual fixes */
+:root{--font-scale:1;--control-bg:#f1f5f9;--control-text:#334155;--control-border:#dbe4ef}
+body.font-small{--font-scale:.88}
+body.font-medium{--font-scale:1}
+body.font-large{--font-scale:1.12}
+body{font-size:calc(15px * var(--font-scale))!important}
+header b{font-size:calc(15px * var(--font-scale))!important}
+header .muted{font-size:calc(11px * var(--font-scale))!important}
+.card{font-size:calc(15px * var(--font-scale))}
+.card h3{font-size:calc(19px * var(--font-scale))}
+.muted{font-size:calc(13px * var(--font-scale))!important}
+.title{font-size:calc(16px * var(--font-scale))!important}
+.home-kicker{font-size:calc(13px * var(--font-scale))!important}
+.home-title{font-size:calc(25px * var(--font-scale))!important}
+.home-date{font-size:calc(13px * var(--font-scale))!important}
+.home-stat .label{font-size:calc(10px * var(--font-scale))!important}
+.home-stat b{font-size:calc(18px * var(--font-scale))!important}
+.home-stat .sub{font-size:calc(9px * var(--font-scale))!important}
+.home-upcoming-head b{font-size:calc(15px * var(--font-scale))!important}
+.home-upcoming-title{font-size:calc(11px * var(--font-scale))!important}
+.home-upcoming-date{font-size:calc(10px * var(--font-scale))!important}
+.home-upcoming-badge{font-size:calc(9px * var(--font-scale))!important}
+.calhead{font-size:calc(11px * var(--font-scale))!important}
+.event-legend,.calendar-filters label,.search-idea-row label{font-size:calc(12px * var(--font-scale))!important}
+.selectbar button,.release-badge{font-size:calc(12px * var(--font-scale))!important}
+.settings-grid label,.skin-grid label{font-size:calc(12px * var(--font-scale))!important}
+button,input,textarea,select{font-size:calc(15px * var(--font-scale))!important}
+nav button,nav button.active{font-size:calc(11px * var(--font-scale))!important}
+
+/* Buttons: only selected states use the theme's main color. */
+.theme-choice,.font-choice{background:var(--control-bg)!important;color:var(--control-text)!important;border:1px solid var(--control-border)!important;box-shadow:none!important}
+.theme-choice.active,.font-choice.active{background:var(--primary)!important;color:#fff!important;border-color:var(--primary)!important}
+.search-mode button{background:transparent!important;color:var(--theme-muted)!important;border:0!important}
+.search-mode button.active{background:var(--surface)!important;color:var(--primary)!important}
+nav button{background:transparent!important;color:var(--theme-muted)!important;border-top-color:transparent!important}
+nav button.active{background:transparent!important;color:var(--primary)!important;border-top-color:var(--primary)!important}
+.calendar-filters input,.search-idea-row input{accent-color:var(--primary)}
+
+/* Calendar date cells stay neutral; primary color is reserved for selection/today/accent. */
+#calendarGrid .day{background:var(--surface)!important;color:var(--app-text)!important;border-color:color-mix(in srgb,var(--app-text) 12%,transparent)!important}
+#calendarGrid .day button{background:transparent!important;color:inherit!important;border:0!important;box-shadow:none!important}
+#calendarGrid .day .dot{background:var(--primary)!important}
+#calendarGrid .day.today{border:2px solid var(--primary)!important}
+#calendarGrid .day.selected{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--primary) 55%,transparent)!important}
+#calendarGrid .day.sun,#calendarGrid .day.holiday{color:#dc2626!important}
+#calendarGrid .day.sat{color:#2563eb!important}
+#calendarGrid .day.sun button,#calendarGrid .day.holiday button{color:#dc2626!important}
+#calendarGrid .day.sat button{color:#2563eb!important}
+
+/* Neutral secondary controls and selection controls remain readable in custom/dark themes. */
+button.secondary{background:color-mix(in srgb,var(--surface) 90%,var(--app-text) 10%)!important;color:var(--app-text)!important;border-color:color-mix(in srgb,var(--app-text) 18%,transparent)!important}
+.library-filterbar button.secondary,.home-more,.home-link-btn{color:var(--app-text)!important}
+.home-link-btn{background:transparent!important;color:var(--primary)!important}
+.settings-grid input,.settings-grid textarea,.skin-grid input[type=color]{color:var(--app-text)!important}
+
+/* Custom/green/dark themes should inherit the same semantic roles. */
+body.theme-green,body.theme-dark,body.custom-skin{--control-bg:color-mix(in srgb,var(--surface) 88%,var(--app-text) 12%);--control-text:var(--app-text);--control-border:color-mix(in srgb,var(--app-text) 18%,transparent)}
+body.theme-dark .theme-choice,body.theme-dark .font-choice{background:#273449!important;color:#e5e7eb!important}
+body.theme-dark .theme-choice.active,body.theme-dark .font-choice.active{background:var(--primary)!important;color:#fff!important}
+
+/* Background image: keep cards legible while letting the image show through the page background. */
+body{background-repeat:no-repeat!important}
+</style>
 </head><body>
-<header><b>📚 本棚スケジュール v4.5.0</b><div class="muted">複数ISBN・詳細/関連検索・発売日カレンダー対応</div></header>
+<header><b>📚 本棚スケジュール v4.5.1</b><div class="muted">複数ISBN・詳細/関連検索・発売日カレンダー対応</div></header>
 <main id="content">
 <section id="home" class="active">
 <div class="card home-welcome"><div class="home-kicker">📚 本棚スケジュール</div><div class="home-title">おかえりなさい</div><div id="homeDate" class="home-date"></div><div class="home-stats"><div class="home-stat library"><div class="label">蔵書</div><b id="homeBookCount">0冊</b><div class="sub">登録済み</div></div><div class="home-stat money"><div class="label">蔵書総額</div><b id="homeBookTotal">未登録</b><div id="homeBookTotalSub" class="sub">価格データを登録すると集計</div></div><div class="home-stat purchase"><div class="label">今月の残購入予定</div><b id="homePurchaseCount">0冊</b><div id="homePurchaseSub" class="sub">今日以降の予定</div></div></div></div><div class="home-upcoming-card card"><div class="home-upcoming-head"><div><b>🔥 近日発売の注目書籍</b><div class="muted">これから発売される本をチェック</div></div><button id="homeUpcomingMore" class="home-link-btn" type="button">すべて見る</button></div><div id="homeUpcomingBooks" class="home-upcoming-grid"></div></div>
@@ -340,11 +405,11 @@ async function scan(){
 function stopScan(){if(timer)clearInterval(timer);timer=null;if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;$("video").srcObject=null;$("scanner").style.display="none"}
 $("scan").onclick=scan;$("closeScan").onclick=stopScan;$("scanSearch").onclick=()=>{stopScan();$("isbnSearch").click()};
 // 画面全体の左右フリック：端から端まで循環
-(function(){const ids=["home","add","library","search","calendar","settings"];let sx=0,sy=0,tracking=false,start=null;
+(function(){const ids=["home","add","library","search","calendar","settings"];let sx=0,sy=0,tracking=false,start=null,calendarSwipeMode=null;
 function setTab(id){setMainTab(id)}
-function inCal(el){return !!el?.closest?.("#calendar,#calendarGrid,.calgrid")};
-document.addEventListener("touchstart",e=>{if(e.touches.length!==1)return;let t=e.touches[0];if(t.clientY<innerHeight*.5){tracking=false;return}tracking=true;sx=t.clientX;sy=t.clientY;start=e.target},{passive:true});
-document.addEventListener("touchend",e=>{if(!tracking)return;tracking=false;let t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;if(Math.abs(dx)<65||Math.abs(dx)<Math.abs(dy)*1.2)return;if(inCal(start)){if(dx<0)$("nextMonth").click();else $("prevMonth").click();return}let cur=ids.findIndex(id=>$(id).classList.contains("active"));setTab(ids[(cur+(dx<0?1:-1)+ids.length)%ids.length]);},{passive:true});})();
+function calendarSwipeArea(y){if($("calendar")?.classList.contains("active")){let ics=$("ics");if(ics){let r=ics.getBoundingClientRect();return y<=r.bottom?"month":"tabs"}return "tabs"}return null}
+document.addEventListener("touchstart",e=>{if(e.touches.length!==1)return;let t=e.touches[0];if(t.clientY<innerHeight*.5){tracking=false;calendarSwipeMode=null;return}tracking=true;sx=t.clientX;sy=t.clientY;start=e.target;calendarSwipeMode=calendarSwipeArea(t.clientY)},{passive:true});
+document.addEventListener("touchend",e=>{if(!tracking)return;tracking=false;let t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;if(Math.abs(dx)<65||Math.abs(dx)<Math.abs(dy)*1.2)return;if(calendarSwipeMode==="month"){if(dx<0)$("nextMonth").click();else $("prevMonth").click();return}let cur=ids.findIndex(id=>$(id).classList.contains("active"));setTab(ids[(cur+(dx<0?1:-1)+ids.length)%ids.length]);},{passive:true});})();
 async function findSimilarWorks(){const q=($("query").value||$("work").value||"").trim();if(!q){alert("作品名を入力してください。");return}const c=[...document.querySelectorAll("#similarBox input:checked")].map(x=>x.value);if(!c.length){alert("条件を1つ以上選択してください。");return}$("similarResults").innerHTML="検索中…";try{const base=(await searchGoogle(q)).map(gbook)[0]||{};const terms=[];if(c.includes("story")||c.includes("setting")||c.includes("tone"))terms.push(q);if(c.includes("art")||c.includes("author"))terms.push(base.author||"");if(c.includes("genre"))terms.push(q);let arr=(await searchGoogle([...new Set(terms.filter(Boolean))].join(" "))).map(gbook).filter(x=>norm(x.title)!==norm(base.title));window.similarResultsData=arr;$("similarResults").innerHTML=(arr.length?`<div class="selectbar"><label><input class="check similarAll"> 全選択</label><button onclick="bulkAdd('similarResults')">選択した本を一括登録</button></div>`:"")+arr.map((x,i)=>card(x,true,"similar",i)).join("")||"候補なし";$("similarResults").querySelector(".similarAll")?.addEventListener("change",e=>$("similarResults").querySelectorAll(".selectBook").forEach(x=>x.checked=e.target.checked))}catch(e){$("similarResults").innerHTML=esc(e.message)}}$("similarBtn")?.addEventListener("click",findSimilarWorks);
 /* v4.4 書籍詳細・蔵書から関連検索 */
 const detailOverlay=document.createElement("div");detailOverlay.className="detail-overlay";detailOverlay.innerHTML='<div class="detail-sheet"><div class="detail-head"><h2 id="detailTitle">書籍詳細</h2><button class="clearbtn" id="detailClose">×</button></div><div id="detailBody"></div></div>';document.body.appendChild(detailOverlay);
@@ -359,7 +424,7 @@ render();loadSettingsUI();
 </script>
 
 <script id="v450-offline-js">
-/* v4.5.0: registered data never depends on remote image URLs. Search results may show remote covers;
+/* v4.5.1: registered data never depends on remote image URLs. Search results may show remote covers;
    when a book is registered, its cover is copied into localStorage when possible. */
 async function cacheBookCover(b){return b?.cover?.startsWith("data:")?{...b,cachedCover:b.cover}:b}
 window.addBook=async b=>{if(books.some(x=>norm(x.isbn)==norm(b.isbn))){alert("すでに登録されています");return}let x=await cacheBookCover(b);books.push(x);localStorage.setItem(KEY,JSON.stringify(books));render();alert("登録しました")};
