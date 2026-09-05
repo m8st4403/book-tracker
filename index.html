@@ -767,8 +767,12 @@ function showDay(k){
   a=all.filter(e=>e.date>k&&e.date<monthEnd).sort((x,y)=>x.date.localeCompare(y.date)).slice(0,8);
   title=a.length?"今月の今後の発売予定":"この日の発売予定";
  }
+ const [yy,mm]=k.split("-").map(Number),monthStart=yy+"-"+String(mm).padStart(2,"0")+"-01",nextMonth=new Date(yy,mm,1),monthEnd=nextMonth.getFullYear()+"-"+String(nextMonth.getMonth()+1).padStart(2,"0")+"-01",today=localDateKey();
+ const monthReleased=all.filter(e=>/^\d{4}-\d{2}-\d{2}$/.test(e.date||"")&&e.date>=monthStart&&e.date<monthEnd&&e.date<=today).sort((x,y)=>x.date.localeCompare(y.date)||String(x.title||"").localeCompare(String(y.title||""),"ja"));
+ const seen=new Set(),releasedUnique=monthReleased.filter(e=>{const key=norm(e.isbn)||((e.date||"")+"|"+norm(e.title));if(seen.has(key))return false;seen.add(key);return true});
+ const releasedHtml=releasedUnique.length?`<div class="calendar-month-released"><div class="calendar-subtitle">📚 今月発売された書籍 <span class="muted">${releasedUnique.length}冊</span></div>${releasedUnique.map(e=>calendarEventHtml(e,k)).join("")}</div>`:"";
  $("selectedDateTitle").textContent=title;
- $("selectedEvents").innerHTML=a.length?a.map(e=>calendarEventHtml(e,k)).join(""):"<p class='muted'>今月の今後の発売予定はありません。</p>"
+ $("selectedEvents").innerHTML=(a.length?a.map(e=>calendarEventHtml(e,k)).join(""):"<p class='muted'>今月の今後の発売予定はありません。</p>")+releasedHtml;
 }
 function seriesKey(b){let t=String(b.title||"").replace(/[：:・･]?(?:第\s*)?\d+\s*(?:巻|集)\s*$/i,"").replace(/\s+/g,"").trim();return t||String(b.title||"")}
 function runSeriesCheck(){let groups={};books.forEach(b=>{let n=volumeNo(b);if(!n)return;(groups[seriesKey(b)]??=[]).push(n)});let rows=Object.entries(groups).filter(([,v])=>new Set(v).size>=2).map(([k,v])=>{let u=[...new Set(v)].sort((a,b)=>a-b),max=Math.max(...u),miss=[];for(let i=1;i<=max;i++)if(!u.includes(i))miss.push(i);return {k,u,miss}}).filter(x=>x.miss.length);if(rows.length){let html='<div class="series-box"><b>巻抜け候補</b>';rows.forEach(x=>{html+='<div class="series-box"><b>'+esc(x.k)+'</b><br><span class="muted">登録：'+x.u.join('・')+'巻</span><br><span class="series-missing">未登録の可能性：'+x.miss.join('・')+'巻</span></div>'});html+='</div>';$('seriesCheckResults').innerHTML=html}else $('seriesCheckResults').innerHTML='<div class="series-box">巻抜け候補は見つかりませんでした。<br><span class="muted">タイトルから巻数を判定できる蔵書を対象にしています。</span></div>'}
