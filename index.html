@@ -510,27 +510,37 @@ function seedDemoBooks(){
  const monthKey=offset=>{const x=new Date(y,m+offset,15);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-15"};
  books=[
   {isbn:"demo-004",title:"サンプル本棚：前月の便り",author:"サンプル作家",publisher:"サンプル出版社",date:monthKey(-1),price:760,currency:"JPY",cover:"",upcoming:[],demo:true,format:"単行本",series:""},
-  {isbn:"demo-001",title:"サンプル本棚：月夜の標本",author:"サンプル作家",publisher:"サンプル出版社",date:dayKey(-7),price:780,currency:"JPY",cover:"",upcoming:[],demo:true,format:"単行本",series:""},
-  {isbn:"demo-002",title:"サンプルシリーズ：星の余白 1巻",author:"サンプル作家",publisher:"サンプル出版社",date:dayKey(0),price:920,currency:"JPY",cover:"",upcoming:[],demo:true,format:"単行本",series:"サンプルシリーズ：星の余白"},
-  {isbn:"demo-003",title:"サンプルシリーズ：星の余白 2巻",author:"サンプル作家",publisher:"サンプル出版社",date:dayKey(7),price:1100,currency:"JPY",cover:"",upcoming:[],demo:true,format:"単行本",series:"サンプルシリーズ：星の余白"},
-  {isbn:"demo-005",title:"サンプル本棚：翌月の灯り",author:"サンプル作家",publisher:"サンプル出版社",date:monthKey(1),price:980,currency:"JPY",cover:"",upcoming:[],demo:true,format:"単行本",series:""}
+  {isbn:"demo-001",title:"サンプル本棚：月夜の標本",author:"サンプル作家",publisher:"サンプル出版社",date:dayKey(-7),price:780,currency:"JPY",cover:"",upcoming:[],demo:true,format:"単行本",series:""}
  ];
- try{localStorage.setItem(KEY,JSON.stringify(books));localStorage.setItem(DEMO_KEY,"1")}catch(e){}
+ const demoFuture=[
+  {isbn:"demo-002",title:"サンプルシリーズ：星の余白 1巻",author:"サンプル作家",publisher:"サンプル出版社",date:dayKey(0),price:920,currency:"JPY",cover:"",demo:true,format:"単行本",series:"サンプルシリーズ：星の余白",sourceType:"library",source:"蔵書の発売予定"},
+  {isbn:"demo-003",title:"サンプルシリーズ：星の余白 2巻",author:"サンプル作家",publisher:"サンプル出版社",date:dayKey(7),price:1100,currency:"JPY",cover:"",demo:true,format:"単行本",series:"サンプルシリーズ：星の余白",sourceType:"library",source:"蔵書の発売予定"},
+  {isbn:"demo-005",title:"サンプル本棚：翌月の灯り",author:"サンプル作家",publisher:"サンプル出版社",date:monthKey(1),price:980,currency:"JPY",cover:"",demo:true,format:"単行本",series:"",sourceType:"library",source:"蔵書の発売予定"}
+ ];
+ try{localStorage.setItem(KEY,JSON.stringify(books));localStorage.setItem("calendarExtras_v442",JSON.stringify(demoFuture));localStorage.setItem(DEMO_KEY,"1")}catch(e){}
 }
 seedDemoBooks();
-// v4.9.2: keep the built-in demo dates relative to the first launch/current day.
+// Demo calendar data is kept separate from the library: only the previous-month sample is an owned book.
+// This lets the calendar show released/unregistered and future-release states without inflating the library count.
 (function migrateDemoSet(){
- const demoTitles=["サンプル本棚：月夜の標本","サンプルシリーズ：星の余白 1巻","サンプルシリーズ：星の余白 2巻"];
- if(books.length===3 && books.every(b=>b.demo) && demoTitles.every(t=>books.some(b=>b.title===t))){
-  const today=new Date(),y=today.getFullYear(),m=today.getMonth(),d=today.getDate();
-  const dayKey=n=>{const x=new Date(y,m,d+n);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0")};
-  const monthKey=offset=>{const x=new Date(y,m+offset,15);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-15"};
-  const dates=[dayKey(-7),dayKey(0),dayKey(7)];
-  books=books.map((b,i)=>({...b,date:dates[i],format:"単行本",series:i===0?"":"サンプルシリーズ：星の余白"}));
-  books.unshift({isbn:"demo-004",title:"サンプル本棚：前月の便り",author:"サンプル作家",publisher:"サンプル出版社",date:monthKey(-1),price:760,currency:"JPY",cover:"",upcoming:[],demo:true,format:"単行本",series:""});
-  books.push({isbn:"demo-005",title:"サンプル本棚：翌月の灯り",author:"サンプル作家",publisher:"サンプル出版社",date:monthKey(1),price:980,currency:"JPY",cover:"",upcoming:[],demo:true,format:"単行本",series:""});
-  persistBooks();
- }
+ const allDemoTitles=["サンプル本棚：前月の便り","サンプル本棚：月夜の標本","サンプルシリーズ：星の余白 1巻","サンプルシリーズ：星の余白 2巻","サンプル本棚：翌月の灯り"];
+ const combined=[...books,...calendarExtras].filter(e=>e&&e.demo&&allDemoTitles.includes(e.title));
+ if(combined.length<2)return;
+ const today=new Date(),y=today.getFullYear(),m=today.getMonth(),d=today.getDate();
+ const dayKey=n=>{const x=new Date(y,m,d+n);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0")};
+ const monthKey=offset=>{const x=new Date(y,m+offset,15);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-15"};
+ const byTitle=Object.fromEntries(combined.map(b=>[b.title,b]));
+ const make=(title,isbn,price,date,series="")=>({...((byTitle[title])||{isbn,title,author:"サンプル作家",publisher:"サンプル出版社",price,currency:"JPY",cover:"",upcoming:[],demo:true}),date,format:"単行本",series});
+ const prev=make("サンプル本棚：前月の便り","demo-004",760,monthKey(-1));
+ const released=make("サンプル本棚：月夜の標本","demo-001",780,dayKey(-7));
+ const todayRelease=make("サンプルシリーズ：星の余白 1巻","demo-002",920,dayKey(0),"サンプルシリーズ：星の余白");
+ const future=make("サンプルシリーズ：星の余白 2巻","demo-003",1100,dayKey(7),"サンプルシリーズ：星の余白");
+ const next=make("サンプル本棚：翌月の灯り","demo-005",980,monthKey(1));
+ const extras=[released,todayRelease,future,next].map(e=>({...e,sourceType:"library",source:"蔵書の発売予定",key:"demo-release|"+e.isbn}));
+ books=[prev];
+ calendarExtras=calendarExtras.filter(e=>!allDemoTitles.includes(e.title));
+ calendarExtras.push(...extras);
+ persistBooks();persistCalendarExtras();
 })();
 let bookMeta=readJSONStorage("bookTrackerMeta_v483",{});if(!bookMeta||typeof bookMeta!=="object"||Array.isArray(bookMeta))bookMeta={};
 function getMeta(isbn){let k=norm(isbn);if(!bookMeta[k])bookMeta[k]={purchaseStatus:"wanted",readingStatus:"unread",favorite:false,memo:"",rating:0,notify:false};return bookMeta[k]}
@@ -767,9 +777,9 @@ function calendarEventHtml(e,k){
 }
 function renderMonthReleased(){
  const y=calDate.getFullYear(),m=calDate.getMonth(),monthStart=y+"-"+String(m+1).padStart(2,"0")+"-01",nextMonth=new Date(y,m+1,1),monthEnd=nextMonth.getFullYear()+"-"+String(nextMonth.getMonth()+1).padStart(2,"0")+"-01",today=localDateKey(),currentMonth=today.slice(0,7),displayedMonth=y+"-"+String(m+1).padStart(2,"0");
- const monthReleased=allEvents().filter(e=>/^\d{4}-\d{2}-\d{2}$/.test(e.date||"")&&e.date>=monthStart&&e.date<monthEnd&&e.date<=today).sort((a,b)=>a.date.localeCompare(b.date)||String(a.title||"").localeCompare(String(b.title||""),"ja"));
- const seen=new Set(),releasedUnique=monthReleased.filter(e=>{const key=norm(e.isbn)||((e.date||"")+"|"+norm(e.title));if(seen.has(key))return false;seen.add(key);return true;});
  const futureMonth=displayedMonth>currentMonth;
+ const monthReleased=allEvents().filter(e=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(e.date||"")||e.date<monthStart||e.date>=monthEnd)return false;return futureMonth?e.date>=today:e.date<=today}).sort((a,b)=>a.date.localeCompare(b.date)||String(a.title||"").localeCompare(String(b.title||""),"ja"));
+ const seen=new Set(),releasedUnique=monthReleased.filter(e=>{const key=norm(e.isbn)||((e.date||"")+"|"+norm(e.title));if(seen.has(key))return false;seen.add(key);return true;});
  $("calendarMonthReleasedTitle").textContent=(m+1)+"月に"+(futureMonth?"発売予定の書籍":"発売された書籍");
  $("calendarMonthReleasedCount").textContent=releasedUnique.length?releasedUnique.length+"冊":"";
  $("calendarMonthReleasedList").innerHTML=releasedUnique.length?releasedUnique.map(e=>calendarEventHtml(e,null)).join(""):"<p class='muted'>表示中の月に"+(futureMonth?"発売予定の書籍":"発売された書籍")+"はありません。</p>";
