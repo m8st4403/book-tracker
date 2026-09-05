@@ -15,7 +15,7 @@
 
 /* ===== v4.7.1 consolidated CSS ===== */
 .clearwrap{display:flex;align-items:center;gap:6px;width:100%;}.clearwrap input,.clearwrap textarea{min-width:0;flex:1 1 auto;}.clearbtn{flex:0 0 42px;min-width:42px;min-height:42px;}#isbn{min-width:0;width:100%;min-height:78px;resize:vertical;line-height:1.45;padding:12px;border:1px solid #d1d5db;border-radius:11px;font:inherit;}#work,#query,#author,#libraryFilter{min-width:0;width:100%;}@media(max-width:600px){#isbn{font-size:16px;}}
-.booktap{cursor:pointer}.detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.detail-actions a,.detail-actions button{min-height:44px}.detail-related{margin-top:18px}.detail-related-item{display:flex;gap:10px;align-items:center;width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;background:inherit;text-align:left}.detail-related-item img{width:48px;height:68px;object-fit:cover}.detail-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);display:none;align-items:flex-end}.detail-sheet{background:var(--bg,#fff);color:var(--text,#222);width:100%;max-width:760px;max-height:90vh;overflow:auto;margin:auto;padding:18px;border-radius:20px 20px 0 0}.detail-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.detail-close{display:inline-flex!important;align-items:center;justify-content:center;flex:0 0 auto;min-width:72px;height:44px;padding:8px 12px!important;font-size:14px!important;white-space:nowrap}.detail-grid{display:grid;grid-template-columns:120px 1fr;gap:16px;margin-top:12px}.detail-cover{width:120px;max-height:180px;object-fit:contain}.multi-isbn-hint{font-size:12px;opacity:.7;margin-top:5px}.multi-isbn-results{display:grid;gap:8px;margin-top:10px}.multi-isbn-item{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid #ddd;border-radius:10px}.multi-isbn-item img{width:44px;height:62px;object-fit:cover}
+.booktap{cursor:pointer}.detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.detail-actions a,.detail-actions button{min-height:44px}.detail-related{margin-top:18px}.detail-related-item{display:flex;gap:10px;align-items:center;width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;background:inherit;text-align:left}.detail-related-item img{width:48px;height:68px;object-fit:cover}.detail-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);display:none;align-items:flex-end}.detail-sheet{background:var(--bg,#fff);color:var(--text,#222);width:100%;max-width:760px;max-height:90vh;overflow:auto;margin:auto;padding:18px;border-radius:20px 20px 0 0}.detail-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.detail-close{display:inline-flex!important;align-items:center;justify-content:center;flex:0 0 auto;width:44px;min-width:44px;height:44px;padding:0!important;font-size:0!important;white-space:nowrap;opacity:.65}.detail-close::before{content:"×";font-size:28px;line-height:1;font-weight:300}.detail-grid{display:grid;grid-template-columns:120px 1fr;gap:16px;margin-top:12px}.detail-cover{width:120px;max-height:180px;object-fit:contain}.multi-isbn-hint{font-size:12px;opacity:.7;margin-top:5px}.multi-isbn-results{display:grid;gap:8px;margin-top:10px}.multi-isbn-item{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid #ddd;border-radius:10px}.multi-isbn-item img{width:44px;height:62px;object-fit:cover}
 
 /* ===== v4.7.1 consolidated CSS ===== */
 nav button{transition:.15s;position:relative;border-top:3px solid transparent;color:#6b7280;background:#fff}
@@ -514,17 +514,14 @@ function seedDemoBooks(){
  try{localStorage.setItem(KEY,JSON.stringify(books));localStorage.setItem(DEMO_KEY,"1")}catch(e){}
 }
 seedDemoBooks();
-// v4.9.1: update the built-in demo set when an earlier demo-only set is still present.
+// v4.9.2: keep the built-in demo dates relative to the first launch/current day.
 (function migrateDemoSet(){
- const oldDemoTitles=["サンプル本棚：青い灯 1巻","サンプル本棚：星の余白 2巻","サンプル本棚：風の記録 3巻"];
- if(books.length===3 && books.every(b=>b.demo) && books.some(b=>oldDemoTitles.includes(b.title))){
+ const demoTitles=["サンプル本棚：月夜の標本","サンプルシリーズ：星の余白 1巻","サンプルシリーズ：星の余白 2巻"];
+ if(books.length===3 && books.every(b=>b.demo) && demoTitles.every(t=>books.some(b=>b.title===t))){
   const today=new Date(),y=today.getFullYear(),m=today.getMonth(),d=today.getDate();
   const dayKey=n=>{const x=new Date(y,m,d+n);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0")};
-  books=[
-   {isbn:"demo-001",title:"サンプル本棚：月夜の標本",author:"サンプル作家",publisher:"サンプル出版社",date:dayKey(7),price:780,currency:"JPY",cover:"",upcoming:[],demo:true,format:"単行本"},
-   {isbn:"demo-002",title:"サンプルシリーズ：星の余白 1巻",author:"サンプル作家",publisher:"サンプル出版社",date:dayKey(14),price:920,currency:"JPY",cover:"",upcoming:[],demo:true,format:"シリーズ"},
-   {isbn:"demo-003",title:"サンプルシリーズ：星の余白 2巻",author:"サンプル作家",publisher:"サンプル出版社",date:dayKey(22),price:1100,currency:"JPY",cover:"",upcoming:[],demo:true,format:"シリーズ"}
-  ];
+  const dates=[dayKey(-7),dayKey(0),dayKey(7)];
+  books=books.map((b,i)=>({...b,date:dates[i],format:i===0?"単行本":"単行本",series:i===0?"":"サンプルシリーズ：星の余白"}));
   persistBooks();
  }
 })();
