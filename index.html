@@ -507,14 +507,14 @@ function seedDemoBooks(){
  const today=new Date(), y=today.getFullYear(), m=today.getMonth(), d=today.getDate();
  const dayKey=n=>{const x=new Date(y,m,d+n);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0")};
  books=[
-  {isbn:"demo-001",title:"サンプル本棚：月夜の標本",author:"サンプル作家",publisher:"サンプル出版社",date:dayKey(7),price:780,currency:"JPY",cover:"",upcoming:[],demo:true,format:"単行本",series:""},
-  {isbn:"demo-002",title:"サンプルシリーズ：星の余白 1巻",author:"サンプル作家",publisher:"サンプル出版社",date:dayKey(14),price:920,currency:"JPY",cover:"",upcoming:[],demo:true,format:"単行本",series:"サンプルシリーズ：星の余白"},
-  {isbn:"demo-003",title:"サンプルシリーズ：星の余白 2巻",author:"サンプル作家",publisher:"サンプル出版社",date:dayKey(22),price:1100,currency:"JPY",cover:"",upcoming:[],demo:true,format:"単行本",series:"サンプルシリーズ：星の余白"}
+  {isbn:"demo-001",title:"サンプル本棚：月夜の標本",author:"サンプル作家",publisher:"サンプル出版社",date:dayKey(-7),price:780,currency:"JPY",cover:"",upcoming:[],demo:true,format:"単行本",series:""},
+  {isbn:"demo-002",title:"サンプルシリーズ：星の余白 1巻",author:"サンプル作家",publisher:"サンプル出版社",date:dayKey(0),price:920,currency:"JPY",cover:"",upcoming:[],demo:true,format:"単行本",series:"サンプルシリーズ：星の余白"},
+  {isbn:"demo-003",title:"サンプルシリーズ：星の余白 2巻",author:"サンプル作家",publisher:"サンプル出版社",date:dayKey(7),price:1100,currency:"JPY",cover:"",upcoming:[],demo:true,format:"単行本",series:"サンプルシリーズ：星の余白"}
  ];
  try{localStorage.setItem(KEY,JSON.stringify(books));localStorage.setItem(DEMO_KEY,"1")}catch(e){}
 }
 seedDemoBooks();
-// v4.9.0: update the built-in demo set when an earlier demo-only set is still present.
+// v4.9.1: update the built-in demo set when an earlier demo-only set is still present.
 (function migrateDemoSet(){
  const oldDemoTitles=["サンプル本棚：青い灯 1巻","サンプル本棚：星の余白 2巻","サンプル本棚：風の記録 3巻"];
  if(books.length===3 && books.every(b=>b.demo) && books.some(b=>oldDemoTitles.includes(b.title))){
