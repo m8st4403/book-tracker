@@ -327,6 +327,24 @@ body.font-large .card>h3{font-size:20px}.font-large .home-title{font-size:27px!i
   .home-link-btn{min-width:86px;padding:8px 11px;font-size:13px}
   #add #scan{flex-basis:88px;min-width:88px;font-size:14px}
 }
+
+/* ===== v4.8.0 ISBN row input ===== */
+#add .scan-main{width:100%;min-height:56px;margin:4px 0 14px;font-size:16px;font-weight:800;border-radius:14px}
+.isbn-list-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 8px}
+.isbn-rows{display:grid;gap:8px}
+.isbn-row{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:8px;align-items:center;padding:7px 8px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+.isbn-row .row-no{font-weight:800;text-align:center}
+.isbn-row input.isbn-input{width:100%;min-width:0;height:44px;font-size:16px;letter-spacing:.04em}
+.isbn-row .isbn-check{width:44px;height:44px;margin:0;justify-self:end}
+.isbn-row-status{grid-column:2 / 4;font-size:12px;line-height:1.35;margin-top:-2px}
+.isbn-row-status.ok{font-weight:700}
+.isbn-row-status.error{color:var(--danger,#b42318)}
+.isbn-row.has-result{border-color:color-mix(in srgb,var(--primary) 28%,var(--border))}
+.isbn-row .row-remove{grid-column:3;grid-row:1;width:44px;height:44px;padding:0;border-radius:10px}
+.isbn-row .isbn-check-wrap{grid-column:1 / 4;display:flex;align-items:center;gap:7px;margin-top:-1px}
+.isbn-row .isbn-check-wrap input{width:22px;height:22px}
+@media(max-width:390px){#add .scan-main{font-size:15px}.isbn-row{grid-template-columns:36px minmax(0,1fr) 40px;padding:6px}.isbn-row .isbn-check{width:40px}.isbn-row .row-remove{width:40px}}
+#addResults .selectline>.selectBook{display:none}
 </style>
 </head><body>
 <header><b id="appHeaderTitle">📚 本棚スケジュール</b><div class="muted" id="appHeaderSub">複数ISBN・詳細/関連検索・発売日カレンダー対応</div></header>
@@ -334,11 +352,14 @@ body.font-large .card>h3{font-size:20px}.font-large .home-title{font-size:27px!i
 <section class="active" id="home">
 <div class="card home-welcome"><div class="home-kicker">📚 本棚スケジュール</div><div class="home-title"><span id="homeWelcome">おかえりなさい</span></div><div class="home-date" id="homeDate"></div><div class="home-stats"><div class="home-stat library"><div class="label">蔵書</div><b id="homeBookCount">0冊</b><div class="sub">登録済み</div></div><div class="home-stat money"><div class="label">蔵書総額</div><b id="homeBookTotal">未登録</b><div class="sub" id="homeBookTotalSub">価格データを登録すると集計</div></div><div class="home-stat purchase"><div class="label">今月の残購入予定</div><b id="homePurchaseCount">0冊</b><div class="sub" id="homePurchaseSub">今日以降の予定</div></div></div></div><div class="home-upcoming-card card"><div class="home-upcoming-head"><div><b>🔥 近日発売の注目書籍</b><div class="muted">これから発売される本をチェック</div></div><button class="home-link-btn" id="homeUpcomingMore" type="button">すべて見る</button></div><div class="home-upcoming-grid" id="homeUpcomingBooks"></div></div>
 </section>
-<section hidden="" id="add"><div class="card"><b>➕ 本を追加</b><p class="muted">ISBN-10/13、ハイフン、全角数字に対応。</p>
-<div class="row"><div class="clearwrap"><textarea id="isbn" placeholder="ISBNを入力
-例）9784098610403
-複数冊は改行・空白・カンマ区切りで入力できます"></textarea><button class="clearbtn" data-clear="isbn">×</button></div><button id="scan">📷 スキャン</button></div><div class="multi-isbn-hint">📚 複数冊対応：手入力でも改行・スペース・カンマで区切れます。スキャンでも読み取るたび自動で改行して追加します（最大30冊）。</div><button id="isbnSearch" style="width:100%;margin-top:8px">ISBNをまとめて検索</button>
-<hr/><div class="row"><div class="clearwrap"><input id="work" placeholder="作品タイトル"/><button class="clearbtn" data-clear="work">×</button></div><div class="clearwrap"><input id="vol" inputmode="numeric" placeholder="巻数（未入力＝全巻検索）"/><button class="clearbtn" data-clear="vol">×</button></div></div><p class="isbn-help">巻数を入力しない場合は、その作品の全巻を検索します。</p><button id="workSearch" style="width:100%;margin-top:8px">作品＋巻数から検索</button><div id="addResults"></div></div></section>
+<section hidden="" id="add"><div class="card"><b>➕ 本を追加</b><p class="muted">ISBNは1冊につき1行。ISBN-10/13を数字だけで入力できます。最大30冊。</p>
+<button id="scan" class="scan-main" type="button">📷 本をスキャン</button>
+<div class="isbn-list-head"><b>ISBNを入力・確認</b><span class="muted" id="isbnRowCount">0 / 30冊</span></div>
+<div id="isbnRows" class="isbn-rows"></div>
+<div class="multi-isbn-hint">💡 入力欄は必要な分だけ自動で増えます。ISBN-10の末尾がXになる本は、先頭9桁を数字で入力するとアプリ側でXを判定して検索します。</div>
+<button id="isbnSearch" type="button" style="width:100%;margin-top:8px">ISBNをまとめて検索</button>
+<div id="addResults"></div>
+<hr/><div class="row"><div class="clearwrap"><input id="work" placeholder="作品タイトル"/><button class="clearbtn" data-clear="work">×</button></div><div class="clearwrap"><input id="vol" inputmode="numeric" placeholder="巻数（未入力＝全巻検索）"/><button class="clearbtn" data-clear="vol">×</button></div></div><p class="isbn-help">巻数を入力しない場合は、その作品の全巻を検索します。</p><button id="workSearch" style="width:100%;margin-top:8px">作品＋巻数から検索</button></div></section>
 <section hidden="" id="library"><div class="card"><b>📚 蔵書</b><p class="muted">作品名・作家名・ISBNで部分一致検索。</p><div class="library-stats" id="libraryStats"></div><div class="library-idea-row"><button class="secondary" id="seriesCheckBtn">📚 シリーズ・巻抜けチェック</button></div><div class="muted" id="seriesCheckResults"></div><div class="clearwrap"><input id="libraryFilter" placeholder="作品名 / 作家名 / ISBN"/><button class="clearbtn" data-clear="libraryFilter">×</button></div><div class="library-filterbar"><button class="secondary" id="libraryFilterToggle">⚙️ 絞り込み</button><button class="secondary" id="seriesViewToggle">📚 シリーズ表示</button><div class="library-sort"><span class="muted">並び順</span><select id="librarySort"><option value="registered-desc">登録が新しい順</option><option value="registered-asc">登録が古い順</option><option value="title-asc">タイトル順</option><option value="author-asc">作者順</option><option value="publisher-asc">出版社順</option><option value="volume-asc">巻数の小さい順</option><option value="volume-desc">巻数の大きい順</option><option value="release-asc">発売日が早い順</option><option value="release-desc">発売日が新しい順</option></select></div></div><div class="library-filter-panel" id="libraryFilterPanel"><div class="filter-grid"><select id="filterAuthor"><option value="">作者：すべて</option></select><select id="filterPublisher"><option value="">出版社：すべて</option></select><select id="filterYear"><option value="">発売年：すべて</option></select><select id="filterRelease"><option value="">発売日：すべて</option><option value="known">発売日あり</option><option value="unknown">発売日不明</option></select></div><div class="filter-summary" id="filterSummary">絞り込みなし</div><button class="secondary" id="filterReset" style="margin-top:8px;width:100%">フィルターをリセット</button></div><div id="myBooks"></div></div></section>
 <section hidden="" id="search">
 <div class="search-mode"><button class="active" id="searchModeBook">🔎 本を探す</button><button id="searchModeAuthor">✍️ 作家を探す</button></div>
@@ -362,7 +383,7 @@ body.font-large .card>h3{font-size:20px}.font-large .home-title{font-size:27px!i
 <div class="card"><b>✍️ 作家検索</b><p class="muted">作家名から作品を探したり、新刊をチェックできます。</p><div class="row"><div class="clearwrap"><input id="author" placeholder="作家名"/><button class="clearbtn" data-clear="author">×</button></div><button id="authorBtn">検索</button></div><button class="secondary" id="authorNewBtn" style="width:100%;margin-top:8px">🆕 この作家の新刊をチェック</button></div><div id="authorResults"></div>
 </div>
 </section>
-<section hidden="" id="settings"><div class="card settings-card"><b>⚙️ 設定</b><p class="muted">プロフィール・見た目・データ管理は、この端末に保存されます。</p></div><div class="card"><h3>👤 プロフィール</h3><div class="settings-grid"><label>表示名<input id="profileName" placeholder="例）まさる"/></label><label>好きなジャンル<input id="profileGenre" placeholder="例）漫画・ミステリー"/></label><label>好きな作家<input id="profileAuthor" placeholder="例）○○先生"/></label><label>メモ<textarea id="profileMemo" placeholder="本棚についてのメモ" rows="3"></textarea></label></div><button id="profileSave" style="width:100%;margin-top:8px">プロフィールを保存</button></div><div class="card"><h3>🎨 テーマ</h3><p class="muted">選んだテーマをアプリ全体へ反映します。</p><div class="theme-grid"><button class="theme-choice" data-theme="blue" type="button">🔵 UIブルー</button><button class="theme-choice" data-theme="green" type="button">🟢 ナチュラル</button><button class="theme-choice" data-theme="dark" type="button">🌙 ダーク</button></div><div class="current-setting" id="themeCurrent">現在：UIブルー</div></div><div class="card"><h3>🔤 文字サイズ</h3><p class="muted">ボタンや一覧の文字も一緒に調整します。折り返しが起きにくいようレイアウトも調整します。</p><div class="font-size-grid"><button class="font-choice" data-font="small" type="button">小</button><button class="font-choice" data-font="medium" type="button">中</button><button class="font-choice" data-font="large" type="button">大</button></div><div class="current-setting" id="fontCurrent">現在：中</div></div><div class="card"><h3>🖌️ 自作スキン</h3><p class="muted">色を決めた簡易スキンを保存して適用できます。</p><div class="skin-grid"><label>メイン色<input id="skinPrimary" type="color" value="#2563eb"/></label><label>背景色<input id="skinBg" type="color" value="#f6f8fc"/></label><label>カード色<input id="skinSurface" type="color" value="#ffffff"/></label><label>文字色<input id="skinText" type="color" value="#172033"/></label></div><button class="secondary" id="skinSave" style="width:100%;margin-top:8px">自作スキンを保存</button><button id="skinApply" style="width:100%;margin-top:8px">自作スキンを適用</button></div><div class="card"><h3>🖼️ 背景画像</h3><p class="muted">iPhone内の写真・画像をアプリ背景に設定できます。画像は端末内に圧縮保存します。</p><input accept="image/*" id="bgImageInput" style="width:100%" type="file"/><button class="secondary" id="bgImageRemove" style="width:100%;margin-top:8px">背景画像を削除</button><div class="muted" id="bgImageStatus" style="margin-top:7px"></div></div><div class="card"><h3>👁️ 文字色の自動補正</h3><p class="muted">スキン／テーマで選んだ文字色の「色味」は保ちつつ、背景色や背景画像に合わせて明るさを自動調整します。</p><label class="toggle-row"><input checked="" id="autoTextContrast" type="checkbox"/> 自動補正をオン</label></div><div class="card"><h3>💾 データ管理</h3><p class="muted">蔵書・発売予定・カレンダー追加・プロフィール・テーマ・背景画像などの端末内データをJSONで保存／復元できます。</p><div class="backup-row"><button id="backupDataBtn" type="button">⬇️ バックアップ</button><button id="restoreDataBtn" type="button">⬆️ 復元</button></div><input accept="application/json,.json" hidden="" id="restoreDataInput" type="file"/><div class="muted" id="backupStatus" style="margin-top:7px"></div></div><div class="card settings-card"><h3>🔎 検索設定</h3><div class="settings-grid"><label>検索結果の表示数<select id="setSearchCount"><option value="10">10件</option><option value="20">20件</option><option value="40">40件</option></select></label><label>並び順<select id="setSearchSort"><option value="relevance">関連度順</option><option value="release-desc">発売日が新しい順</option><option value="release-asc">発売日が古い順</option><option value="title-asc">タイトル順</option></select></label></div><label class="toggle-row"><input id="setJpPriority" type="checkbox"/> 日本語の書籍を優先</label><label class="toggle-row"><input id="setUnownedFirst" type="checkbox"/> 未登録の本を優先</label><label class="toggle-row"><input id="setSearchCache" type="checkbox"/> 検索結果を一時キャッシュ</label><div class="muted" id="searchSettingStatus" style="margin-top:7px"></div></div><div class="card settings-card"><h3>🗓 カレンダー設定</h3><div class="settings-grid"><label>週の始まり<select id="setWeekStart"><option value="0">日曜日</option><option value="1">月曜日</option></select></label></div><label class="toggle-row"><input id="setCalLibrary" type="checkbox"/> 蔵書を表示</label><label class="toggle-row"><input id="setCalRelated" type="checkbox"/> 関連図書を表示</label><label class="toggle-row"><input id="setCalRecommended" type="checkbox"/> おすすめを表示</label><label class="toggle-row"><input id="setOpenToday" type="checkbox"/> カレンダーを開いたら今日を表示</label><label class="toggle-row"><input id="setICS" type="checkbox"/> iPhoneカレンダー用ICSボタンを表示</label><div class="muted" style="margin-top:7px">※カレンダー上部で左右フリックすると月変更、下部ではタブ移動です。</div></div><div class="card settings-card"><h3>ℹ️ このアプリについて</h3><p><b>本棚スケジュール</b><br/>ISBNで蔵書を登録し、発売予定・関連図書・おすすめをカレンダーで管理する本棚アプリです。</p><p class="muted">バージョン：4.6.3（試作）<br/>通常の閲覧・蔵書管理・設定・カレンダーは端末内で動作し、書誌情報の検索時だけ通信します。</p><p class="muted">個人情報や蔵書データは、この試作版では外部サーバーへ自動送信しません。App Store公開時にはプライバシーポリシー等を別途整備します。</p></div><div class="card"><h3>🌐 通信</h3><div class="offline-note">検索・ISBN照会など、書誌情報を取得する「検索操作」のときだけインターネットを使用します。蔵書表示・編集・削除・カレンダー・設定・バックアップ／復元は端末内で動作します。</div></div></section>
+<section hidden="" id="settings"><div class="card settings-card"><b>⚙️ 設定</b><p class="muted">プロフィール・見た目・データ管理は、この端末に保存されます。</p></div><div class="card"><h3>👤 プロフィール</h3><div class="settings-grid"><label>表示名<input id="profileName" placeholder="例）まさる"/></label><label>好きなジャンル<input id="profileGenre" placeholder="例）漫画・ミステリー"/></label><label>好きな作家<input id="profileAuthor" placeholder="例）○○先生"/></label><label>メモ<textarea id="profileMemo" placeholder="本棚についてのメモ" rows="3"></textarea></label></div><button id="profileSave" style="width:100%;margin-top:8px">プロフィールを保存</button></div><div class="card"><h3>🎨 テーマ</h3><p class="muted">選んだテーマをアプリ全体へ反映します。</p><div class="theme-grid"><button class="theme-choice" data-theme="blue" type="button">🔵 UIブルー</button><button class="theme-choice" data-theme="green" type="button">🟢 ナチュラル</button><button class="theme-choice" data-theme="dark" type="button">🌙 ダーク</button></div><div class="current-setting" id="themeCurrent">現在：UIブルー</div></div><div class="card"><h3>🔤 文字サイズ</h3><p class="muted">ボタンや一覧の文字も一緒に調整します。折り返しが起きにくいようレイアウトも調整します。</p><div class="font-size-grid"><button class="font-choice" data-font="small" type="button">小</button><button class="font-choice" data-font="medium" type="button">中</button><button class="font-choice" data-font="large" type="button">大</button></div><div class="current-setting" id="fontCurrent">現在：中</div></div><div class="card"><h3>🖌️ 自作スキン</h3><p class="muted">色を決めた簡易スキンを保存して適用できます。</p><div class="skin-grid"><label>メイン色<input id="skinPrimary" type="color" value="#2563eb"/></label><label>背景色<input id="skinBg" type="color" value="#f6f8fc"/></label><label>カード色<input id="skinSurface" type="color" value="#ffffff"/></label><label>文字色<input id="skinText" type="color" value="#172033"/></label></div><button class="secondary" id="skinSave" style="width:100%;margin-top:8px">自作スキンを保存</button><button id="skinApply" style="width:100%;margin-top:8px">自作スキンを適用</button></div><div class="card"><h3>🖼️ 背景画像</h3><p class="muted">iPhone内の写真・画像をアプリ背景に設定できます。画像は端末内に圧縮保存します。</p><input accept="image/*" id="bgImageInput" style="width:100%" type="file"/><button class="secondary" id="bgImageRemove" style="width:100%;margin-top:8px">背景画像を削除</button><div class="muted" id="bgImageStatus" style="margin-top:7px"></div></div><div class="card"><h3>👁️ 文字色の自動補正</h3><p class="muted">スキン／テーマで選んだ文字色の「色味」は保ちつつ、背景色や背景画像に合わせて明るさを自動調整します。</p><label class="toggle-row"><input checked="" id="autoTextContrast" type="checkbox"/> 自動補正をオン</label></div><div class="card"><h3>💾 データ管理</h3><p class="muted">蔵書・発売予定・カレンダー追加・プロフィール・テーマ・背景画像などの端末内データをJSONで保存／復元できます。</p><div class="backup-row"><button id="backupDataBtn" type="button">⬇️ バックアップ</button><button id="restoreDataBtn" type="button">⬆️ 復元</button></div><input accept="application/json,.json" hidden="" id="restoreDataInput" type="file"/><div class="muted" id="backupStatus" style="margin-top:7px"></div></div><div class="card settings-card"><h3>🔎 検索設定</h3><div class="settings-grid"><label>検索結果の表示数<select id="setSearchCount"><option value="10">10件</option><option value="20">20件</option><option value="40">40件</option></select></label><label>並び順<select id="setSearchSort"><option value="relevance">関連度順</option><option value="release-desc">発売日が新しい順</option><option value="release-asc">発売日が古い順</option><option value="title-asc">タイトル順</option></select></label></div><label class="toggle-row"><input id="setJpPriority" type="checkbox"/> 日本語の書籍を優先</label><label class="toggle-row"><input id="setUnownedFirst" type="checkbox"/> 未登録の本を優先</label><label class="toggle-row"><input id="setSearchCache" type="checkbox"/> 検索結果を一時キャッシュ</label><div class="muted" id="searchSettingStatus" style="margin-top:7px"></div></div><div class="card settings-card"><h3>🗓 カレンダー設定</h3><div class="settings-grid"><label>週の始まり<select id="setWeekStart"><option value="0">日曜日</option><option value="1">月曜日</option></select></label></div><label class="toggle-row"><input id="setCalLibrary" type="checkbox"/> 蔵書を表示</label><label class="toggle-row"><input id="setCalRelated" type="checkbox"/> 関連図書を表示</label><label class="toggle-row"><input id="setCalRecommended" type="checkbox"/> おすすめを表示</label><label class="toggle-row"><input id="setOpenToday" type="checkbox"/> カレンダーを開いたら今日を表示</label><label class="toggle-row"><input id="setICS" type="checkbox"/> iPhoneカレンダー用ICSボタンを表示</label><div class="muted" style="margin-top:7px">※カレンダー上部で左右フリックすると月変更。タブ移動はタップのみです。</div></div><div class="card settings-card"><h3>ℹ️ このアプリについて</h3><p><b>本棚スケジュール</b><br/>ISBNで蔵書を登録し、発売予定・関連図書・おすすめをカレンダーで管理する本棚アプリです。</p><p class="muted">バージョン：4.8.0（試作）<br/>通常の閲覧・蔵書管理・設定・カレンダーは端末内で動作し、書誌情報の検索時だけ通信します。</p><p class="muted">個人情報や蔵書データは、この試作版では外部サーバーへ自動送信しません。App Store公開時にはプライバシーポリシー等を別途整備します。</p></div><div class="card"><h3>🌐 通信</h3><div class="offline-note">検索・ISBN照会など、書誌情報を取得する「検索操作」のときだけインターネットを使用します。蔵書表示・編集・削除・カレンダー・設定・バックアップ／復元は端末内で動作します。</div></div></section>
 <section hidden="" id="calendar"><div class="card" id="calendarMonthCard"><div class="monthbar"><button class="secondary" id="prevMonth">‹</button><button class="secondary today-btn" id="todayMonth">今日</button><b id="monthTitle"></b><button class="secondary" id="nextMonth">›</button></div><p class="muted">● 蔵書・作家連動の発売予定</p><div class="calhead" id="calHead"></div><div class="calgrid" id="calendarGrid"></div><div class="event-legend"><span class="legend-item"><i class="legend-dot legend-library"></i>蔵書</span><span class="legend-item"><i class="legend-dot legend-related"></i>関連図書</span><span class="legend-item"><i class="legend-dot legend-recommended"></i>おすすめ</span></div><div class="calendar-filters"><b>表示</b><label><input checked="" id="calFilterLibrary" type="checkbox"/> 蔵書</label><label><input checked="" id="calFilterRelated" type="checkbox"/> 関連</label><label><input checked="" id="calFilterRecommended" type="checkbox"/> おすすめ</label></div><button id="ics" style="width:100%;margin-top:12px">iPhoneカレンダー用ICS</button></div><div class="card"><b id="selectedDateTitle">日付を選択してください</b><div class="muted" id="selectedEvents" style="margin-top:8px">カレンダーの日をタップしてください。</div></div></section>
 </main>
 <div class="runtime-error" id="runtimeError" style="display:none"></div><nav id="bottomNav"><button aria-current="page" class="active" data-s="home" type="button">🏠<br/>ホーム</button><button data-s="add" type="button">➕<br/>追加</button><button data-s="library" type="button">📚<br/>蔵書</button><button data-s="search" type="button">🔎<br/>検索</button><button data-s="calendar" type="button">🗓<br/>カレンダー</button><button data-s="settings" type="button">⚙️<br/>設定</button></nav>
@@ -458,19 +479,80 @@ function card(book,add=true,mode="result",index=-1){
  return `<div class="card booktap" data-book='${detail}'><div class="selectline">${chk}<div class="content"><div class="book">${(add?book.cover:(book.cachedCover||""))?`<img class="cover" src="${esc(add?book.cover:book.cachedCover)}">`:`<div class='cover'></div>`}<div><div class="title">${esc(book.title)} ${books.some(x=>norm(x.isbn)===norm(book.isbn))?'<span class="owned-badge">蔵書</span>':'<span class="unowned-badge">未登録</span>'}</div><div class="muted">${esc(book.author)}</div><div class="muted">${esc(book.publisher)} ${esc(book.date)}${Number(book.price)>0?` ・ ¥${Math.round(book.price).toLocaleString()}`:""}</div><div class="muted">ISBN ${esc(book.isbn||"")}</div><div class="actions"><button type="button" onclick='event.stopPropagation();openBookDetail(${safe})'>詳細を見る</button>${add?`<button onclick='event.stopPropagation();addBook(${safe})'>蔵書に登録</button>`:""}</div></div></div></div></div></div>`;
 }
 
+function isbnDigits(v){return String(v||"").normalize("NFKC").replace(/[^0-9]/g,"").slice(0,13)}
+function isbnCandidates(raw){
+ const d=isbnDigits(raw), out=[];
+ if(valid13(d)){out.push(d);return out}
+ if(/^\d{10}$/.test(d)){
+  const first9=d.slice(0,9), normalized=to13(first9+"0");
+  // Numeric ISBN-10: validate the supplied check digit normally.
+  if(valid10(d)) out.push(to13(d));
+  // Also tolerate a transcription where the ISBN-10 check digit was X and was omitted/replaced.
+  const x10=first9+"X"; if(valid10(x10)) out.push(to13(x10));
+  return [...new Set(out)];
+ }
+ // For an ISBN-10 whose check digit is X, the user can enter the first nine digits only.
+ if(/^\d{9}$/.test(d)){
+  const c10=(()=>{let n=0;for(let i=0;i<9;i++)n+=+d[i]*(10-i);const r=n%11;return r===1?"X":String((11-r)%11)})();
+  const x10=d+c10;if(valid10(x10))out.push(to13(x10));
+ }
+ return [...new Set(out)];
+}
+function renderIsbnRows(){
+ const box=$("isbnRows"); if(!box)return;
+ const rows=[...box.querySelectorAll(".isbn-row")];
+ if(!rows.length) addIsbnRow();
+ const current=[...box.querySelectorAll(".isbn-input")].map(x=>x.value.trim()).filter(Boolean).length;
+ $("isbnRowCount").textContent=current+" / 30冊";
+}
+function addIsbnRow(value="",checked=true){
+ const box=$("isbnRows"); if(!box)return null;
+ const rows=[...box.querySelectorAll(".isbn-row")]; if(rows.length>=30)return null;
+ const i=rows.length+1;
+ const el=document.createElement("div");el.className="isbn-row";el.dataset.index=i;
+ el.innerHTML=`<div class="row-no">${i}</div><input class="isbn-input" inputmode="numeric" autocomplete="off" maxlength="13" placeholder="ISBN ${i}" value="${esc(isbnDigits(value))}"><button class="secondary row-remove" type="button" aria-label="この行を削除">×</button><div class="isbn-check-wrap"><input class="isbn-check" type="checkbox" ${checked?"checked":""}><span class="muted">登録対象</span></div><div class="isbn-row-status muted"></div>`;
+ box.appendChild(el);
+ const input=el.querySelector(".isbn-input");
+ input.addEventListener("input",()=>{input.value=isbnDigits(input.value);updateIsbnRow(el);ensureTrailingIsbnRow();updateIsbnRowCount()});
+ el.querySelector(".row-remove").onclick=()=>{el.remove();renumberIsbnRows();ensureTrailingIsbnRow();updateIsbnRowCount()};
+ updateIsbnRow(el);updateIsbnRowCount();return el;
+}
+function renumberIsbnRows(){[...$("isbnRows").querySelectorAll(".isbn-row")].forEach((r,i)=>{r.dataset.index=i+1;r.querySelector(".row-no").textContent=i+1;r.querySelector(".isbn-input").placeholder="ISBN "+(i+1)})}
+function ensureTrailingIsbnRow(){const rows=[...$("isbnRows").querySelectorAll(".isbn-row")];if(!rows.length){addIsbnRow();return}const last=rows[rows.length-1];if(last.querySelector(".isbn-input").value&&rows.length<30)addIsbnRow("",true)}
+function updateIsbnRowCount(){const n=[...$("isbnRows").querySelectorAll(".isbn-input")].filter(x=>x.value.trim()).length;$("isbnRowCount").textContent=n+" / 30冊"}
+function updateIsbnRow(el){const raw=el.querySelector(".isbn-input").value,d=isbnDigits(raw),st=el.querySelector(".isbn-row-status");el.classList.remove("has-result");st.className="isbn-row-status muted";st.textContent="";if(!d)return;if(valid13(d)||valid10(d)||/^\d{9}$/.test(d)){const c=isbnCandidates(d);if(c.length){st.className="isbn-row-status ok";st.textContent=c.length>1?"ISBN候補を確認して検索します。":"検索可能です。"}else{st.className="isbn-row-status error";st.textContent="ISBNとして確認できません。"}}else st.textContent="13桁、10桁、またはISBN-10の先頭9桁を入力"}
+function getIsbnRows(){return [...$("isbnRows").querySelectorAll(".isbn-row")].map(el=>({el,raw:el.querySelector(".isbn-input").value.trim(),checked:el.querySelector(".isbn-check").checked})).filter(x=>x.raw)}
+
 $("isbnSearch").onclick=async()=>{
- let raw=$("isbn").value||"";
- let tokens=raw.split(/[\s,、，]+/).map(norm).filter(Boolean),list=[];
- for(const x of tokens){let y=valid10(x)?to13(x):x;if(valid13(y)&&!list.includes(y))list.push(y)}
- list=list.slice(0,30);
- if(!list.length){$("addResults").innerHTML='<div class="error">ISBN-10またはISBN-13を入力してください。複数冊は改行・カンマ・空白で区切れます。</div>';return}
- $("addResults").innerHTML="検索中…（"+list.length+"冊）";let found=[];
- for(const isbn of list){try{let b=await isbnLookup(isbn);if(b)found.push(b)}catch(e){}}
+ const rows=getIsbnRows();
+ if(!rows.length){$("addResults").innerHTML='<div class="error">ISBNを1冊以上入力してください。</div>';return}
+ $("addResults").innerHTML="検索中…（"+rows.length+"冊）";
+ const found=[];
+ for(const row of rows){
+  const candidates=isbnCandidates(row.raw); let b=null;
+  for(const isbn of candidates){try{b=await isbnLookup(isbn);if(b)break}catch(e){}}
+  row.el.classList.toggle("has-result",!!b);
+  const st=row.el.querySelector(".isbn-row-status");
+  if(b){st.className="isbn-row-status ok";st.innerHTML=`✓ <b>${esc(b.title||"書誌情報を取得しました")}</b> ・ ${row.checked?"登録対象":"登録対象外"}`;el.classList.add("has-result")}
+  else {st.className="isbn-row-status error";st.textContent="書誌情報が見つかりませんでした。"}
+  if(b)found.push({...b,_rowEl:row.el,_register:row.checked});
+ }
  window.addResultsData=found;
  if(!found.length){$("addResults").innerHTML='<div class="error">一致する書籍が見つかりませんでした。</div>';return}
- $("addResults").innerHTML=`<div class="selectbar"><label><input class="check selectAll"> 全選択</label><button onclick="bulkAdd('addResults')">選択した本を一括登録</button><button onclick="addAllFound()">見つかった本を全部登録</button></div>`+found.map((x,i)=>card(x,true,"result",i)).join("");
- $("addResults").querySelector(".selectAll").onchange=e=>$("addResults").querySelectorAll(".selectBook").forEach(x=>x.checked=e.target.checked);
+ $("addResults").innerHTML=`<div class="selectbar"><button id="registerIsbnRows" type="button">☑️ チェックした本を一括登録</button></div>`+found.map((x,i)=>card(x,true,"result",i)).join("");
+ $("registerIsbnRows").onclick=()=>registerCheckedIsbnRows();
+};
+async function registerCheckedIsbnRows(){
+ const found=window.addResultsData||[], targets=found.filter(x=>x._rowEl?.querySelector(".isbn-check")?.checked);
+ if(!targets.length){alert("登録対象にチェックがありません。");return}
+ let added=[];
+ for(const b of targets){if(!books.some(x=>norm(x.isbn)===norm(b.isbn)))added.push(await cacheBookCover(b))}
+ if(added.length){books.push(...added);if(!await saveBooksSafely()){books.splice(-added.length,added.length);return}}
+ render();alert(added.length+"冊を登録しました（重複は除外）");
 }
+
+$("isbnRows").addEventListener("change",e=>{if(e.target.classList.contains("isbn-check")){const row=e.target.closest(".isbn-row");if(row?.querySelector(".isbn-row-status")?.textContent.includes("✓"))row.querySelector(".isbn-row-status").textContent=row.querySelector(".isbn-row-status").textContent.replace(/・ 登録対象(外)?$/,"・ "+(e.target.checked?"登録対象":"登録対象外"));}});
+addIsbnRow();
 $("workSearch").onclick=async()=>{let q=$("work").value.trim(),v=$("vol").value.trim();if(!q)return;$("addResults").innerHTML="検索中…";try{let arr=(await searchGoogle("intitle:"+q+(v?" "+v:""))).map(gbook);arr=arr.filter((x,i,a)=>i===a.findIndex(y=>norm(y.isbn)===norm(x.isbn)&&norm(x.isbn)));if(!v)arr=sortBooks(arr,"release-desc");renderSelectableResults("addResults",arr);if(!v&&arr.length)$("addResults").insertAdjacentHTML("afterbegin",'<div class="ok">巻数未入力：全巻検索です。発売日が新しい順に表示しています。</div>')}catch(e){$("addResults").innerHTML=esc(e.message)}};
 $("searchBtn").onclick=async()=>{let q=$("query").value.trim();if(!q)return;$("searchResults").innerHTML="検索中…";try{let arr=await searchGoogle(q);if($("searchUnownedOnly").checked)arr=arr.filter(x=>!books.some(b=>norm(b.isbn)===norm(gbook(x).isbn)));renderResults("searchResults",arr)}catch(e){$("searchResults").innerHTML=esc(e.message)}};
 $("searchUnownedOnly").onchange=()=>{if($("query").value.trim())$("searchBtn").click()};
@@ -647,7 +729,7 @@ $("skinApply").onclick=()=>{appSettings.skin={primary:$("skinPrimary").value,bg:
 $("autoTextContrast").onchange=()=>{appSettings.autoTextContrast=$("autoTextContrast").checked;saveSettings();applyVisualSettings()};
 $("bgImageInput").onchange=async e=>{let f=e.target.files?.[0];if(!f)return;try{let data=await compressImage(f);appSettings.background.image=data;let stats=await averageImageColor(data);appSettings.background.avgLum=stats?.lum??null;appSettings.background.avgColor=stats?.color??null;saveSettings();applyVisualSettings()}catch(err){alert("背景画像を設定できませんでした。別の画像を試してください。")}};
 $("bgImageRemove").onclick=()=>{appSettings.background={image:"",avgLum:null,avgColor:null};$("bgImageInput").value="";saveSettings();applyVisualSettings()};
-function createBackupData(){let localStorageData={};for(const k of APP_STORAGE_KEYS){const v=localStorage.getItem(k);if(v!==null)localStorageData[k]=v}return {schemaVersion:3,appVersion:"4.7.1",exportedAt:new Date().toISOString(),localStorage:localStorageData}}
+function createBackupData(){let localStorageData={};for(const k of APP_STORAGE_KEYS){const v=localStorage.getItem(k);if(v!==null)localStorageData[k]=v}return {schemaVersion:3,appVersion:"4.8.0",exportedAt:new Date().toISOString(),localStorage:localStorageData}}
 $("backupDataBtn").onclick=()=>{let blob=new Blob([JSON.stringify(createBackupData(),null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a"),d=new Date(),stamp=d.toISOString().slice(0,19).replace(/[T:]/g,"-");a.href=url;a.download=`book-tracker-backup-${stamp}.json`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);$("backupStatus").textContent="バックアップファイルを作成しました。"};
 $("restoreDataBtn").onclick=()=>$("restoreDataInput").click();
 $("restoreDataInput").onchange=e=>{let f=e.target.files?.[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!d||!d.localStorage||typeof d.localStorage!=="object")throw Error();if(!confirm("現在の端末内データをバックアップ内容で置き換えます。よろしいですか？"))return;for(const k of APP_STORAGE_KEYS){try{localStorage.removeItem(k)}catch(_){}}Object.entries(d.localStorage).forEach(([k,v])=>{if(APP_STORAGE_KEYS.includes(k)&&typeof v==="string")localStorage.setItem(k,v)});$("backupStatus").textContent="復元しました。画面を再読み込みします。";setTimeout(()=>location.reload(),500)}catch(err){$("backupStatus").textContent="復元できませんでした。Book TrackerのバックアップJSONを選択してください。"}};r.readAsText(f)};
@@ -667,10 +749,18 @@ $("todayMonth").onclick=()=>{let n=new Date();calDate=new Date(n.getFullYear(),n
 ["Library","Related","Recommended"].forEach(t=>{const el=$("calFilter"+t);el.onchange=()=>{calFilters[t.toLowerCase()]=el.checked;appSettings.calendar["show"+t]=el.checked;saveSettings();renderCalendar()}});
 $("ics").onclick=()=>{let l=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//BookShelf//JP//"];allEvents().forEach((e,i)=>{if(/^\d{4}-\d{2}-\d{2}$/.test(e.date))l.push("BEGIN:VEVENT","UID:"+i+"@bookshelf","DTSTART:"+e.date.replaceAll("-","")+"T090000","SUMMARY:"+e.title+" 発売予定","DESCRIPTION:"+e.base+" / "+(e.isbn||""),"END:VEVENT")});l.push("END:VCALENDAR");let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([l.join("\r\n")],{type:"text/calendar"}));a.download="book-release.ics";a.click()};
 async function scan(){
- if(!navigator.mediaDevices?.getUserMedia){alert("HTTPSのSafariで開いてください。");return}$("scanner").style.display="block";
- let seen=new Set(($('isbn').value||'').split(/[\s,、，]+/).map(norm).filter(Boolean));$("scanCount").textContent=seen.size+"冊読み取り";$("scanStatus").textContent="カメラを起動しています…";
- try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}},audio:false});$("video").srcObject=stream;await $("video").play();if("BarcodeDetector" in window){let d=new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e"]});timer=setInterval(async()=>{try{let c=(await d.detect($("video")))[0],v=norm(c?.rawValue||"");if(v&&/^97[89]\d{10}$/.test(v)&&!seen.has(v)){seen.add(v);$("isbn").value+=(($('isbn').value.trim()?"\n":""))+v;$("isbn").dispatchEvent(new Event("input",{bubbles:true}));$("scanCount").textContent=seen.size+"冊読み取り";$("scanStatus").textContent=v+" を追加しました。次の本を読み取れます。"}}catch(e){}},700)}else $("scanStatus").textContent="カメラは起動しました。このSafariでは自動読取に非対応です。ISBNを手入力してください。"}catch(e){$("scanStatus").innerHTML="カメラを起動できませんでした。Safariのサイト設定でカメラを許可してください。"}}
-
+ if(!navigator.mediaDevices?.getUserMedia){alert("HTTPSのSafariで開いてください。");return}
+ $("scanner").style.display="block";$('scanStatus').textContent="カメラを起動しています…";
+ try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}},audio:false});$("video").srcObject=stream;await $("video").play();
+  if("BarcodeDetector" in window){let d=new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e"]});let seen=new Set(getIsbnRows().flatMap(r=>isbnCandidates(r.raw)));
+   timer=setInterval(async()=>{try{let c=(await d.detect($("video")))[0],v=isbnDigits(c?.rawValue||"");if(v&&/^97[89]\d{10}$/.test(v)&&!seen.has(v)){
+    if([...$("isbnRows").querySelectorAll(".isbn-row")].length>=30){$("scanStatus").textContent="最大30冊に達しました。確認して検索してください。";return}
+    seen.add(v);let rows=[...$("isbnRows").querySelectorAll(".isbn-row")],last=rows[rows.length-1],input=last?.querySelector(".isbn-input");if(input?.value.trim())last=addIsbnRow();
+    input=last?.querySelector(".isbn-input");if(input){input.value=v;updateIsbnRow(last);ensureTrailingIsbnRow();updateIsbnRowCount();$("scanCount").textContent=seen.size+"冊読み取り";$("scanStatus").textContent=v+" を追加しました。次の本を読み取れます。"}
+   }}catch(e){}},700)
+  }else $("scanStatus").textContent="カメラは起動しました。このSafariでは自動読取に非対応です。ISBNを手入力してください。"
+ }catch(e){$("scanStatus").textContent="カメラを起動できませんでした。Safariのサイト設定でカメラを許可してください。"}
+}
 function stopScan(){if(timer)clearInterval(timer);timer=null;if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;$("video").srcObject=null;$("scanner").style.display="none"}
 $("scan").onclick=scan;$("closeScan").onclick=stopScan;$("scanSearch").onclick=()=>{stopScan();$("isbnSearch").click()};
 // v4.7.1: swipe is calendar-month navigation only. Tab navigation is tap-only.
