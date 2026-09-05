@@ -501,6 +501,8 @@ window.addEventListener("error",e=>{if(e.error){console.error(e.error);showRunti
 window.addEventListener("unhandledrejection",e=>{console.error(e.reason||e);showRuntimeError("アプリの処理中にエラーが発生しました。ページを再読み込みしてください。")});
 function readJSONStorage(key,fallback){try{const raw=localStorage.getItem(key);if(!raw)return fallback;const v=JSON.parse(raw);return v??fallback}catch(e){try{localStorage.removeItem(key)}catch(_){}return fallback}}
 let books=readJSONStorage(KEY,[]);if(!Array.isArray(books))books=[];
+// Calendar extras must be initialized before demo migration and rendering.
+let calendarExtras=readJSONStorage("calendarExtras_v442",[]);if(!Array.isArray(calendarExtras))calendarExtras=[];
 // v4.8.8: first launch demo data so the calendar and library appearance are understandable immediately.
 const DEMO_KEY="bookTrackerDemoSeed_v488";
 function seedDemoBooks(){
@@ -546,7 +548,6 @@ let bookMeta=readJSONStorage("bookTrackerMeta_v483",{});if(!bookMeta||typeof boo
 function getMeta(isbn){let k=norm(isbn);if(!bookMeta[k])bookMeta[k]={purchaseStatus:"wanted",readingStatus:"unread",favorite:false,memo:"",rating:0,notify:false};return bookMeta[k]}
 function saveMeta(){try{localStorage.setItem("bookTrackerMeta_v483",JSON.stringify(bookMeta));return true}catch(e){console.error("meta save",e);return false}}
 function updateBookMeta(isbn,patch){const m=getMeta(isbn);Object.assign(m,patch);saveMeta();render();}
-let calendarExtras=readJSONStorage("calendarExtras_v442",[]);if(!Array.isArray(calendarExtras))calendarExtras=[];
 let stream=null,timer=null;
 const esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function norm(s){return String(s||"").normalize("NFKC").replace(/[\s‐‑‒–—−-]/g,"").toUpperCase()}
