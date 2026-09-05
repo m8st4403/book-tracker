@@ -399,18 +399,20 @@ input[type="checkbox"]{
 #calendarGrid .day.today{background:var(--today-bg)!important;border:2px solid var(--today-border)!important}
 #calendarGrid .day.selected{background:var(--selected-bg)!important;box-shadow:inset 0 0 0 2px var(--selected-border)!important}
 #calendarGrid .day.today.selected{background:linear-gradient(135deg,var(--today-bg),var(--selected-bg))!important;border-color:#a9c5ec!important;box-shadow:inset 0 0 0 2px #b9a5e8!important}
-#calendarGrid .day .dot{width:7px;height:7px;margin:3px 2px}
-#calendarGrid .event-dot-library{background:#5b8fc9!important}.event-dot-related{background:#9b7bc7!important}.event-dot-recommended{background:#79a987!important}
-.release-mark{display:inline-block;font-size:9px;line-height:1;padding:2px 4px;border-radius:999px;background:#eaf4ff;color:#3975aa;margin-left:2px;vertical-align:middle;font-weight:700}
+.event-dots{display:inline-flex;align-items:center;justify-content:center;min-height:16px;width:100%;}
+.release-mark{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:16px;box-sizing:border-box;font-size:9px;line-height:1;padding:2px 4px;border-radius:999px;background:#eaf4ff;color:#3975aa;vertical-align:middle;font-weight:700}
 .day.selected .release-mark{background:#eee7ff;color:#7655a5}
+.demo-global{display:flex;flex-direction:column;gap:3px;margin:10px 0 0;padding:10px 12px;border-radius:12px;background:#f7f4ff;border:1px solid #e5dcff;color:#65548a;font-size:12px;line-height:1.5}
+.demo-global b{font-size:12px;color:#5c4b82}
 .demo-banner{margin-top:10px;padding:10px 12px;border-radius:12px;background:#f7f4ff;border:1px solid #e5dcff;color:#65548a;font-size:12px}
 .demo-badge{display:inline-block;margin-left:5px;padding:2px 6px;border-radius:999px;background:#eee7ff;color:#7255a4;font-size:10px;font-weight:700}
 </style>
 </head><body>
 <header><b id="appHeaderTitle">📚 本棚スケジュール</b><div class="muted" id="appHeaderSub">複数ISBN・詳細/関連検索・発売日カレンダー対応</div></header>
 <main id="content">
+<div id="demoNotice" class="demo-global" hidden><b>📚 サンプルデータを表示しています</b><span>初回起動時の見え方を確認するためのサンプル蔵書です。表示名や実際の本を登録したあと、設定からサンプル蔵書を削除できます。</span></div>
 <section class="active" id="home">
-<div class="card home-welcome"><div class="home-kicker">📚 本棚スケジュール</div><div class="home-title"><span id="homeWelcome">おかえりなさい</span></div><div class="home-date" id="homeDate"></div><div class="home-stats unified-stats"><div class="statbox"><span class="muted">蔵書冊数</span><b id="homeBookCount">0冊</b><span class="muted">登録済み</span></div><div class="statbox"><span class="muted">蔵書総額</span><b id="homeBookTotal">未登録</b><span class="muted" id="homeBookTotalSub">価格データを登録すると集計できます</span></div><div class="statbox"><span class="muted">購入予定</span><b id="homePurchaseCount">0冊</b><span class="muted" id="homePurchaseSub">今日以降の予定</span></div><div class="statbox"><span class="muted">積読</span><b id="homeUnreadCount">0冊</b><span class="muted">未読の蔵書</span></div><div class="statbox"><span class="muted">お気に入り</span><b id="homeFavoriteCount">0冊</b><span class="muted">お気に入りの蔵書</span></div></div></div><div class="home-upcoming-card card"><div class="home-upcoming-head"><div><b>🔥 近日発売の注目書籍</b><div class="muted">これから発売される本をチェック</div></div><button class="home-link-btn" id="homeUpcomingMore" type="button">すべて見る</button></div><div class="home-upcoming-grid" id="homeUpcomingBooks"></div></div>
+<div class="card home-welcome"><div class="home-kicker">📚 本棚スケジュール</div><div class="home-title"><span id="homeWelcome">あなたの本棚をはじめよう</span></div><div class="home-date" id="homeDate"></div><div class="home-stats unified-stats"><div class="statbox"><span class="muted">蔵書冊数</span><b id="homeBookCount">0冊</b><span class="muted">登録済み</span></div><div class="statbox"><span class="muted">蔵書総額</span><b id="homeBookTotal">未登録</b><span class="muted" id="homeBookTotalSub">価格データを登録すると集計できます</span></div><div class="statbox"><span class="muted">購入予定</span><b id="homePurchaseCount">0冊</b><span class="muted" id="homePurchaseSub">今日以降の予定</span></div><div class="statbox"><span class="muted">積読</span><b id="homeUnreadCount">0冊</b><span class="muted">未読の蔵書</span></div><div class="statbox"><span class="muted">お気に入り</span><b id="homeFavoriteCount">0冊</b><span class="muted">お気に入りの蔵書</span></div></div></div><div class="home-upcoming-card card"><div class="home-upcoming-head"><div><b>🔥 近日発売の注目書籍</b><div class="muted">これから発売される本をチェック</div></div><button class="home-link-btn" id="homeUpcomingMore" type="button">すべて見る</button></div><div class="home-upcoming-grid" id="homeUpcomingBooks"></div></div>
 </section>
 <section hidden="" id="add"><div class="card"><b>➕ 本を追加</b><p class="muted">ISBNは1冊につき1行。ISBN-10/13を数字だけで入力できます。最大30冊。</p>
 <button id="scan" class="scan-main" type="button">📷 本をスキャン</button>
@@ -713,7 +715,7 @@ function renderLibrary(){
 function renderCalendar(){
  let y=calDate.getFullYear(),m=calDate.getMonth(),by={};allEvents().forEach(e=>{if(/^\d{4}-\d{2}-\d{2}$/.test(e.date))(by[e.date]??=[]).push(e)});
  $("monthTitle").textContent=y+"年"+(m+1)+"月";let wd=["日","月","火","水","木","金","土"];wd=wd.slice(Number(appSettings.calendar.weekStart||0)).concat(wd.slice(0,Number(appSettings.calendar.weekStart||0)));$("calHead").innerHTML=wd.map(x=>`<div>${x}</div>`).join("");let s="",first=(new Date(y,m,1).getDay()-Number(appSettings.calendar.weekStart||0)+7)%7,days=new Date(y,m+1,0).getDate();for(let i=0;i<first;i++)s+='<div class="day empty"></div>';
- for(let d=1;d<=days;d++){let k=y+"-"+String(m+1).padStart(2,"0")+"-"+String(d).padStart(2,"0"),es=by[k]||[],dow=new Date(y,m,d).getDay(),cls="day "+(k===localDateKey()?"today ":"")+(k===selectedDate?"selected ":"")+(dow===0?"sun ":dow===6?"sat ":"")+(isHoliday(k)?"holiday":""),dots=es.slice(0,5).map(e=>`<span class="dot event-dot-${e.sourceType||"library"}" title="${esc(e.source||"")}"></span>`).join(""),hasLibrary=es.some(e=>e.sourceType==="library"),releaseMark=hasLibrary?`<span class="release-mark">発売</span>`:"";s+=`<div class="${cls}"><button onclick="selectDay('${k}')"><b>${d}</b>${releaseMark}<br><span class="event-dots">${dots}</span></button></div>`}
+ for(let d=1;d<=days;d++){let k=y+"-"+String(m+1).padStart(2,"0")+"-"+String(d).padStart(2,"0"),es=by[k]||[],dow=new Date(y,m,d).getDay(),cls="day "+(k===localDateKey()?"today ":"")+(k===selectedDate?"selected ":"")+(dow===0?"sun ":dow===6?"sat ":"")+(isHoliday(k)?"holiday":""),hasLibrary=es.some(e=>e.sourceType==="library"),releaseMark=hasLibrary?`<span class="release-mark" title="蔵書の発売予定あり">発売</span>`:"";s+=`<div class="${cls}"><button onclick="selectDay('${k}')"><b>${d}</b><br><span class="event-dots">${releaseMark}</span></button></div>`}
  $("calendarGrid").innerHTML=s;if(selectedDate)showDay(selectedDate)
 }
 window.selectDay=k=>{selectedDate=k;renderCalendar();showDay(k)}
@@ -724,16 +726,34 @@ $("seriesCheckBtn").onclick=runSeriesCheck;$("unreadOnlyBtn").onclick=()=>{windo
 function localDateKey(d=new Date()){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function addDaysKey(key,n){let [y,m,d]=key.split("-").map(Number),dt=new Date(y,m-1,d);dt.setDate(dt.getDate()+n);return localDateKey(dt)}
 function formatHomeDate(key){let [y,m,d]=key.split("-").map(Number);return y+"年"+m+"月"+d+"日（"+["日","月","火","水","木","金","土"][new Date(y,m-1,d).getDay()]+"）"}
+const ONBOARDING_KEY="bookTrackerOnboarding_v489";
+function isOnboardingComplete(){
+ try{
+  if(localStorage.getItem(ONBOARDING_KEY)==="1")return true;
+  if(String(appSettings?.profile?.name||"").trim()||books.some(b=>!b.demo)){
+   localStorage.setItem(ONBOARDING_KEY,"1");
+   return true;
+  }
+ }catch(e){}
+ return false;
+}
 function updateProfileDisplay(){
  const name=String(appSettings?.profile?.name||"").trim();
  const welcome=$("homeWelcome"),head=$("appHeaderTitle"),sub=$("appHeaderSub");
- const welcomeText=name?`おかえりなさい、${name}さん`:"おかえりなさい";
+ const complete=isOnboardingComplete();
+ const welcomeText=name?`おかえりなさい、${name}さん`:complete?"おかえりなさい":"あなたの本棚をはじめよう";
  const headerText=name?`📚 ${name}さんの 本棚スケジュール`:"📚 本棚スケジュール";
  const subText=name?`${name}さんの本棚・発売日スケジュール`:"複数ISBN・詳細/関連検索・発売日カレンダー対応";
  if(welcome)welcome.textContent=welcomeText;
  if(head)head.textContent=headerText;
  if(sub)sub.textContent=subText;
  document.title=name?`本棚スケジュール｜${name}さん`:"本棚スケジュール";
+}
+function renderDemoNotice(){
+ const el=$("demoNotice");
+ if(!el)return;
+ const hasDemo=books.some(b=>b.demo);
+ el.hidden=!hasDemo;
 }
 
 function deriveLibraryStats(){
@@ -782,8 +802,7 @@ function renderHome(){
   if(upcomingSeen.has(key))return false;upcomingSeen.add(key);return true;
  }).slice(0,3);
  $("homeUpcomingBooks").innerHTML=upcoming.length?upcoming.map(e=>`<div class="home-upcoming-item booktap" data-book='${esc(JSON.stringify(e).replace(/</g,"\u003c").replace(/'/g,"&#39;"))}' onclick='openBookDetail(${JSON.stringify(e).replace(/</g,"\u003c").replace(/'/g,"&#39;")})'><img class="home-upcoming-cover" src="${esc(e.cachedCover||"")}" onerror="this.style.display='none'" alt=""><div class="home-upcoming-title">${esc(e.title)}</div><div class="home-upcoming-date">${esc(e.date)}発売</div><span class="home-upcoming-badge">${e.sourceType==="recommended"?"おすすめ":e.sourceType==="related"?"関連":"蔵書"}</span></div>`).join(""): '<div class="home-upcoming-empty">近日発売予定の書籍はありません。</div>';
- const demoBanner=books.some(b=>b.demo)?'<div class="demo-banner" id="homeDemoBanner">これは初回表示用のサンプル蔵書です。発売予定日の見え方を確認できます。実際の本を登録する前に削除できます。</div>':"";
- const hu=$("homeUpcomingBooks"); if(hu && demoBanner && !$("homeDemoBanner")){hu.insertAdjacentHTML("beforebegin",demoBanner);}
+ const hu=$("homeUpcomingBooks");
 
  $("homeUpcomingMore").onclick=()=>{document.querySelector('[data-s="calendar"]').click()};
 }
@@ -852,13 +871,13 @@ $("skinApply").onclick=()=>{appSettings.skin={primary:$("skinPrimary").value,bg:
 
 $("bgImageInput").onchange=async e=>{let f=e.target.files?.[0];if(!f)return;try{let data=await compressImage(f);appSettings.background.image=data;let stats=await averageImageColor(data);appSettings.background.avgLum=stats?.lum??null;appSettings.background.avgColor=stats?.color??null;saveSettings();applyVisualSettings()}catch(err){alert("背景画像を設定できませんでした。別の画像を試してください。")}};
 $("bgImageRemove").onclick=()=>{appSettings.background={image:"",avgLum:null,avgColor:null};$("bgImageInput").value="";saveSettings();applyVisualSettings()};
-function createBackupData(){let localStorageData={};for(const k of APP_STORAGE_KEYS){const v=localStorage.getItem(k);if(v!==null)localStorageData[k]=v}return {schemaVersion:3,appVersion:"4.8.6",exportedAt:new Date().toISOString(),localStorage:localStorageData}}
+function createBackupData(){let localStorageData={};for(const k of APP_STORAGE_KEYS){const v=localStorage.getItem(k);if(v!==null)localStorageData[k]=v}return {schemaVersion:3,appVersion:"4.8.9",exportedAt:new Date().toISOString(),localStorage:localStorageData}}
 $("deleteDemoBtn").onclick=()=>{const n=books.filter(b=>b.demo).length;if(!n){alert("サンプル蔵書はありません。");return}if(!confirm("初回表示用のサンプル蔵書を削除しますか？"))return;books=books.filter(b=>!b.demo);persistBooks();try{localStorage.setItem(DEMO_KEY,"1")}catch(e){}render();alert("サンプル蔵書を削除しました。");};
 $("backupDataBtn").onclick=()=>{let blob=new Blob([JSON.stringify(createBackupData(),null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a"),d=new Date(),stamp=d.toISOString().slice(0,19).replace(/[T:]/g,"-");a.href=url;a.download=`book-tracker-backup-${stamp}.json`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);$("backupStatus").textContent="バックアップファイルを作成しました。"};
 $("restoreDataBtn").onclick=()=>$("restoreDataInput").click();
 $("restoreDataInput").onchange=e=>{let f=e.target.files?.[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!d||!d.localStorage||typeof d.localStorage!=="object")throw Error();if(!confirm("現在の端末内データをバックアップ内容で置き換えます。よろしいですか？"))return;for(const k of APP_STORAGE_KEYS){try{localStorage.removeItem(k)}catch(_){}}Object.entries(d.localStorage).forEach(([k,v])=>{if(APP_STORAGE_KEYS.includes(k)&&typeof v==="string")localStorage.setItem(k,v)});$("backupStatus").textContent="復元しました。画面を再読み込みします。";setTimeout(()=>location.reload(),500)}catch(err){$("backupStatus").textContent="復元できませんでした。Book TrackerのバックアップJSONを選択してください。"}};r.readAsText(f)};
 $("setSearchCount").onchange=()=>{appSettings.search.resultCount=Number($("setSearchCount").value);saveSettings();updateSettingLabels()};$("setSearchSort").onchange=()=>{appSettings.search.sort=$("setSearchSort").value;saveSettings();updateSettingLabels()};$("setWeekStart").onchange=()=>{appSettings.calendar.weekStart=Number($("setWeekStart").value);saveSettings();renderCalendar()};
-function render(){try{renderHome()}catch(e){console.error("renderHome",e);showRuntimeError()}try{renderLibrary()}catch(e){console.error("renderLibrary",e);showRuntimeError()}try{renderCalendar()}catch(e){console.error("renderCalendar",e);showRuntimeError()}try{updateClearButtons()}catch(e){console.error("clear buttons",e)}}
+function render(){try{updateProfileDisplay()}catch(e){console.error("profile display",e)}try{renderDemoNotice()}catch(e){console.error("demo notice",e)}try{renderHome()}catch(e){console.error("renderHome",e);showRuntimeError()}try{renderLibrary()}catch(e){console.error("renderLibrary",e);showRuntimeError()}try{renderCalendar()}catch(e){console.error("renderCalendar",e);showRuntimeError()}try{updateClearButtons()}catch(e){console.error("clear buttons",e)}}
 function updateClearButtons(){document.querySelectorAll(".clearbtn").forEach(b=>{let i=$(b.dataset.clear);b.style.display=i&&i.value?"block":"none"})}
 document.querySelectorAll(".clearbtn").forEach(b=>b.onclick=()=>{$(b.dataset.clear).value="";$(b.dataset.clear).dispatchEvent(new Event("input",{bubbles:true}));updateClearButtons()});
 document.querySelectorAll(".clearwrap input,.clearwrap textarea").forEach(i=>i.addEventListener("input",updateClearButtons));
