@@ -1,19 +1,19 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#111827"><title>本棚スケジュール v4.5.4</title>
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#111827"><title>本棚スケジュール v4.5.5</title>
 <style id="app-css">
 *{box-sizing:border-box}body{margin:0;background:#f5f5f7;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;padding-bottom:72px}header{background:#fff;padding:14px 16px;position:sticky;top:0;z-index:5;border-bottom:1px solid #ddd}main{max-width:800px;margin:auto;padding:12px;touch-action:pan-y;min-height:calc(100vh - 150px)}section{display:block}section[hidden]{display:none!important}section.active{display:block}.card{background:#fff;border-radius:16px;padding:15px;margin:10px 0;box-shadow:0 1px 3px #0001}.muted{font-size:13px;color:#6b7280}.row{display:flex;gap:8px}.row>*{flex:1}input{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:11px;font:inherit}button{font:inherit;padding:11px 13px;border:0;border-radius:11px;background:#111827;color:white;font-weight:700}.secondary{background:#e5e7eb;color:#111827}.clearwrap{position:relative}.clearwrap input{padding-right:42px}.clearbtn{position:absolute;right:5px;top:5px;width:34px;height:34px;padding:0;border-radius:50%;background:#e5e7eb;color:#555;display:none}.book{display:flex;gap:12px}.cover{width:68px;height:96px;object-fit:cover;border-radius:8px;background:#eee}.title{font-weight:800;font-size:16px}.actions{margin-top:8px}nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;display:flex;z-index:10}nav button{flex:1;background:#fff;color:#666;border-radius:0;font-size:13px;padding:10px 3px;min-height:68px}nav button.active{color:#111;font-weight:800;font-size:14px}.monthbar{display:flex;align-items:center;justify-content:space-between}.monthbar button{min-width:42px}.calhead{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;color:#777;font-size:11px;margin-top:12px}.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:5px}.day{min-height:58px;background:#f8f8fa;border:1px solid #eee;border-radius:8px;padding:4px}.day.empty{background:transparent;border:0}.day button{background:transparent;color:#111;padding:0;width:100%;height:100%;text-align:left}.today{border:2px solid #111}.selected{box-shadow:inset 0 0 0 2px #777}.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#111;margin:3px 2px}.selectbar{display:flex;align-items:center;gap:8px;position:sticky;top:58px;background:#fff;padding:8px 0;z-index:2;border-bottom:1px solid #eee}.selectbar button{font-size:12px}.check{width:26px;height:26px}.selectline{display:flex;gap:10px;align-items:flex-start}.selectline .content{flex:1}.event{padding:10px 0;border-top:1px solid #eee}.release{font-weight:800}.error{background:#fee2e2;color:#991b1b;padding:10px;border-radius:10px}.ok{background:#ecfdf5;color:#166534;padding:10px;border-radius:10px}#scanner{display:none;position:fixed;inset:0;background:#000;color:white;z-index:20;padding:16px}#video{width:100%;height:70%;object-fit:cover;margin-top:35px;border-radius:16px}
 .series-group{border:1px solid #e5e7eb;border-radius:14px;margin:10px 0;overflow:hidden}.series-group summary{list-style:none;cursor:pointer;padding:13px 14px;background:rgba(127,127,127,.06);display:flex;justify-content:space-between;align-items:center}.series-group summary::-webkit-details-marker{display:none}.series-books{padding:0 8px}.series-books .card{margin:8px 0}.series-books .card:first-child{margin-top:8px}
 
-/* ===== v4.5.4 consolidated CSS ===== */
+/* ===== v4.5.5 consolidated CSS ===== */
 .similar-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
 .similar-grid label{border:1px solid #ddd;border-radius:12px;padding:10px}
 .similar-grid input{width:24px;height:24px;vertical-align:middle}
 .check{width:26px;height:26px}
 
-/* ===== v4.5.4 consolidated CSS ===== */
+/* ===== v4.5.5 consolidated CSS ===== */
 .clearwrap{display:flex;align-items:center;gap:6px;width:100%;}.clearwrap input,.clearwrap textarea{min-width:0;flex:1 1 auto;}.clearbtn{flex:0 0 42px;min-width:42px;min-height:42px;}#isbn{min-width:0;width:100%;min-height:78px;resize:vertical;line-height:1.45;padding:12px;border:1px solid #d1d5db;border-radius:11px;font:inherit;}#work,#query,#author,#libraryFilter{min-width:0;width:100%;}@media(max-width:600px){#isbn{font-size:16px;}}
 .booktap{cursor:pointer}.detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.detail-actions a,.detail-actions button{min-height:44px}.detail-related{margin-top:18px}.detail-related-item{display:flex;gap:10px;align-items:center;width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;background:inherit;text-align:left}.detail-related-item img{width:48px;height:68px;object-fit:cover}.detail-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);display:none;align-items:flex-end}.detail-sheet{background:var(--bg,#fff);color:var(--text,#222);width:100%;max-width:760px;max-height:90vh;overflow:auto;margin:auto;padding:18px;border-radius:20px 20px 0 0}.detail-head{display:flex;justify-content:space-between;align-items:center}.detail-grid{display:grid;grid-template-columns:120px 1fr;gap:16px;margin-top:12px}.detail-cover{width:120px;max-height:180px;object-fit:contain}.multi-isbn-hint{font-size:12px;opacity:.7;margin-top:5px}.multi-isbn-results{display:grid;gap:8px;margin-top:10px}.multi-isbn-item{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid #ddd;border-radius:10px}.multi-isbn-item img{width:44px;height:62px;object-fit:cover}
 
-/* ===== v4.5.4 consolidated CSS ===== */
+/* ===== v4.5.5 consolidated CSS ===== */
 nav button{transition:.15s;position:relative;border-top:3px solid transparent;color:#6b7280;background:#fff}
 nav button.active{background:#fff;color:#2563eb;border-top-color:#2563eb;transform:none;box-shadow:none;font-weight:800}
 nav button.active::after{display:none}
@@ -27,10 +27,10 @@ nav button.active::after{display:none}
 
 .home-welcome{text-align:left}.home-kicker{font-size:13px;color:#6b7280;margin-bottom:2px}.home-title{font-size:27px;line-height:1.25;margin:0;font-weight:850;letter-spacing:-.02em}.home-date{font-size:14px;color:#6b7280;margin:5px 0 0}.home-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.home-stat{min-width:0;padding:12px 10px;border-radius:14px;border:1px solid transparent}.home-stat.library{background:#eff6ff;border-color:#dbeafe}.home-stat.money{background:#ecfdf5;border-color:#d1fae5}.home-stat.purchase{background:#f5f3ff;border-color:#e9d5ff}.home-stat .label{font-size:11px;color:#6b7280;white-space:nowrap}.home-stat b{display:block;font-size:19px;line-height:1.2;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.home-stat .sub{font-size:10px;color:#6b7280;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.home-stat.purchase b{color:#7c3aed}.home-stat.money b{color:#047857}.home-stat.library b{color:#2563eb}.home-note{margin-top:10px;padding:10px 12px;border-radius:12px;background:#f8fafc;color:#64748b;font-size:12px}.search-mode{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}.search-mode button{background:#f3f4f6;color:#4b5563}.search-mode button.active{background:#111827;color:#fff}.search-panel{display:none}.search-panel.active{display:block}.search-subnav{margin-top:0}.search-subnav .card{margin-top:0}.series-group{box-shadow:0 1px 2px #00000008}.series-group summary{font-size:15px}.series-books .card{box-shadow:none;border:1px solid #eee}.home-more{background:#f3f4f6;color:#111827;width:100%;margin-top:8px}
 
-/* ===== v4.5.4 consolidated CSS ===== */
+/* ===== v4.5.5 consolidated CSS ===== */
 .home-welcome{text-align:left}.home-kicker{font-size:13px;color:#6b7280;margin-bottom:2px}.home-title{font-size:27px;line-height:1.25;margin:0;font-weight:850;letter-spacing:-.02em}.home-date{font-size:14px;color:#6b7280;margin:5px 0 0}.home-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.home-stat{min-width:0;padding:12px 10px;border-radius:14px;border:1px solid transparent}.home-stat.library{background:#eff6ff;border-color:#dbeafe}.home-stat.money{background:#ecfdf5;border-color:#d1fae5}.home-stat.purchase{background:#f5f3ff;border-color:#e9d5ff}.home-stat .label{font-size:11px;color:#6b7280;white-space:nowrap}.home-stat b{display:block;font-size:19px;line-height:1.2;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.home-stat .sub{font-size:10px;color:#6b7280;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.home-stat.purchase b{color:#7c3aed}.home-stat.money b{color:#047857}.home-stat.library b{color:#2563eb}.home-note{margin-top:10px;padding:10px 12px;border-radius:12px;background:#f8fafc;color:#64748b;font-size:12px}.search-mode{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}.search-mode button{background:#f3f4f6;color:#4b5563}.search-mode button.active{background:#111827;color:#fff}.search-panel{display:none}.search-panel.active{display:block}.search-subnav{margin-top:0}.search-subnav .card{margin-top:0}.series-group{box-shadow:0 1px 2px #00000008}.series-group summary{font-size:15px}.series-books .card{box-shadow:none;border:1px solid #eee}.home-more{background:#f3f4f6;color:#111827;width:100%;margin-top:8px}
 
-/* ===== v4.5.4 consolidated CSS ===== */
+/* ===== v4.5.5 consolidated CSS ===== */
 :root{--primary:#2563eb;--primary-soft:#eff6ff;--border:#dbeafe;--text:#111827;--muted:#64748b;--library:#111827;--related:#2563eb;--recommended:#16a34a;--danger:#dc2626}
 button{background:var(--primary)}button.secondary{background:#f1f5f9;color:#334155;border:1px solid #e2e8f0}
 #deleteSelected{background:#dc2626}.today-btn{color:var(--primary)!important;background:#eff6ff!important;border-color:#bfdbfe!important}
@@ -44,7 +44,7 @@ button{background:var(--primary)}button.secondary{background:#f1f5f9;color:#3341
 #scan,#isbnSearch,#workSearch,#searchBtn,#authorBtn,#authorNewBtn,#similarBtn{background:var(--primary)}
 #seriesCheckBtn{color:#166534;background:#ecfdf5;border-color:#bbf7d0}.ok{background:#ecfdf5;color:#166534}.error{background:#fef2f2;color:#b91c1c}
 
-/* ===== v4.5.4 consolidated CSS ===== */
+/* ===== v4.5.5 consolidated CSS ===== */
 :root{--primary:#2563eb;--navy:#172554;--bg:#f6f8fc;--surface:#fff;--muted:#64748b;--soft-blue:#eff6ff;--soft-green:#ecfdf5;--soft-purple:#f5f3ff}
 body{background:var(--bg);color:#172033;font-size:15px}header{background:rgba(255,255,255,.97);padding:12px 16px 11px;border-bottom:1px solid #e5eaf2;box-shadow:0 1px 5px rgba(15,23,42,.04)}header b{color:var(--navy);font-size:15px}header .muted{margin-top:2px;color:#7b8798;font-size:11px}main{padding:10px 12px 18px;max-width:760px}.card{background:var(--surface);border:1px solid #e6ebf3;border-radius:16px;padding:14px;margin:9px 0;box-shadow:0 2px 8px rgba(30,41,59,.045)}button{background:var(--primary);border-radius:12px;min-height:42px;box-shadow:0 2px 5px rgba(37,99,235,.14)}button:active{transform:scale(.985)}button.secondary{background:#fff;color:#334155;border:1px solid #cbd8e8;box-shadow:none}input,textarea,select{background:#fff;border:1px solid #cbd5e1;color:#172033;border-radius:11px}input:focus,textarea:focus,select:focus{outline:none;border-color:#93c5fd;box-shadow:0 0 0 3px rgba(37,99,235,.10)}.muted{color:var(--muted)}.book .cover{width:68px;height:96px;border-radius:7px;box-shadow:0 1px 4px rgba(15,23,42,.12)}.title{color:#172033}.owned-badge{background:#dcfce7;color:#15803d}.unowned-badge{background:#f1f5f9;color:#64748b}
 nav{background:rgba(255,255,255,.98);border-top:1px solid #dfe6ef;box-shadow:0 -2px 10px rgba(15,23,42,.04);padding-bottom:env(safe-area-inset-bottom)}nav button{background:transparent;color:#64748b;border-top:3px solid transparent;box-shadow:none;min-height:62px;padding:8px 2px 7px;font-size:11px;line-height:1.25}nav button.active{color:var(--primary);border-top-color:var(--primary);font-size:12px;font-weight:800}
@@ -55,7 +55,7 @@ nav{background:rgba(255,255,255,.98);border-top:1px solid #dfe6ef;box-shadow:0 -
 .home-upcoming-card{padding:13px 12px 12px}.home-upcoming-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:9px}.home-upcoming-head b{font-size:15px;color:#172033}.home-link-btn{background:transparent;color:var(--primary);box-shadow:none;border:0;min-height:auto;padding:2px 0;font-size:12px;white-space:nowrap}.home-upcoming-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.home-upcoming-item{min-width:0;text-align:left}.home-upcoming-cover{width:100%;aspect-ratio:2/2.8;object-fit:cover;border-radius:8px;background:#eef2f7;box-shadow:0 1px 4px rgba(15,23,42,.12)}.home-upcoming-title{font-size:11px;font-weight:800;line-height:1.3;margin-top:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.home-upcoming-date{font-size:10px;color:#64748b;margin-top:3px}.home-upcoming-badge{display:inline-block;margin-top:4px;font-size:9px;padding:2px 5px;border-radius:999px;background:#dcfce7;color:#15803d}.home-upcoming-empty{grid-column:1/-1;padding:16px 8px;text-align:center;background:#f8fafc;border-radius:11px;color:#64748b;font-size:12px}.selectbar{background:#fff;border-bottom-color:#e5eaf2}
 @media(max-width:600px){.home-stat b{font-size:17px}.home-upcoming-grid{gap:7px}}
 
-/* ===== v4.5.4 consolidated CSS ===== */
+/* ===== v4.5.5 consolidated CSS ===== */
 :root{--app-font:15px;--theme-primary:#2563eb;--theme-bg:#f6f8fc;--theme-surface:#fff;--theme-text:#172033;--theme-muted:#64748b}
 body{font-size:var(--app-font);background:var(--theme-bg);color:var(--theme-text)}
 button,input,textarea,select{font-size:var(--app-font)}
@@ -71,7 +71,7 @@ body.font-small{--app-font:13px}body.font-medium{--app-font:15px}body.font-large
 body.font-small .title{font-size:15px}body.font-large .title{font-size:17px}body.font-large .home-title{font-size:26px}.font-large .home-stat b{font-size:18px}
 @media(max-width:390px){nav button{font-size:10px!important;padding-left:1px;padding-right:1px}.theme-choice,.font-choice{padding-left:6px;padding-right:6px}.home-stat .label{font-size:9px}.home-stat b{font-size:16px}}
 
-/* ===== v4.5.4 consolidated CSS ===== */
+/* ===== v4.5.5 consolidated CSS ===== */
 :root{--app-text:#172033;--bg-overlay:transparent;--app-bg-image:none}
 body{background-color:var(--bg)!important;background-image:linear-gradient(var(--bg-overlay),var(--bg-overlay)),var(--app-bg-image)!important;background-size:cover;background-position:center;background-attachment:fixed;color:var(--app-text)!important}
 body>header,body .card,body .series-group,body .settings-card{color:var(--app-text)}
@@ -90,8 +90,8 @@ input,textarea,select{background:var(--surface)!important;color:var(--app-text)!
 .offline-note{padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--primary) 8%,var(--surface));color:var(--app-text);font-size:.9em}.backup-row{display:flex;gap:8px;flex-wrap:wrap}.backup-row button{flex:1 1 140px}.toggle-row{display:flex!important;align-items:center;gap:8px;padding:10px;border:1px solid color-mix(in srgb,var(--app-text) 12%,transparent);border-radius:12px;color:var(--app-text)!important}.toggle-row input{width:22px;height:22px;flex:0 0 auto}
 body.theme-dark .home-stat{background:color-mix(in srgb,var(--primary) 12%,var(--surface))!important}body.theme-dark .home-welcome{background:var(--surface)!important}body.theme-dark .error{background:#3b1f24!important;color:#fecaca!important}body.theme-dark .ok{background:#153b28!important;color:#bbf7d0!important}
 
-/* ===== v4.5.4 consolidated CSS ===== */
-/* v4.5.4 visual fixes */
+/* ===== v4.5.5 consolidated CSS ===== */
+/* v4.5.5 visual fixes */
 :root{--font-scale:1;--control-bg:#f1f5f9;--control-text:#334155;--control-border:#dbe4ef}
 body.font-small{--font-scale:.88}
 body.font-medium{--font-scale:1}
@@ -155,7 +155,7 @@ body.theme-dark .theme-choice.active,body.theme-dark .font-choice.active{backgro
 body{background-repeat:no-repeat!important}
 </style>
 </head><body>
-<header><b>📚 本棚スケジュール v4.5.4</b><div class="muted">複数ISBN・詳細/関連検索・発売日カレンダー対応</div></header>
+<header><b>📚 本棚スケジュール v4.5.5</b><div class="muted">複数ISBN・詳細/関連検索・発売日カレンダー対応</div></header>
 <main id="content">
 <section id="home" class="active">
 <div class="card home-welcome"><div class="home-kicker">📚 本棚スケジュール</div><div class="home-title">おかえりなさい</div><div id="homeDate" class="home-date"></div><div class="home-stats"><div class="home-stat library"><div class="label">蔵書</div><b id="homeBookCount">0冊</b><div class="sub">登録済み</div></div><div class="home-stat money"><div class="label">蔵書総額</div><b id="homeBookTotal">未登録</b><div id="homeBookTotalSub" class="sub">価格データを登録すると集計</div></div><div class="home-stat purchase"><div class="label">今月の残購入予定</div><b id="homePurchaseCount">0冊</b><div id="homePurchaseSub" class="sub">今日以降の予定</div></div></div></div><div class="home-upcoming-card card"><div class="home-upcoming-head"><div><b>🔥 近日発売の注目書籍</b><div class="muted">これから発売される本をチェック</div></div><button id="homeUpcomingMore" class="home-link-btn" type="button">すべて見る</button></div><div id="homeUpcomingBooks" class="home-upcoming-grid"></div></div>
@@ -195,6 +195,17 @@ body{background-repeat:no-repeat!important}
 <div id="scanner"><button id="closeScan" class="secondary">読み取り終了</button><video id="video" playsinline muted></video><p id="scanStatus">カメラを起動しています…</p><div class="scan-count" id="scanCount">0冊読み取り</div><div class="scan-actions"><button id="scanSearch">読み取り終了して検索</button></div></div>
 <script>
 const $=id=>document.getElementById(id),KEY="books_v41";
+// v4.5.5: install tab navigation before the rest of the app.
+const TAB_IDS=["home","add","library","search","calendar","settings"];
+function setMainTab(id){
+ const target=$(id); if(!target)return;
+ document.querySelectorAll("main#content > section").forEach(s=>{const on=s===target;s.style.display=on?"block":"none";s.hidden=!on;s.classList.toggle("active",on);s.setAttribute("aria-hidden",on?"false":"true")});
+ document.querySelectorAll("#bottomNav button[data-s]").forEach(b=>{const on=b.dataset.s===id;b.classList.toggle("active",on);b.setAttribute("aria-current",on?"page":"false")});
+ window.scrollTo(0,0);
+}
+const earlyNav=$("bottomNav");
+if(earlyNav)earlyNav.addEventListener("click",e=>{const b=e.target.closest("button[data-s]");if(b){e.preventDefault();e.stopPropagation();setMainTab(b.dataset.s)}},true);
+
 window.addEventListener("error",e=>{const el=document.getElementById("runtimeError");if(el){el.style.display="block";el.textContent="アプリの動作中にエラーが発生しました。ページを再読み込みしてください。";}console.error(e.error||e.message||e);});
 window.addEventListener("unhandledrejection",e=>{const el=document.getElementById("runtimeError");if(el){el.style.display="block";el.textContent="アプリの処理中にエラーが発生しました。ページを再読み込みしてください。";}console.error(e.reason||e);});
 function readJSONStorage(key,fallback){try{const raw=localStorage.getItem(key);if(!raw)return fallback;const v=JSON.parse(raw);return v??fallback}catch(e){try{localStorage.removeItem(key)}catch(_){}return fallback}}
@@ -442,17 +453,6 @@ $("filterReset").onclick=()=>{["filterAuthor","filterPublisher","filterYear","fi
 $("prevMonth").onclick=()=>{calDate.setMonth(calDate.getMonth()-1);selectedDate=null;renderCalendar()};$("nextMonth").onclick=()=>{calDate.setMonth(calDate.getMonth()+1);selectedDate=null;renderCalendar()};
 $("todayMonth").onclick=()=>{let n=new Date();calDate=new Date(n.getFullYear(),n.getMonth(),1);selectedDate=n.toISOString().slice(0,10);renderCalendar();showDay(selectedDate)};
 ["Library","Related","Recommended"].forEach(t=>{const el=$("calFilter"+t);el.onchange=()=>{calFilters[t.toLowerCase()]=el.checked;appSettings.calendar["show"+t]=el.checked;saveSettings();renderCalendar()}});
-function setMainTab(id){
- const target=$(id);if(!target)return;
- document.querySelectorAll("main#content > section").forEach(s=>{const on=s===target;s.hidden=!on;s.classList.toggle("active",on);s.setAttribute("aria-hidden",on?"false":"true")});
- document.querySelectorAll("#bottomNav button").forEach(b=>{const on=b.dataset.s===id;b.classList.toggle("active",on);b.setAttribute("aria-current",on?"page":"false")});
- if(id==="home")renderHome();
- if(id==="calendar"&&appSettings.calendar.openToday){let n=new Date();calDate=new Date(n.getFullYear(),n.getMonth(),1);selectedDate=localDateKey(n);renderCalendar();showDay(selectedDate)}
- window.scrollTo(0,0);
-}
-const bottomNav=$("bottomNav");
-if(bottomNav)bottomNav.addEventListener("click",e=>{const b=e.target.closest("button[data-s]");if(b){e.preventDefault();setMainTab(b.dataset.s)}});
-
 $("ics").onclick=()=>{let l=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//BookShelf//JP//"];allEvents().forEach((e,i)=>{if(/^\d{4}-\d{2}-\d{2}$/.test(e.date))l.push("BEGIN:VEVENT","UID:"+i+"@bookshelf","DTSTART:"+e.date.replaceAll("-","")+"T090000","SUMMARY:"+e.title+" 発売予定","DESCRIPTION:"+e.base+" / "+(e.isbn||""),"END:VEVENT")});l.push("END:VCALENDAR");let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([l.join("\r\n")],{type:"text/calendar"}));a.download="book-release.ics";a.click()};
 async function scan(){
  if(!navigator.mediaDevices?.getUserMedia){alert("HTTPSのSafariで開いてください。");return}$("scanner").style.display="block";
@@ -461,38 +461,12 @@ async function scan(){
 
 function stopScan(){if(timer)clearInterval(timer);timer=null;if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;$("video").srcObject=null;$("scanner").style.display="none"}
 $("scan").onclick=scan;$("closeScan").onclick=stopScan;$("scanSearch").onclick=()=>{stopScan();$("isbnSearch").click()};
-// v4.5.4: lower-half tab swipe, calendar upper/lower split.
+// v4.5.5: lower-half tab swipe, with calendar upper/lower split.
 (function(){
- const ids=["home","add","library","search","calendar","settings"];
- let sx=0,sy=0,tracking=false,swipeMode=null;
- const content=$("content");
- function calendarMode(y){
-   if(!$("calendar")?.classList.contains("active"))return "tabs";
-   const upper=$("calendarMonthCard");
-   if(!upper)return "tabs";
-   const r=upper.getBoundingClientRect();
-   return y<=r.bottom?"month":"tabs";
- }
- if(!content)return;
- content.addEventListener("touchstart",e=>{
-   if(e.touches.length!==1)return;
-   const t=e.touches[0];
-   if(t.clientY<window.innerHeight*.5){tracking=false;swipeMode=null;return;}
-   sx=t.clientX;sy=t.clientY;tracking=true;swipeMode=calendarMode(t.clientY);
- },{passive:true});
- content.addEventListener("touchend",e=>{
-   if(!tracking)return;tracking=false;
-   const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;
-   if(Math.abs(dx)<65||Math.abs(dx)<Math.abs(dy)*1.2)return;
-   if(swipeMode==="month"){
-     if(dx<0)$("nextMonth")?.click();else $("prevMonth")?.click();
-     return;
-   }
-   const cur=ids.findIndex(id=>$(id)?.classList.contains("active"));
-   if(cur<0)return;
-   const next=ids[(cur+(dx<0?1:-1)+ids.length)%ids.length];
-   setMainTab(next);
- },{passive:true});
+ const content=$("content"); if(!content)return;
+ let sx=0,sy=0,tracking=false,mode="tabs";
+ content.addEventListener("touchstart",e=>{if(e.touches.length!==1)return;const t=e.touches[0];if(t.clientY<innerHeight*.5){tracking=false;return}sx=t.clientX;sy=t.clientY;tracking=true;mode="tabs";if($("calendar")?.classList.contains("active")){const r=$("calendarMonthCard")?.getBoundingClientRect();if(r&&t.clientY<=r.bottom)mode="month";}},{passive:true});
+ content.addEventListener("touchend",e=>{if(!tracking)return;tracking=false;const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;if(Math.abs(dx)<65||Math.abs(dx)<Math.abs(dy)*1.2)return;if(mode==="month"){$(dx<0?"nextMonth":"prevMonth")?.click();return}const current=TAB_IDS.find(id=>$(id)?.classList.contains("active"));const cur=TAB_IDS.indexOf(current);if(cur<0)return;setMainTab(TAB_IDS[(cur+(dx<0?1:-1)+TAB_IDS.length)%TAB_IDS.length]);},{passive:true});
 })();
 
 async function findSimilarWorks(){const q=($("query").value||$("work").value||"").trim();if(!q){alert("作品名を入力してください。");return}const c=[...document.querySelectorAll("#similarBox input:checked")].map(x=>x.value);if(!c.length){alert("条件を1つ以上選択してください。");return}$("similarResults").innerHTML="検索中…";try{const base=(await searchGoogle(q)).map(gbook)[0]||{};const terms=[];if(c.includes("story")||c.includes("setting")||c.includes("tone"))terms.push(q);if(c.includes("art")||c.includes("author"))terms.push(base.author||"");if(c.includes("genre"))terms.push(q);let arr=(await searchGoogle([...new Set(terms.filter(Boolean))].join(" "))).map(gbook).filter(x=>norm(x.title)!==norm(base.title));window.similarResultsData=arr;$("similarResults").innerHTML=(arr.length?`<div class="selectbar"><label><input class="check similarAll"> 全選択</label><button onclick="bulkAdd('similarResults')">選択した本を一括登録</button></div>`:"")+arr.map((x,i)=>card(x,true,"similar",i)).join("")||"候補なし";$("similarResults").querySelector(".similarAll")?.addEventListener("change",e=>$("similarResults").querySelectorAll(".selectBook").forEach(x=>x.checked=e.target.checked))}catch(e){$("similarResults").innerHTML=esc(e.message)}}$("similarBtn")?.addEventListener("click",findSimilarWorks);
@@ -509,7 +483,7 @@ loadSettingsUI();render();setMainTab("home");
 </script>
 
 <script id="v450-offline-js">
-/* v4.5.4 offline guard */
+/* v4.5.5 offline guard */
 async function cacheBookCover(b){return b?.cover?.startsWith("data:")?{...b,cachedCover:b.cover}:b}
 window.addBook=async b=>{if(books.some(x=>norm(x.isbn)==norm(b.isbn))){alert("すでに登録されています");return}let x=await cacheBookCover(b);books.push(x);localStorage.setItem(KEY,JSON.stringify(books));render();alert("登録しました")};
 window.addAllFound=async()=>{let arr=window.addResultsData||[],n=0;for(const b of arr){if(!books.some(x=>norm(x.isbn)==norm(b.isbn))){books.push(await cacheBookCover(b));n++}}localStorage.setItem(KEY,JSON.stringify(books));render();alert(n+"冊を登録しました（重複は除外）")};
