@@ -1,4 +1,5 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#111827"><title>本棚スケジュール</title>
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><meta content="#111827" name="theme-color"/><title>本棚スケジュール</title>
 <style id="app-css">
 .runtime-error{position:fixed;left:12px;right:12px;top:72px;z-index:100;display:none;box-sizing:border-box;padding:10px 12px;border-radius:12px;background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;box-shadow:0 4px 16px #0002;font-size:13px;line-height:1.4;max-height:30vh;overflow:auto}
 .runtime-error.show{display:block}
@@ -6,17 +7,17 @@
 *{box-sizing:border-box}body{overflow-x:hidden;margin:0;background:#f5f5f7;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;padding-bottom:72px}header{background:#fff;padding:14px 16px;position:sticky;top:0;z-index:5;border-bottom:1px solid #ddd}main{max-width:800px;margin:auto;padding:12px;touch-action:pan-y;min-height:calc(100vh - 150px)}section{display:block}section[hidden]{display:none!important}section.active{display:block}.card{background:#fff;border-radius:16px;padding:15px;margin:10px 0;box-shadow:0 1px 3px #0001}.muted{font-size:13px;color:#6b7280}.row{display:flex;gap:8px}.row>*{flex:1}input{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:11px;font:inherit}button{font:inherit;padding:11px 13px;border:0;border-radius:11px;background:#111827;color:white;font-weight:700}.secondary{background:#e5e7eb;color:#111827}.clearwrap{position:relative}.clearwrap input{padding-right:42px}.clearbtn{position:absolute;right:5px;top:5px;width:34px;height:34px;padding:0;border-radius:50%;background:#e5e7eb;color:#555;display:none}.book{display:flex;gap:12px}.cover{width:68px;height:96px;object-fit:cover;border-radius:8px;background:#eee}.title{font-weight:800;font-size:16px}.actions{margin-top:8px}nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;display:flex;z-index:10}nav button{flex:1;background:#fff;color:#666;border-radius:0;font-size:13px;padding:10px 3px;min-height:68px}nav button.active{color:#111;font-weight:800;font-size:14px}.monthbar{display:flex;align-items:center;justify-content:space-between}.monthbar button{min-width:42px}.calhead{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;color:#777;font-size:11px;margin-top:12px}.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:5px}.day{min-height:58px;background:#f8f8fa;border:1px solid #eee;border-radius:8px;padding:4px}.day.empty{background:transparent;border:0}.day button{background:transparent;color:#111;padding:0;width:100%;height:100%;text-align:left}.today{border:2px solid #111}.selected{box-shadow:inset 0 0 0 2px #777}.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#111;margin:3px 2px}.selectbar{display:flex;align-items:center;gap:8px;position:sticky;top:58px;background:#fff;padding:8px 0;z-index:2;border-bottom:1px solid #eee}.selectbar button{font-size:12px}.check{width:26px;height:26px}.selectline{display:flex;gap:10px;align-items:flex-start}.selectline .content{flex:1}.event{padding:10px 0;border-top:1px solid #eee}.release{font-weight:800}.error{background:#fee2e2;color:#991b1b;padding:10px;border-radius:10px}.ok{background:#ecfdf5;color:#166534;padding:10px;border-radius:10px}#scanner{display:none;position:fixed;inset:0;background:#000;color:white;z-index:20;padding:16px}#video{width:100%;height:70%;object-fit:cover;margin-top:35px;border-radius:16px}
 .series-group{border:1px solid #e5e7eb;border-radius:14px;margin:10px 0;overflow:hidden}.series-group summary{list-style:none;cursor:pointer;padding:13px 14px;background:rgba(127,127,127,.06);display:flex;justify-content:space-between;align-items:center}.series-group summary::-webkit-details-marker{display:none}.series-books{padding:0 8px}.series-books .card{margin:8px 0}.series-books .card:first-child{margin-top:8px}
 
-/* ===== v4.6.2 consolidated CSS ===== */
+/* ===== v4.7.0 consolidated CSS ===== */
 .similar-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
 .similar-grid label{border:1px solid #ddd;border-radius:12px;padding:10px}
 .similar-grid input{width:24px;height:24px;vertical-align:middle}
 .check{width:26px;height:26px}
 
-/* ===== v4.6.2 consolidated CSS ===== */
+/* ===== v4.7.0 consolidated CSS ===== */
 .clearwrap{display:flex;align-items:center;gap:6px;width:100%;}.clearwrap input,.clearwrap textarea{min-width:0;flex:1 1 auto;}.clearbtn{flex:0 0 42px;min-width:42px;min-height:42px;}#isbn{min-width:0;width:100%;min-height:78px;resize:vertical;line-height:1.45;padding:12px;border:1px solid #d1d5db;border-radius:11px;font:inherit;}#work,#query,#author,#libraryFilter{min-width:0;width:100%;}@media(max-width:600px){#isbn{font-size:16px;}}
 .booktap{cursor:pointer}.detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.detail-actions a,.detail-actions button{min-height:44px}.detail-related{margin-top:18px}.detail-related-item{display:flex;gap:10px;align-items:center;width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;background:inherit;text-align:left}.detail-related-item img{width:48px;height:68px;object-fit:cover}.detail-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);display:none;align-items:flex-end}.detail-sheet{background:var(--bg,#fff);color:var(--text,#222);width:100%;max-width:760px;max-height:90vh;overflow:auto;margin:auto;padding:18px;border-radius:20px 20px 0 0}.detail-head{display:flex;justify-content:space-between;align-items:center}.detail-grid{display:grid;grid-template-columns:120px 1fr;gap:16px;margin-top:12px}.detail-cover{width:120px;max-height:180px;object-fit:contain}.multi-isbn-hint{font-size:12px;opacity:.7;margin-top:5px}.multi-isbn-results{display:grid;gap:8px;margin-top:10px}.multi-isbn-item{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid #ddd;border-radius:10px}.multi-isbn-item img{width:44px;height:62px;object-fit:cover}
 
-/* ===== v4.6.2 consolidated CSS ===== */
+/* ===== v4.7.0 consolidated CSS ===== */
 nav button{transition:.15s;position:relative;border-top:3px solid transparent;color:#6b7280;background:#fff}
 nav button.active{background:#fff;color:#2563eb;border-top-color:#2563eb;transform:none;box-shadow:none;font-weight:800}
 nav button.active::after{display:none}
@@ -30,10 +31,10 @@ nav button.active::after{display:none}
 
 .home-welcome{text-align:left}.home-kicker{font-size:13px;color:#6b7280;margin-bottom:2px}.home-title{font-size:27px;line-height:1.25;margin:0;font-weight:850;letter-spacing:-.02em}.home-date{font-size:14px;color:#6b7280;margin:5px 0 0}.home-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.home-stat{min-width:0;padding:12px 10px;border-radius:14px;border:1px solid transparent}.home-stat.library{background:#eff6ff;border-color:#dbeafe}.home-stat.money{background:#ecfdf5;border-color:#d1fae5}.home-stat.purchase{background:#f5f3ff;border-color:#e9d5ff}.home-stat .label{font-size:11px;color:#6b7280;white-space:nowrap}.home-stat b{display:block;font-size:19px;line-height:1.2;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.home-stat .sub{font-size:10px;color:#6b7280;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.home-stat.purchase b{color:#7c3aed}.home-stat.money b{color:#047857}.home-stat.library b{color:#2563eb}.home-note{margin-top:10px;padding:10px 12px;border-radius:12px;background:#f8fafc;color:#64748b;font-size:12px}.search-mode{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}.search-mode button{background:#f3f4f6;color:#4b5563}.search-mode button.active{background:#111827;color:#fff}.search-panel{display:none}.search-panel.active{display:block}.search-subnav{margin-top:0}.search-subnav .card{margin-top:0}.series-group{box-shadow:0 1px 2px #00000008}.series-group summary{font-size:15px}.series-books .card{box-shadow:none;border:1px solid #eee}.home-more{background:#f3f4f6;color:#111827;width:100%;margin-top:8px}
 
-/* ===== v4.6.2 consolidated CSS ===== */
+/* ===== v4.7.0 consolidated CSS ===== */
 .home-welcome{text-align:left}.home-kicker{font-size:13px;color:#6b7280;margin-bottom:2px}.home-title{font-size:27px;line-height:1.25;margin:0;font-weight:850;letter-spacing:-.02em}.home-date{font-size:14px;color:#6b7280;margin:5px 0 0}.home-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.home-stat{min-width:0;padding:12px 10px;border-radius:14px;border:1px solid transparent}.home-stat.library{background:#eff6ff;border-color:#dbeafe}.home-stat.money{background:#ecfdf5;border-color:#d1fae5}.home-stat.purchase{background:#f5f3ff;border-color:#e9d5ff}.home-stat .label{font-size:11px;color:#6b7280;white-space:nowrap}.home-stat b{display:block;font-size:19px;line-height:1.2;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.home-stat .sub{font-size:10px;color:#6b7280;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.home-stat.purchase b{color:#7c3aed}.home-stat.money b{color:#047857}.home-stat.library b{color:#2563eb}.home-note{margin-top:10px;padding:10px 12px;border-radius:12px;background:#f8fafc;color:#64748b;font-size:12px}.search-mode{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}.search-mode button{background:#f3f4f6;color:#4b5563}.search-mode button.active{background:#111827;color:#fff}.search-panel{display:none}.search-panel.active{display:block}.search-subnav{margin-top:0}.search-subnav .card{margin-top:0}.series-group{box-shadow:0 1px 2px #00000008}.series-group summary{font-size:15px}.series-books .card{box-shadow:none;border:1px solid #eee}.home-more{background:#f3f4f6;color:#111827;width:100%;margin-top:8px}
 
-/* ===== v4.6.2 consolidated CSS ===== */
+/* ===== v4.7.0 consolidated CSS ===== */
 :root{--primary:#2563eb;--primary-soft:#eff6ff;--border:#dbeafe;--text:#111827;--muted:#64748b;--library:#111827;--related:#2563eb;--recommended:#16a34a;--danger:#dc2626}
 button{background:var(--primary)}button.secondary{background:#f1f5f9;color:#334155;border:1px solid #e2e8f0}
 #deleteSelected{background:#dc2626}.today-btn{color:var(--primary)!important;background:#eff6ff!important;border-color:#bfdbfe!important}
@@ -47,7 +48,7 @@ button{background:var(--primary)}button.secondary{background:#f1f5f9;color:#3341
 #scan,#isbnSearch,#workSearch,#searchBtn,#authorBtn,#authorNewBtn,#similarBtn{background:var(--primary)}
 #seriesCheckBtn{color:#166534;background:#ecfdf5;border-color:#bbf7d0}.ok{background:#ecfdf5;color:#166534}.error{background:#fef2f2;color:#b91c1c}
 
-/* ===== v4.6.2 consolidated CSS ===== */
+/* ===== v4.7.0 consolidated CSS ===== */
 :root{--primary:#2563eb;--navy:#172554;--bg:#f6f8fc;--surface:#fff;--muted:#64748b;--soft-blue:#eff6ff;--soft-green:#ecfdf5;--soft-purple:#f5f3ff}
 body{background:var(--bg);color:#172033;font-size:15px}header{background:rgba(255,255,255,.97);padding:12px 16px 11px;border-bottom:1px solid #e5eaf2;box-shadow:0 1px 5px rgba(15,23,42,.04)}header b{color:var(--navy);font-size:15px}header .muted{margin-top:2px;color:#7b8798;font-size:11px}main{padding:10px 12px 18px;max-width:760px}.card{background:var(--surface);border:1px solid #e6ebf3;border-radius:16px;padding:14px;margin:9px 0;box-shadow:0 2px 8px rgba(30,41,59,.045)}button{background:var(--primary);border-radius:12px;min-height:42px;box-shadow:0 2px 5px rgba(37,99,235,.14)}button:active{transform:scale(.985)}button.secondary{background:#fff;color:#334155;border:1px solid #cbd8e8;box-shadow:none}input,textarea,select{background:#fff;border:1px solid #cbd5e1;color:#172033;border-radius:11px}input:focus,textarea:focus,select:focus{outline:none;border-color:#93c5fd;box-shadow:0 0 0 3px rgba(37,99,235,.10)}.muted{color:var(--muted)}.book .cover{width:68px;height:96px;border-radius:7px;box-shadow:0 1px 4px rgba(15,23,42,.12)}.title{color:#172033}.owned-badge{background:#dcfce7;color:#15803d}.unowned-badge{background:#f1f5f9;color:#64748b}
 nav{background:rgba(255,255,255,.98);border-top:1px solid #dfe6ef;box-shadow:0 -2px 10px rgba(15,23,42,.04);padding-bottom:env(safe-area-inset-bottom)}nav button{background:transparent;color:#64748b;border-top:3px solid transparent;box-shadow:none;min-height:62px;padding:8px 2px 7px;font-size:11px;line-height:1.25}nav button.active{color:var(--primary);border-top-color:var(--primary);font-size:12px;font-weight:800}
@@ -58,7 +59,7 @@ nav{background:rgba(255,255,255,.98);border-top:1px solid #dfe6ef;box-shadow:0 -
 .home-upcoming-card{padding:13px 12px 12px}.home-upcoming-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:9px}.home-upcoming-head b{font-size:15px;color:#172033}.home-link-btn{background:transparent;color:var(--primary);box-shadow:none;border:0;min-height:auto;padding:2px 0;font-size:12px;white-space:nowrap}.home-upcoming-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.home-upcoming-item{min-width:0;text-align:left}.home-upcoming-cover{width:100%;aspect-ratio:2/2.8;object-fit:cover;border-radius:8px;background:#eef2f7;box-shadow:0 1px 4px rgba(15,23,42,.12)}.home-upcoming-title{font-size:11px;font-weight:800;line-height:1.3;margin-top:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.home-upcoming-date{font-size:10px;color:#64748b;margin-top:3px}.home-upcoming-badge{display:inline-block;margin-top:4px;font-size:9px;padding:2px 5px;border-radius:999px;background:#dcfce7;color:#15803d}.home-upcoming-empty{grid-column:1/-1;padding:16px 8px;text-align:center;background:#f8fafc;border-radius:11px;color:#64748b;font-size:12px}.selectbar{background:#fff;border-bottom-color:#e5eaf2}
 @media(max-width:600px){.home-stat b{font-size:17px}.home-upcoming-grid{gap:7px}}
 
-/* ===== v4.6.2 consolidated CSS ===== */
+/* ===== v4.7.0 consolidated CSS ===== */
 :root{--app-font:15px;--theme-primary:#2563eb;--theme-bg:#f6f8fc;--theme-surface:#fff;--theme-text:#172033;--theme-muted:#64748b}
 body{font-size:var(--app-font);background:var(--theme-bg);color:var(--theme-text)}
 button,input,textarea,select{font-size:var(--app-font)}
@@ -74,7 +75,7 @@ body.font-small{--app-font:13px}body.font-medium{--app-font:15px}body.font-large
 body.font-small .title{font-size:15px}body.font-large .title{font-size:17px}body.font-large .home-title{font-size:26px}.font-large .home-stat b{font-size:18px}
 @media(max-width:390px){nav button{font-size:10px!important;padding-left:1px;padding-right:1px}.theme-choice,.font-choice{padding-left:6px;padding-right:6px}.home-stat .label{font-size:9px}.home-stat b{font-size:16px}}
 
-/* ===== v4.6.2 consolidated CSS ===== */
+/* ===== v4.7.0 consolidated CSS ===== */
 :root{--app-text:#172033;--bg-overlay:transparent;--app-bg-image:none}
 body{background-color:var(--bg)!important;background-image:linear-gradient(var(--bg-overlay),var(--bg-overlay)),var(--app-bg-image)!important;background-size:cover;background-position:center;background-attachment:fixed;color:var(--app-text)!important}
 body>header,body .card,body .series-group,body .settings-card{color:var(--app-text)}
@@ -93,8 +94,8 @@ input,textarea,select{background:var(--surface)!important;color:var(--app-text)!
 .offline-note{padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--primary) 8%,var(--surface));color:var(--app-text);font-size:.9em}.backup-row{display:flex;gap:8px;flex-wrap:wrap}.backup-row button{flex:1 1 140px}.toggle-row{display:flex!important;align-items:center;gap:8px;padding:10px;border:1px solid color-mix(in srgb,var(--app-text) 12%,transparent);border-radius:12px;color:var(--app-text)!important}.toggle-row input{width:22px;height:22px;flex:0 0 auto}
 body.theme-dark .home-stat{background:color-mix(in srgb,var(--primary) 12%,var(--surface))!important}body.theme-dark .home-welcome{background:var(--surface)!important}body.theme-dark .error{background:#3b1f24!important;color:#fecaca!important}body.theme-dark .ok{background:#153b28!important;color:#bbf7d0!important}
 
-/* ===== v4.6.2 consolidated CSS ===== */
-/* v4.6.2 visual fixes */
+/* ===== v4.7.0 consolidated CSS ===== */
+/* v4.7.0 visual fixes */
 :root{--font-scale:1;--control-bg:#f1f5f9;--control-text:#334155;--control-border:#dbe4ef}
 body.font-small{--font-scale:.88}
 body.font-medium{--font-scale:1}
@@ -166,56 +167,195 @@ body{background-repeat:no-repeat!important}
 #calendarMonthCard{touch-action:pan-y}
 #calendarMonthCard button,#calendarGrid button{touch-action:manipulation}
 
-/* ===== v4.6.2 library sort responsive fix ===== */
-.library-filterbar{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:stretch}
-.library-filterbar>button{min-width:0;width:100%;box-sizing:border-box}
-.library-filterbar .library-sort{grid-column:1 / -1;display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:8px;min-width:0;width:100%;margin-top:0!important}
-.library-filterbar .library-sort .muted{white-space:nowrap}
-.library-filterbar .library-sort select{min-width:0;width:100%;box-sizing:border-box}
-@media(max-width:600px){.library-filterbar{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.library-filterbar .library-sort{grid-template-columns:auto minmax(0,1fr)}}
+/* ===== v4.7.0 library controls visual refinement ===== */
+.library-filterbar{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:stretch;margin-top:10px}
+.library-filterbar>button{min-width:0;width:100%;box-sizing:border-box;min-height:44px;padding:8px 10px;background:var(--surface)!important;color:var(--app-text)!important;border:1px solid #dbe4ef!important;box-shadow:0 1px 3px rgba(15,23,42,.05)!important;font-weight:750}
+.library-filterbar>button:active{background:#f8fbff!important}
+.library-filterbar .library-sort{grid-column:1 / -1;display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:8px;min-width:0;width:100%;margin-top:0!important;padding:0}
+.library-filterbar .library-sort .muted{white-space:nowrap;font-size:13px!important;font-weight:700;color:var(--app-text)!important}
+.library-filterbar .library-sort select{min-width:0;width:100%;height:44px;box-sizing:border-box;padding:8px 36px 8px 12px;background:var(--surface);border:1px solid #cbd8e8;border-radius:12px;color:var(--app-text);font:inherit;font-weight:650}
+.library-filter-panel{margin-top:8px;padding-top:8px;border-top:1px solid #edf1f6}
+.library-filter-panel .filter-grid{gap:7px}
+.library-filter-panel select{min-width:0;width:100%;height:40px;padding:7px 30px 7px 10px;border-radius:11px;font-size:14px!important}
+@media(max-width:600px){.library-filterbar{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.library-filterbar .library-sort{grid-template-columns:56px minmax(0,1fr);gap:7px}.library-filterbar .library-sort select{height:44px}.library-filter-panel .filter-grid{grid-template-columns:1fr 1fr}}
+@media(min-width:601px){.library-filterbar .library-sort{max-width:520px}}
+
+/* ===== v4.7.0 unified UI / responsive polish ===== */
+:root{
+  --primary:#2563eb;--bg:#f6f8fc;--surface:#fff;--app-text:#172033;--theme-muted:#64748b;
+  --line:#dfe7f1;--soft:#f4f7fb;--soft-primary:#eef4ff;--radius:14px;
+}
+html{background:var(--bg);-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;min-width:0;overflow-x:hidden;background:var(--bg);color:var(--app-text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;line-height:1.45;padding-bottom:calc(74px + env(safe-area-inset-bottom));}
+header{padding:13px 16px 12px;background:var(--surface);border-bottom:1px solid var(--line);box-shadow:0 1px 6px rgba(15,23,42,.05);}
+header b{display:block;color:var(--app-text);font-size:17px!important;line-height:1.25;letter-spacing:-.01em}
+header .muted{margin-top:3px;font-size:12px!important;line-height:1.3}
+main#content{width:100%;max-width:760px;margin:0 auto;padding:12px 12px 22px;min-height:calc(100vh - 145px);}
+section{min-width:0}
+.card{margin:10px 0;padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 2px 10px rgba(15,23,42,.045);}
+.card>h3{margin:0 0 7px;font-size:19px;line-height:1.3}
+.card>p{margin:6px 0;color:var(--theme-muted)}
+button,input,textarea,select{font-family:inherit;-webkit-appearance:none;appearance:none}
+button{min-height:44px;padding:9px 13px;border-radius:12px;border:1px solid transparent;background:var(--primary);color:#fff;font-weight:750;line-height:1.25;box-shadow:0 2px 5px rgba(37,99,235,.14);touch-action:manipulation;}
+button:active{transform:scale(.985)}
+button.secondary{background:var(--surface)!important;color:var(--app-text)!important;border:1px solid #cbd7e6!important;box-shadow:none!important}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid color-mix(in srgb,var(--primary) 22%,transparent);outline-offset:1px}
+input,textarea,select{width:100%;min-width:0;min-height:44px;padding:10px 12px;background:var(--surface)!important;color:var(--app-text)!important;border:1px solid #cbd5e1;border-radius:12px;font-size:16px!important;line-height:1.35;}
+textarea{resize:vertical}
+select{padding-right:34px;background-image:linear-gradient(45deg,transparent 50%,var(--app-text) 50%),linear-gradient(135deg,var(--app-text) 50%,transparent 50%);background-position:calc(100% - 17px) 18px,calc(100% - 12px) 18px;background-size:5px 5px,5px 5px;background-repeat:no-repeat;}
+.muted{color:var(--theme-muted)!important}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:stretch;}
+.row>*{min-width:0}
+.clearwrap{display:flex;align-items:center;gap:6px;min-width:0;width:100%}
+.clearwrap input,.clearwrap textarea{flex:1 1 auto;min-width:0}
+.clearbtn{flex:0 0 36px!important;width:36px!important;min-width:36px!important;height:36px!important;min-height:36px!important;padding:0!important;border-radius:999px!important;background:#eef2f7!important;color:#475569!important;border:0!important;box-shadow:none!important;font-size:20px!important;line-height:1}
+/* Home */
+.home-welcome{padding:18px 16px 15px;background:linear-gradient(180deg,var(--surface),color-mix(in srgb,var(--surface) 92%,var(--primary) 8%));}
+.home-kicker{font-size:12px!important;color:var(--theme-muted)!important;margin:0 0 3px}
+.home-title{font-size:25px!important;line-height:1.28;color:var(--app-text)!important}
+.home-date{font-size:13px!important;margin-top:4px}
+.home-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}
+.home-stat{min-width:0;padding:12px 10px;border-radius:13px;border:1px solid var(--line);box-shadow:0 1px 4px rgba(15,23,42,.035)}
+.home-stat .label{font-size:10px!important}.home-stat b{font-size:18px!important}.home-stat .sub{font-size:9px!important}
+.home-upcoming-card{padding:14px 13px}.home-upcoming-head{margin-bottom:10px}.home-upcoming-head b{font-size:15px!important}.home-upcoming-grid{gap:8px}
+.home-link-btn{min-height:36px!important;padding:4px 2px!important;background:transparent!important;color:var(--primary)!important;border:0!important;box-shadow:none!important}
+/* Add */
+#add .card>hr{border:0;border-top:1px solid var(--line);margin:16px 0}
+#add .card>.row:first-of-type{grid-template-columns:minmax(0,1fr) 96px}
+#add #isbn{min-height:94px;line-height:1.45}
+#add #scan{width:100%;height:100%;}
+#add .card>.row:nth-of-type(2){grid-template-columns:minmax(0,1fr) 112px}
+#add .isbn-help,#add .multi-isbn-hint{font-size:12px!important;color:var(--theme-muted);margin:6px 0}
+#isbnSearch,#workSearch{width:100%;margin-top:9px}
+/* Library */
+.library-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:13px 0}
+.statbox{min-width:0;padding:13px;border-radius:13px;border:1px solid var(--line);background:var(--soft)}
+.statbox b{font-size:20px;line-height:1.25;margin-top:3px}
+.library-idea-row{margin:10px 0 8px}.library-idea-row button{width:100%}
+.library-filterbar{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;margin-top:10px!important;align-items:stretch!important}
+.library-filterbar>button{width:100%;min-width:0;min-height:44px!important;padding:9px 10px!important;white-space:nowrap}
+.library-sort{grid-column:1/-1!important;display:grid!important;grid-template-columns:56px minmax(0,1fr)!important;gap:8px!important;align-items:center!important;margin:0!important;min-width:0!important}
+.library-sort .muted{white-space:nowrap;font-size:13px!important;font-weight:750;color:var(--app-text)!important}
+.library-sort select{height:44px!important;min-height:44px!important;padding:8px 34px 8px 12px!important;font-weight:650}
+.library-filter-panel{margin-top:10px!important;padding:11px 0 0!important;border-top:1px solid var(--line)!important}
+.library-filter-panel .filter-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px!important}
+.library-filter-panel select{height:42px!important;min-height:42px!important;padding:7px 30px 7px 10px!important;font-size:15px!important}
+.filter-summary{margin-top:9px;font-size:13px;color:var(--theme-muted)}
+#filterReset{width:100%;margin-top:9px!important}
+.selectbar{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:9px 0!important;position:static!important;background:transparent!important;border-bottom:1px solid var(--line)!important}
+.selectbar label{display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:13px}
+.selectbar button{min-height:40px!important;font-size:13px!important;flex:1 1 130px}
+.check{width:22px!important;height:22px!important;min-width:22px!important;min-height:22px!important;accent-color:var(--primary)}
+.series-group{margin:10px 0;border:1px solid var(--line)!important;border-radius:14px!important;background:var(--surface)!important;overflow:hidden;box-shadow:0 2px 7px rgba(15,23,42,.035)!important}
+.series-group summary{padding:13px 14px!important;background:color-mix(in srgb,var(--surface) 94%,var(--primary) 6%)!important}
+.series-books{padding:0 8px 7px!important;background:var(--surface)!important}
+.series-books .card{margin:8px 0!important;box-shadow:none!important}
+/* Search */
+.search-mode{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px!important;margin:0 0 10px!important;padding:3px!important;background:color-mix(in srgb,var(--primary) 7%,var(--surface))!important;border:1px solid var(--line)!important;border-radius:13px!important}
+.search-mode button{min-height:42px!important;background:transparent!important;color:var(--theme-muted)!important;border:0!important;box-shadow:none!important}
+.search-mode button.active{background:var(--surface)!important;color:var(--primary)!important;box-shadow:0 1px 5px rgba(15,23,42,.1)!important}
+.search-panel .card{margin-top:0}
+.search-panel .row{grid-template-columns:minmax(0,1fr) 86px}
+.search-idea-row{margin-top:9px;padding:9px 10px;border:1px solid var(--line);border-radius:12px;background:var(--soft)}
+.search-idea-row label{display:flex;align-items:center;gap:7px;font-size:13px!important}
+.search-idea-row input{width:21px!important;height:21px!important;min-height:21px!important;accent-color:var(--primary)}
+.similar-grid{gap:7px!important}.similar-grid label{padding:10px!important;border-color:var(--line)!important;background:var(--soft);border-radius:12px}
+.similar-grid input{width:21px!important;height:21px!important;min-height:21px!important;accent-color:var(--primary)}
+#similarBtn{width:100%;margin-top:4px}
+/* Settings */
+.settings-card{background:linear-gradient(180deg,var(--surface),color-mix(in srgb,var(--surface) 96%,var(--primary) 4%))}
+.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px!important}
+.settings-grid label,.skin-grid label{font-size:13px!important;font-weight:700;color:var(--app-text)!important;min-width:0}
+.settings-grid label>input,.settings-grid label>textarea,.settings-grid label>select,.skin-grid label>input{margin-top:5px}
+.theme-grid,.font-size-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px!important}
+.theme-choice,.font-choice{min-height:44px!important;background:var(--soft)!important;color:var(--app-text)!important;border:1px solid var(--line)!important;box-shadow:none!important}
+.theme-choice.active,.font-choice.active{background:var(--primary)!important;color:#fff!important;border-color:var(--primary)!important;box-shadow:0 2px 5px rgba(37,99,235,.18)!important}
+.current-setting{margin-top:8px!important;padding:8px 10px!important;border-radius:10px!important;background:color-mix(in srgb,var(--primary) 9%,var(--surface))!important;color:var(--primary)!important;font-size:13px!important}
+.skin-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px!important}.skin-grid input[type=color]{height:44px!important;padding:3px!important}
+.toggle-row{display:flex!important;align-items:center;gap:8px;padding:10px!important;margin-top:7px;border:1px solid var(--line);border-radius:12px;background:var(--soft)}
+.toggle-row input{width:21px!important;height:21px!important;min-height:21px!important;flex:0 0 auto;accent-color:var(--primary)}
+.backup-row{display:grid!important;grid-template-columns:1fr 1fr;gap:8px!important}.backup-row button{min-width:0}
+/* Calendar */
+#calendarMonthCard{touch-action:pan-y}
+.monthbar{display:grid!important;grid-template-columns:44px 64px minmax(0,1fr) 44px;gap:8px!important;align-items:center}
+.monthbar button{width:44px!important;min-width:44px!important;height:44px!important;padding:0!important}.monthbar b{text-align:center;font-size:18px!important;white-space:nowrap}
+.today-btn{color:var(--primary)!important;background:color-mix(in srgb,var(--primary) 8%,var(--surface))!important;border-color:color-mix(in srgb,var(--primary) 28%,var(--line))!important}
+.calhead{margin-top:13px!important;font-size:12px!important}.calgrid{gap:5px!important;margin-top:6px!important}
+.day{min-height:62px!important;background:var(--surface)!important;border:1px solid var(--line)!important;border-radius:10px!important;padding:5px!important}.day button{min-height:50px!important;font-weight:700!important}
+.day.today{border:2px solid var(--primary)!important}.day.selected{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--primary) 55%,transparent)!important}
+.event-legend{gap:12px!important;margin-top:10px!important;font-size:12px!important}.calendar-filters{display:flex!important;align-items:center;gap:10px!important;padding:10px!important;margin-top:10px!important;border:1px solid var(--line)!important;border-radius:12px!important;background:color-mix(in srgb,var(--primary) 4%,var(--surface))!important}.calendar-filters label{display:flex;align-items:center;gap:4px;white-space:nowrap}.calendar-filters input{width:20px!important;height:20px!important;min-height:20px!important;accent-color:var(--primary)}
+#ics{width:100%;margin-top:12px!important}
+/* Bottom navigation */
+#bottomNav{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;background:var(--primary)!important;border-top:0!important;padding:0 0 env(safe-area-inset-bottom)!important;box-shadow:0 -3px 12px rgba(15,23,42,.10)!important}
+#bottomNav button{flex:1;min-width:0;min-height:62px!important;padding:7px 2px 6px!important;background:transparent!important;color:#fff!important;border:0!important;border-radius:0!important;box-shadow:none!important;font-size:11px!important;line-height:1.2!important}
+#bottomNav button.active{background:var(--surface)!important;color:var(--primary)!important;border-top:0!important;font-weight:800!important}
+/* Details / overlays */
+.detail-sheet{background:var(--surface,#fff)!important;color:var(--app-text)!important}.detail-grid{grid-template-columns:100px minmax(0,1fr)!important}.detail-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px!important}.detail-actions a,.detail-actions button{min-height:44px!important;width:100%;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center}
+/* Runtime error must never change document flow */
+.runtime-error{position:fixed!important;left:12px!important;right:12px!important;top:72px!important;z-index:100!important;max-height:30vh!important;overflow:auto!important;box-sizing:border-box!important}
+/* Theme roles */
+body.theme-dark{--bg:#111827;--surface:#1f2937;--app-text:#f8fafc;--theme-muted:#aab7c8;--line:#374151;--soft:#273449}
+body.theme-dark .home-welcome{background:var(--surface)!important}body.theme-dark .home-stat{background:color-mix(in srgb,var(--primary) 12%,var(--surface))!important}
+body.theme-dark .selectbar{border-bottom-color:#374151!important}body.theme-dark .series-group{border-color:#374151!important}
+body.custom-skin{background:var(--theme-bg,var(--bg));color:var(--app-text)}body.custom-skin .card,body.custom-skin header{background:var(--theme-surface,var(--surface));color:var(--app-text)}
+/* Font size choices: controls stay at 16px to avoid Safari zoom; surrounding text scales. */
+body.font-small{--font-scale:.92}body.font-medium{--font-scale:1}body.font-large{--font-scale:1.08}
+body.font-small #content{font-size:calc(15px * var(--font-scale))}body.font-medium #content{font-size:15px}body.font-large #content{font-size:calc(15px * var(--font-scale))}
+body.font-large .card>h3{font-size:20px}.font-large .home-title{font-size:27px!important}
+@media(max-width:600px){
+  main#content{padding-left:10px;padding-right:10px}
+  .settings-grid{grid-template-columns:1fr}
+  .detail-actions{grid-template-columns:1fr}
+}
+@media(max-width:390px){
+  .home-stats{gap:6px}.home-stat{padding:10px 7px}.home-stat b{font-size:16px!important}
+  .library-filterbar{gap:6px!important}.library-sort{grid-template-columns:52px minmax(0,1fr)!important}
+  .library-filter-panel .filter-grid{gap:6px!important}.calendar-filters{gap:7px!important}
+  #bottomNav button{font-size:10px!important}
+}
 </style>
 </head><body>
-<header><b id="appHeaderTitle">📚 本棚スケジュール</b><div id="appHeaderSub" class="muted">複数ISBN・詳細/関連検索・発売日カレンダー対応</div></header>
+<header><b id="appHeaderTitle">📚 本棚スケジュール</b><div class="muted" id="appHeaderSub">複数ISBN・詳細/関連検索・発売日カレンダー対応</div></header>
 <main id="content">
-<section id="home" class="active">
-<div class="card home-welcome"><div class="home-kicker">📚 本棚スケジュール</div><div class="home-title"><span id="homeWelcome">おかえりなさい</span></div><div id="homeDate" class="home-date"></div><div class="home-stats"><div class="home-stat library"><div class="label">蔵書</div><b id="homeBookCount">0冊</b><div class="sub">登録済み</div></div><div class="home-stat money"><div class="label">蔵書総額</div><b id="homeBookTotal">未登録</b><div id="homeBookTotalSub" class="sub">価格データを登録すると集計</div></div><div class="home-stat purchase"><div class="label">今月の残購入予定</div><b id="homePurchaseCount">0冊</b><div id="homePurchaseSub" class="sub">今日以降の予定</div></div></div></div><div class="home-upcoming-card card"><div class="home-upcoming-head"><div><b>🔥 近日発売の注目書籍</b><div class="muted">これから発売される本をチェック</div></div><button id="homeUpcomingMore" class="home-link-btn" type="button">すべて見る</button></div><div id="homeUpcomingBooks" class="home-upcoming-grid"></div></div>
+<section class="active" id="home">
+<div class="card home-welcome"><div class="home-kicker">📚 本棚スケジュール</div><div class="home-title"><span id="homeWelcome">おかえりなさい</span></div><div class="home-date" id="homeDate"></div><div class="home-stats"><div class="home-stat library"><div class="label">蔵書</div><b id="homeBookCount">0冊</b><div class="sub">登録済み</div></div><div class="home-stat money"><div class="label">蔵書総額</div><b id="homeBookTotal">未登録</b><div class="sub" id="homeBookTotalSub">価格データを登録すると集計</div></div><div class="home-stat purchase"><div class="label">今月の残購入予定</div><b id="homePurchaseCount">0冊</b><div class="sub" id="homePurchaseSub">今日以降の予定</div></div></div></div><div class="home-upcoming-card card"><div class="home-upcoming-head"><div><b>🔥 近日発売の注目書籍</b><div class="muted">これから発売される本をチェック</div></div><button class="home-link-btn" id="homeUpcomingMore" type="button">すべて見る</button></div><div class="home-upcoming-grid" id="homeUpcomingBooks"></div></div>
 </section>
-<section id="add" hidden><div class="card"><b>➕ 本を追加</b><p class="muted">ISBN-10/13、ハイフン、全角数字に対応。</p>
+<section hidden="" id="add"><div class="card"><b>➕ 本を追加</b><p class="muted">ISBN-10/13、ハイフン、全角数字に対応。</p>
 <div class="row"><div class="clearwrap"><textarea id="isbn" placeholder="ISBNを入力
 例）9784098610403
 複数冊は改行・空白・カンマ区切りで入力できます"></textarea><button class="clearbtn" data-clear="isbn">×</button></div><button id="scan">📷 スキャン</button></div><div class="multi-isbn-hint">📚 複数冊対応：手入力でも改行・スペース・カンマで区切れます。スキャンでも読み取るたび自動で改行して追加します（最大30冊）。</div><button id="isbnSearch" style="width:100%;margin-top:8px">ISBNをまとめて検索</button>
-<hr><div class="row"><div class="clearwrap"><input id="work" placeholder="作品タイトル"><button class="clearbtn" data-clear="work">×</button></div><div class="clearwrap"><input id="vol" inputmode="numeric" placeholder="巻数（未入力＝全巻検索）"><button class="clearbtn" data-clear="vol">×</button></div></div><p class="isbn-help">巻数を入力しない場合は、その作品の全巻を検索します。</p><button id="workSearch" style="width:100%;margin-top:8px">作品＋巻数から検索</button><div id="addResults"></div></div></section>
-<section id="library" hidden><div class="card"><b>📚 蔵書</b><p class="muted">作品名・作家名・ISBNで部分一致検索。</p><div id="libraryStats" class="library-stats"></div><div class="library-idea-row"><button id="seriesCheckBtn" class="secondary">📚 シリーズ・巻抜けチェック</button></div><div id="seriesCheckResults" class="muted"></div><div class="clearwrap"><input id="libraryFilter" placeholder="作品名 / 作家名 / ISBN"><button class="clearbtn" data-clear="libraryFilter">×</button></div><div class="library-filterbar"><button id="libraryFilterToggle" class="secondary">⚙️ 絞り込み</button><button id="seriesViewToggle" class="secondary">📚 シリーズ表示</button><div class="library-sort" style="flex:2"><span class="muted">並び順</span><select id="librarySort"><option value="registered-desc">登録が新しい順</option><option value="registered-asc">登録が古い順</option><option value="title-asc">タイトル順</option><option value="author-asc">作者順</option><option value="publisher-asc">出版社順</option><option value="volume-asc">巻数の小さい順</option><option value="volume-desc">巻数の大きい順</option><option value="release-asc">発売日が早い順</option><option value="release-desc">発売日が新しい順</option></select></div></div><div id="libraryFilterPanel" class="library-filter-panel"><div class="filter-grid"><select id="filterAuthor"><option value="">作者：すべて</option></select><select id="filterPublisher"><option value="">出版社：すべて</option></select><select id="filterYear"><option value="">発売年：すべて</option></select><select id="filterRelease"><option value="">発売日：すべて</option><option value="known">発売日あり</option><option value="unknown">発売日不明</option></select></div><div class="filter-summary" id="filterSummary">絞り込みなし</div><button id="filterReset" class="secondary" style="margin-top:8px;width:100%">フィルターをリセット</button></div><div id="myBooks"></div></div></section>
-<section id="search" hidden>
-<div class="search-mode"><button id="searchModeBook" class="active">🔎 本を探す</button><button id="searchModeAuthor">✍️ 作家を探す</button></div>
-<div id="bookSearchPanel" class="search-panel active">
-<div class="card"><b>🔎 書籍検索</b><div class="row"><div class="clearwrap"><input id="query" placeholder="作品名 / ISBN / 作家名"><button class="clearbtn" data-clear="query">×</button></div><button id="searchBtn">検索</button></div><div class="search-idea-row"><label><input type="checkbox" id="searchUnownedOnly"> 未登録の本だけ表示</label></div></div>
+<hr/><div class="row"><div class="clearwrap"><input id="work" placeholder="作品タイトル"/><button class="clearbtn" data-clear="work">×</button></div><div class="clearwrap"><input id="vol" inputmode="numeric" placeholder="巻数（未入力＝全巻検索）"/><button class="clearbtn" data-clear="vol">×</button></div></div><p class="isbn-help">巻数を入力しない場合は、その作品の全巻を検索します。</p><button id="workSearch" style="width:100%;margin-top:8px">作品＋巻数から検索</button><div id="addResults"></div></div></section>
+<section hidden="" id="library"><div class="card"><b>📚 蔵書</b><p class="muted">作品名・作家名・ISBNで部分一致検索。</p><div class="library-stats" id="libraryStats"></div><div class="library-idea-row"><button class="secondary" id="seriesCheckBtn">📚 シリーズ・巻抜けチェック</button></div><div class="muted" id="seriesCheckResults"></div><div class="clearwrap"><input id="libraryFilter" placeholder="作品名 / 作家名 / ISBN"/><button class="clearbtn" data-clear="libraryFilter">×</button></div><div class="library-filterbar"><button class="secondary" id="libraryFilterToggle">⚙️ 絞り込み</button><button class="secondary" id="seriesViewToggle">📚 シリーズ表示</button><div class="library-sort"><span class="muted">並び順</span><select id="librarySort"><option value="registered-desc">登録が新しい順</option><option value="registered-asc">登録が古い順</option><option value="title-asc">タイトル順</option><option value="author-asc">作者順</option><option value="publisher-asc">出版社順</option><option value="volume-asc">巻数の小さい順</option><option value="volume-desc">巻数の大きい順</option><option value="release-asc">発売日が早い順</option><option value="release-desc">発売日が新しい順</option></select></div></div><div class="library-filter-panel" id="libraryFilterPanel"><div class="filter-grid"><select id="filterAuthor"><option value="">作者：すべて</option></select><select id="filterPublisher"><option value="">出版社：すべて</option></select><select id="filterYear"><option value="">発売年：すべて</option></select><select id="filterRelease"><option value="">発売日：すべて</option><option value="known">発売日あり</option><option value="unknown">発売日不明</option></select></div><div class="filter-summary" id="filterSummary">絞り込みなし</div><button class="secondary" id="filterReset" style="margin-top:8px;width:100%">フィルターをリセット</button></div><div id="myBooks"></div></div></section>
+<section hidden="" id="search">
+<div class="search-mode"><button class="active" id="searchModeBook">🔎 本を探す</button><button id="searchModeAuthor">✍️ 作家を探す</button></div>
+<div class="search-panel active" id="bookSearchPanel">
+<div class="card"><b>🔎 書籍検索</b><div class="row"><div class="clearwrap"><input id="query" placeholder="作品名 / ISBN / 作家名"/><button class="clearbtn" data-clear="query">×</button></div><button id="searchBtn">検索</button></div><div class="search-idea-row"><label><input id="searchUnownedOnly" type="checkbox"/> 未登録の本だけ表示</label></div></div>
 <div id="searchResults"></div><div class="card" id="similarBox">
 <h3>🔎 類似作品を探す</h3>
 <p class="muted">絵・ストーリーなど、条件を選んで類似作品を探します。</p>
 <div class="similar-grid">
-<label><input type="checkbox" value="art" checked> 🎨 絵・作画</label>
-<label><input type="checkbox" value="story" checked> 📖 ストーリー</label>
-<label><input type="checkbox" value="genre"> 🏷 ジャンル</label>
-<label><input type="checkbox" value="author"> ✍️ 作家・作風</label>
-<label><input type="checkbox" value="setting"> 🌍 舞台・世界観</label>
-<label><input type="checkbox" value="tone"> 🎭 雰囲気</label>
+<label><input checked="" type="checkbox" value="art"/> 🎨 絵・作画</label>
+<label><input checked="" type="checkbox" value="story"/> 📖 ストーリー</label>
+<label><input type="checkbox" value="genre"/> 🏷 ジャンル</label>
+<label><input type="checkbox" value="author"/> ✍️ 作家・作風</label>
+<label><input type="checkbox" value="setting"/> 🌍 舞台・世界観</label>
+<label><input type="checkbox" value="tone"/> 🎭 雰囲気</label>
 </div>
 <button id="similarBtn" style="width:100%">選択条件で類似作品を検索</button>
 <div id="similarResults"></div>
 </div></div>
-<div id="authorSearchPanel" class="search-panel">
-<div class="card"><b>✍️ 作家検索</b><p class="muted">作家名から作品を探したり、新刊をチェックできます。</p><div class="row"><div class="clearwrap"><input id="author" placeholder="作家名"><button class="clearbtn" data-clear="author">×</button></div><button id="authorBtn">検索</button></div><button id="authorNewBtn" class="secondary" style="width:100%;margin-top:8px">🆕 この作家の新刊をチェック</button></div><div id="authorResults"></div>
+<div class="search-panel" id="authorSearchPanel">
+<div class="card"><b>✍️ 作家検索</b><p class="muted">作家名から作品を探したり、新刊をチェックできます。</p><div class="row"><div class="clearwrap"><input id="author" placeholder="作家名"/><button class="clearbtn" data-clear="author">×</button></div><button id="authorBtn">検索</button></div><button class="secondary" id="authorNewBtn" style="width:100%;margin-top:8px">🆕 この作家の新刊をチェック</button></div><div id="authorResults"></div>
 </div>
 </section>
-<section id="settings" hidden><div class="card settings-card"><b>⚙️ 設定</b><p class="muted">プロフィール・見た目・データ管理は、この端末に保存されます。</p></div><div class="card"><h3>👤 プロフィール</h3><div class="settings-grid"><label>表示名<input id="profileName" placeholder="例）まさる"></label><label>好きなジャンル<input id="profileGenre" placeholder="例）漫画・ミステリー"></label><label>好きな作家<input id="profileAuthor" placeholder="例）○○先生"></label><label>メモ<textarea id="profileMemo" rows="3" placeholder="本棚についてのメモ"></textarea></label></div><button id="profileSave" style="width:100%;margin-top:8px">プロフィールを保存</button></div><div class="card"><h3>🎨 テーマ</h3><p class="muted">選んだテーマをアプリ全体へ反映します。</p><div class="theme-grid"><button type="button" class="theme-choice" data-theme="blue">🔵 UIブルー</button><button type="button" class="theme-choice" data-theme="green">🟢 ナチュラル</button><button type="button" class="theme-choice" data-theme="dark">🌙 ダーク</button></div><div id="themeCurrent" class="current-setting">現在：UIブルー</div></div><div class="card"><h3>🔤 文字サイズ</h3><p class="muted">ボタンや一覧の文字も一緒に調整します。折り返しが起きにくいようレイアウトも調整します。</p><div class="font-size-grid"><button type="button" class="font-choice" data-font="small">小</button><button type="button" class="font-choice" data-font="medium">中</button><button type="button" class="font-choice" data-font="large">大</button></div><div id="fontCurrent" class="current-setting">現在：中</div></div><div class="card"><h3>🖌️ 自作スキン</h3><p class="muted">色を決めた簡易スキンを保存して適用できます。</p><div class="skin-grid"><label>メイン色<input id="skinPrimary" type="color" value="#2563eb"></label><label>背景色<input id="skinBg" type="color" value="#f6f8fc"></label><label>カード色<input id="skinSurface" type="color" value="#ffffff"></label><label>文字色<input id="skinText" type="color" value="#172033"></label></div><button id="skinSave" class="secondary" style="width:100%;margin-top:8px">自作スキンを保存</button><button id="skinApply" style="width:100%;margin-top:8px">自作スキンを適用</button></div><div class="card"><h3>🖼️ 背景画像</h3><p class="muted">iPhone内の写真・画像をアプリ背景に設定できます。画像は端末内に圧縮保存します。</p><input id="bgImageInput" type="file" accept="image/*" style="width:100%"><button id="bgImageRemove" class="secondary" style="width:100%;margin-top:8px">背景画像を削除</button><div id="bgImageStatus" class="muted" style="margin-top:7px"></div></div><div class="card"><h3>👁️ 文字色の自動補正</h3><p class="muted">スキン／テーマで選んだ文字色の「色味」は保ちつつ、背景色や背景画像に合わせて明るさを自動調整します。</p><label class="toggle-row"><input id="autoTextContrast" type="checkbox" checked> 自動補正をオン</label></div><div class="card"><h3>💾 データ管理</h3><p class="muted">蔵書・発売予定・カレンダー追加・プロフィール・テーマ・背景画像などの端末内データをJSONで保存／復元できます。</p><div class="backup-row"><button id="backupDataBtn" type="button">⬇️ バックアップ</button><button id="restoreDataBtn" type="button">⬆️ 復元</button></div><input id="restoreDataInput" type="file" accept="application/json,.json" hidden><div id="backupStatus" class="muted" style="margin-top:7px"></div></div><div class="card settings-card"><h3>🔎 検索設定</h3><div class="settings-grid"><label>検索結果の表示数<select id="setSearchCount"><option value="10">10件</option><option value="20">20件</option><option value="40">40件</option></select></label><label>並び順<select id="setSearchSort"><option value="relevance">関連度順</option><option value="release-desc">発売日が新しい順</option><option value="release-asc">発売日が古い順</option><option value="title-asc">タイトル順</option></select></label></div><label class="toggle-row"><input id="setJpPriority" type="checkbox"> 日本語の書籍を優先</label><label class="toggle-row"><input id="setUnownedFirst" type="checkbox"> 未登録の本を優先</label><label class="toggle-row"><input id="setSearchCache" type="checkbox"> 検索結果を一時キャッシュ</label><div id="searchSettingStatus" class="muted" style="margin-top:7px"></div></div><div class="card settings-card"><h3>🗓 カレンダー設定</h3><div class="settings-grid"><label>週の始まり<select id="setWeekStart"><option value="0">日曜日</option><option value="1">月曜日</option></select></label></div><label class="toggle-row"><input id="setCalLibrary" type="checkbox"> 蔵書を表示</label><label class="toggle-row"><input id="setCalRelated" type="checkbox"> 関連図書を表示</label><label class="toggle-row"><input id="setCalRecommended" type="checkbox"> おすすめを表示</label><label class="toggle-row"><input id="setOpenToday" type="checkbox"> カレンダーを開いたら今日を表示</label><label class="toggle-row"><input id="setICS" type="checkbox"> iPhoneカレンダー用ICSボタンを表示</label><div class="muted" style="margin-top:7px">※カレンダー上部で左右フリックすると月変更、下部ではタブ移動です。</div></div><div class="card settings-card"><h3>ℹ️ このアプリについて</h3><p><b>本棚スケジュール</b><br>ISBNで蔵書を登録し、発売予定・関連図書・おすすめをカレンダーで管理する本棚アプリです。</p><p class="muted">バージョン：4.6.0（試作）<br>通常の閲覧・蔵書管理・設定・カレンダーは端末内で動作し、書誌情報の検索時だけ通信します。</p><p class="muted">個人情報や蔵書データは、この試作版では外部サーバーへ自動送信しません。App Store公開時にはプライバシーポリシー等を別途整備します。</p></div><div class="card"><h3>🌐 通信</h3><div class="offline-note">検索・ISBN照会など、書誌情報を取得する「検索操作」のときだけインターネットを使用します。蔵書表示・編集・削除・カレンダー・設定・バックアップ／復元は端末内で動作します。</div></div></section>
-<section id="calendar" hidden><div id="calendarMonthCard" class="card"><div class="monthbar"><button id="prevMonth" class="secondary">‹</button><button id="todayMonth" class="secondary today-btn">今日</button><b id="monthTitle"></b><button id="nextMonth" class="secondary">›</button></div><p class="muted">● 蔵書・作家連動の発売予定</p><div class="calhead" id="calHead"></div><div id="calendarGrid" class="calgrid"></div><div class="event-legend"><span class="legend-item"><i class="legend-dot legend-library"></i>蔵書</span><span class="legend-item"><i class="legend-dot legend-related"></i>関連図書</span><span class="legend-item"><i class="legend-dot legend-recommended"></i>おすすめ</span></div><div class="calendar-filters"><b>表示</b><label><input type="checkbox" id="calFilterLibrary" checked> 蔵書</label><label><input type="checkbox" id="calFilterRelated" checked> 関連</label><label><input type="checkbox" id="calFilterRecommended" checked> おすすめ</label></div><button id="ics" style="width:100%;margin-top:12px">iPhoneカレンダー用ICS</button></div><div class="card"><b id="selectedDateTitle">日付を選択してください</b><div id="selectedEvents" class="muted" style="margin-top:8px">カレンダーの日をタップしてください。</div></div></section>
+<section hidden="" id="settings"><div class="card settings-card"><b>⚙️ 設定</b><p class="muted">プロフィール・見た目・データ管理は、この端末に保存されます。</p></div><div class="card"><h3>👤 プロフィール</h3><div class="settings-grid"><label>表示名<input id="profileName" placeholder="例）まさる"/></label><label>好きなジャンル<input id="profileGenre" placeholder="例）漫画・ミステリー"/></label><label>好きな作家<input id="profileAuthor" placeholder="例）○○先生"/></label><label>メモ<textarea id="profileMemo" placeholder="本棚についてのメモ" rows="3"></textarea></label></div><button id="profileSave" style="width:100%;margin-top:8px">プロフィールを保存</button></div><div class="card"><h3>🎨 テーマ</h3><p class="muted">選んだテーマをアプリ全体へ反映します。</p><div class="theme-grid"><button class="theme-choice" data-theme="blue" type="button">🔵 UIブルー</button><button class="theme-choice" data-theme="green" type="button">🟢 ナチュラル</button><button class="theme-choice" data-theme="dark" type="button">🌙 ダーク</button></div><div class="current-setting" id="themeCurrent">現在：UIブルー</div></div><div class="card"><h3>🔤 文字サイズ</h3><p class="muted">ボタンや一覧の文字も一緒に調整します。折り返しが起きにくいようレイアウトも調整します。</p><div class="font-size-grid"><button class="font-choice" data-font="small" type="button">小</button><button class="font-choice" data-font="medium" type="button">中</button><button class="font-choice" data-font="large" type="button">大</button></div><div class="current-setting" id="fontCurrent">現在：中</div></div><div class="card"><h3>🖌️ 自作スキン</h3><p class="muted">色を決めた簡易スキンを保存して適用できます。</p><div class="skin-grid"><label>メイン色<input id="skinPrimary" type="color" value="#2563eb"/></label><label>背景色<input id="skinBg" type="color" value="#f6f8fc"/></label><label>カード色<input id="skinSurface" type="color" value="#ffffff"/></label><label>文字色<input id="skinText" type="color" value="#172033"/></label></div><button class="secondary" id="skinSave" style="width:100%;margin-top:8px">自作スキンを保存</button><button id="skinApply" style="width:100%;margin-top:8px">自作スキンを適用</button></div><div class="card"><h3>🖼️ 背景画像</h3><p class="muted">iPhone内の写真・画像をアプリ背景に設定できます。画像は端末内に圧縮保存します。</p><input accept="image/*" id="bgImageInput" style="width:100%" type="file"/><button class="secondary" id="bgImageRemove" style="width:100%;margin-top:8px">背景画像を削除</button><div class="muted" id="bgImageStatus" style="margin-top:7px"></div></div><div class="card"><h3>👁️ 文字色の自動補正</h3><p class="muted">スキン／テーマで選んだ文字色の「色味」は保ちつつ、背景色や背景画像に合わせて明るさを自動調整します。</p><label class="toggle-row"><input checked="" id="autoTextContrast" type="checkbox"/> 自動補正をオン</label></div><div class="card"><h3>💾 データ管理</h3><p class="muted">蔵書・発売予定・カレンダー追加・プロフィール・テーマ・背景画像などの端末内データをJSONで保存／復元できます。</p><div class="backup-row"><button id="backupDataBtn" type="button">⬇️ バックアップ</button><button id="restoreDataBtn" type="button">⬆️ 復元</button></div><input accept="application/json,.json" hidden="" id="restoreDataInput" type="file"/><div class="muted" id="backupStatus" style="margin-top:7px"></div></div><div class="card settings-card"><h3>🔎 検索設定</h3><div class="settings-grid"><label>検索結果の表示数<select id="setSearchCount"><option value="10">10件</option><option value="20">20件</option><option value="40">40件</option></select></label><label>並び順<select id="setSearchSort"><option value="relevance">関連度順</option><option value="release-desc">発売日が新しい順</option><option value="release-asc">発売日が古い順</option><option value="title-asc">タイトル順</option></select></label></div><label class="toggle-row"><input id="setJpPriority" type="checkbox"/> 日本語の書籍を優先</label><label class="toggle-row"><input id="setUnownedFirst" type="checkbox"/> 未登録の本を優先</label><label class="toggle-row"><input id="setSearchCache" type="checkbox"/> 検索結果を一時キャッシュ</label><div class="muted" id="searchSettingStatus" style="margin-top:7px"></div></div><div class="card settings-card"><h3>🗓 カレンダー設定</h3><div class="settings-grid"><label>週の始まり<select id="setWeekStart"><option value="0">日曜日</option><option value="1">月曜日</option></select></label></div><label class="toggle-row"><input id="setCalLibrary" type="checkbox"/> 蔵書を表示</label><label class="toggle-row"><input id="setCalRelated" type="checkbox"/> 関連図書を表示</label><label class="toggle-row"><input id="setCalRecommended" type="checkbox"/> おすすめを表示</label><label class="toggle-row"><input id="setOpenToday" type="checkbox"/> カレンダーを開いたら今日を表示</label><label class="toggle-row"><input id="setICS" type="checkbox"/> iPhoneカレンダー用ICSボタンを表示</label><div class="muted" style="margin-top:7px">※カレンダー上部で左右フリックすると月変更、下部ではタブ移動です。</div></div><div class="card settings-card"><h3>ℹ️ このアプリについて</h3><p><b>本棚スケジュール</b><br/>ISBNで蔵書を登録し、発売予定・関連図書・おすすめをカレンダーで管理する本棚アプリです。</p><p class="muted">バージョン：4.6.3（試作）<br/>通常の閲覧・蔵書管理・設定・カレンダーは端末内で動作し、書誌情報の検索時だけ通信します。</p><p class="muted">個人情報や蔵書データは、この試作版では外部サーバーへ自動送信しません。App Store公開時にはプライバシーポリシー等を別途整備します。</p></div><div class="card"><h3>🌐 通信</h3><div class="offline-note">検索・ISBN照会など、書誌情報を取得する「検索操作」のときだけインターネットを使用します。蔵書表示・編集・削除・カレンダー・設定・バックアップ／復元は端末内で動作します。</div></div></section>
+<section hidden="" id="calendar"><div class="card" id="calendarMonthCard"><div class="monthbar"><button class="secondary" id="prevMonth">‹</button><button class="secondary today-btn" id="todayMonth">今日</button><b id="monthTitle"></b><button class="secondary" id="nextMonth">›</button></div><p class="muted">● 蔵書・作家連動の発売予定</p><div class="calhead" id="calHead"></div><div class="calgrid" id="calendarGrid"></div><div class="event-legend"><span class="legend-item"><i class="legend-dot legend-library"></i>蔵書</span><span class="legend-item"><i class="legend-dot legend-related"></i>関連図書</span><span class="legend-item"><i class="legend-dot legend-recommended"></i>おすすめ</span></div><div class="calendar-filters"><b>表示</b><label><input checked="" id="calFilterLibrary" type="checkbox"/> 蔵書</label><label><input checked="" id="calFilterRelated" type="checkbox"/> 関連</label><label><input checked="" id="calFilterRecommended" type="checkbox"/> おすすめ</label></div><button id="ics" style="width:100%;margin-top:12px">iPhoneカレンダー用ICS</button></div><div class="card"><b id="selectedDateTitle">日付を選択してください</b><div class="muted" id="selectedEvents" style="margin-top:8px">カレンダーの日をタップしてください。</div></div></section>
 </main>
-<div id="runtimeError" class="runtime-error" style="display:none"></div><nav id="bottomNav"><button type="button" data-s="home" class="active" aria-current="page">🏠<br>ホーム</button><button type="button" data-s="add">➕<br>追加</button><button type="button" data-s="library">📚<br>蔵書</button><button type="button" data-s="search">🔎<br>検索</button><button type="button" data-s="calendar">🗓<br>カレンダー</button><button type="button" data-s="settings">⚙️<br>設定</button></nav>
-<div id="scanner"><button id="closeScan" class="secondary">読み取り終了</button><video id="video" playsinline muted></video><p id="scanStatus">カメラを起動しています…</p><div class="scan-count" id="scanCount">0冊読み取り</div><div class="scan-actions"><button id="scanSearch">読み取り終了して検索</button></div></div>
+<div class="runtime-error" id="runtimeError" style="display:none"></div><nav id="bottomNav"><button aria-current="page" class="active" data-s="home" type="button">🏠<br/>ホーム</button><button data-s="add" type="button">➕<br/>追加</button><button data-s="library" type="button">📚<br/>蔵書</button><button data-s="search" type="button">🔎<br/>検索</button><button data-s="calendar" type="button">🗓<br/>カレンダー</button><button data-s="settings" type="button">⚙️<br/>設定</button></nav>
+<div id="scanner"><button class="secondary" id="closeScan">読み取り終了</button><video id="video" muted="" playsinline=""></video><p id="scanStatus">カメラを起動しています…</p><div class="scan-count" id="scanCount">0冊読み取り</div><div class="scan-actions"><button id="scanSearch">読み取り終了して検索</button></div></div>
 <script>
 const $=id=>document.getElementById(id),KEY="books_v41";
-// v4.6.2: robust tap-only tab navigation before the rest of the app.
+// v4.7.0: robust tap-only tab navigation before the rest of the app.
 const TAB_IDS=["home","add","library","search","calendar","settings"];
 function setMainTab(id){
  const target=$(id); if(!target)return;
@@ -260,6 +400,10 @@ function norm(s){return String(s||"").normalize("NFKC").replace(/[\s‐‑‒–
 function valid13(s){if(!/^97[89]\d{10}$/.test(s))return false;let n=0;for(let i=0;i<13;i++)n+=+s[i]*(i%2?3:1);return n%10===0}
 function valid10(s){if(!/^\d{9}[\dX]$/.test(s))return false;let n=0;for(let i=0;i<10;i++)n+=(s[i]=="X"?10:+s[i])*(10-i);return n%11===0}
 function to13(s){let c="978"+s.slice(0,9),n=0;for(let i=0;i<12;i++)n+=+c[i]*(i%2?3:1);return c+((10-n%10)%10)}
+const APP_STORAGE_KEYS=[KEY,"calendarExtras_v442","book_tracker_settings_v449","seriesView_v444"];
+function persistBooks(){try{localStorage.setItem(KEY,JSON.stringify(books));return true}catch(e){console.error("books save",e);return false}}
+function persistCalendarExtras(){try{localStorage.setItem("calendarExtras_v442",JSON.stringify(calendarExtras));return true}catch(e){console.error("calendar extras save",e);return false}}
+function readSeriesView(){try{return localStorage.getItem("seriesView_v444")!=="off"}catch(e){return true}}
 const apiCache=new Map(),lastRequest={time:0};
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 async function getJSON(u,opts={}){
@@ -299,13 +443,7 @@ function card(book,add=true,mode="result",index=-1){
  let chk=`<input class="check selectBook" type="checkbox" data-index="${index}" aria-label="選択">`;
  return `<div class="card booktap" data-book='${detail}'><div class="selectline">${chk}<div class="content"><div class="book">${(add?book.cover:(book.cachedCover||""))?`<img class="cover" src="${esc(add?book.cover:book.cachedCover)}">`:`<div class='cover'></div>`}<div><div class="title">${esc(book.title)} ${books.some(x=>norm(x.isbn)===norm(book.isbn))?'<span class="owned-badge">蔵書</span>':'<span class="unowned-badge">未登録</span>'}</div><div class="muted">${esc(book.author)}</div><div class="muted">${esc(book.publisher)} ${esc(book.date)}${Number(book.price)>0?` ・ ¥${Math.round(book.price).toLocaleString()}`:""}</div><div class="muted">ISBN ${esc(book.isbn||"")}</div><div class="actions"><button type="button" onclick='event.stopPropagation();openBookDetail(${safe})'>詳細を見る</button>${add?`<button onclick='event.stopPropagation();addBook(${safe})'>蔵書に登録</button>`:""}</div></div></div></div></div></div>`;
 }
-window.addBook=async b=>{
- if(books.some(x=>norm(x.isbn)==norm(b.isbn))){alert("すでに登録されています");return}
- books.push(b);
- try{localStorage.setItem(KEY,JSON.stringify(books));}catch(e){books.pop();alert("蔵書を保存できませんでした。端末の空き容量を確認してください。");return}
- render();
- alert("登録しました");
-};
+
 $("isbnSearch").onclick=async()=>{
  let raw=$("isbn").value||"";
  let tokens=raw.split(/[\s,、，]+/).map(norm).filter(Boolean),list=[];
@@ -344,7 +482,7 @@ const jpHolidays={
 "2029-01-01":"元日","2029-01-08":"成人の日","2029-02-11":"建国記念の日","2029-02-12":"振替休日","2029-02-23":"天皇誕生日","2029-03-20":"春分の日","2029-04-29":"昭和の日","2029-04-30":"振替休日","2029-05-03":"憲法記念日","2029-05-04":"みどりの日","2029-05-05":"こどもの日","2029-05-06":"振替休日","2029-07-16":"海の日","2029-08-11":"山の日","2029-09-17":"敬老の日","2029-09-23":"秋分の日","2029-09-24":"振替休日","2029-10-08":"スポーツの日","2029-11-03":"文化の日","2029-11-23":"勤労感謝の日",
 "2030-01-01":"元日","2030-01-14":"成人の日","2030-02-11":"建国記念の日","2030-02-23":"天皇誕生日","2030-03-21":"春分の日","2030-04-29":"昭和の日","2030-05-03":"憲法記念日","2030-05-04":"みどりの日","2030-05-05":"こどもの日","2030-05-06":"振替休日","2030-07-15":"海の日","2030-08-11":"山の日","2030-09-16":"敬老の日","2030-09-23":"秋分の日","2030-10-14":"スポーツの日","2030-11-03":"文化の日","2030-11-04":"振替休日","2030-11-23":"勤労感謝の日"};
 function isHoliday(k){return !!jpHolidays[k]}
-function addCalendarExtra(b,type){if(!/^\d{4}-\d{2}-\d{2}$/.test(b.date||"")){alert("発売日が取得できないため、カレンダーに追加できません。");return}let key=(b.isbn||b.title)+"|"+type;if(!calendarExtras.some(x=>x.key===key)){calendarExtras.push({key,date:b.date,title:b.title,author:b.author,isbn:b.isbn,base:b.title,sourceType:type,source:type==="related"?"関連図書":"おすすめ書籍"});localStorage.setItem("calendarExtras_v442",JSON.stringify(calendarExtras));renderCalendar();alert(type==="related"?"関連図書としてカレンダーに追加しました":"おすすめ書籍としてカレンダーに追加しました")}else alert("すでにカレンダーに追加されています")}
+function addCalendarExtra(b,type){if(!/^\d{4}-\d{2}-\d{2}$/.test(b.date||"")){alert("発売日が取得できないため、カレンダーに追加できません。");return}let key=(b.isbn||b.title)+"|"+type;if(!calendarExtras.some(x=>x.key===key)){calendarExtras.push({key,date:b.date,title:b.title,author:b.author,isbn:b.isbn,base:b.title,sourceType:type,source:type==="related"?"関連図書":"おすすめ書籍"});if(!persistCalendarExtras()){alert("カレンダーへの保存に失敗しました。端末の空き容量を確認してください。");return}renderCalendar();alert(type==="related"?"関連図書としてカレンダーに追加しました":"おすすめ書籍としてカレンダーに追加しました")}else alert("すでにカレンダーに追加されています")}
 
 function refreshLibraryFilters(){
  const fill=(id,label,vals)=>{
@@ -360,7 +498,7 @@ function refreshLibraryFilters(){
 function renderLibrary(){
  refreshLibraryFilters();
  let q=($("libraryFilter").value||"").toLowerCase();
- const seriesView=localStorage.getItem("seriesView_v444")!=="off";
+ const seriesView=readSeriesView();
  const fa=$("filterAuthor")?.value||"",fp=$("filterPublisher")?.value||"",fy=$("filterYear")?.value||"",fr=$("filterRelease")?.value||"";
  let a=books.map((b,i)=>({b,i})).filter(x=>{
   const b=x.b, known=/^\d{4}-\d{2}-\d{2}$/.test(b.date||"");
@@ -380,7 +518,7 @@ function renderLibrary(){
  const priced=books.filter(b=>Number(b.price)>0),total=priced.reduce((sum,b)=>sum+Number(b.price||0),0);
  $("libraryStats").innerHTML=`<div class="statbox"><span class="muted">蔵書冊数</span><b>${books.length.toLocaleString()}冊</b></div><div class="statbox"><span class="muted">蔵書総額</span><b>${total?"¥"+Math.round(total).toLocaleString():"未登録"}</b><span class="muted">${total?`${priced.length}/${books.length}冊の価格を集計`:'価格データを登録すると集計できます'}</span></div>`;
  $("libAll")?.addEventListener("change",e=>document.querySelectorAll("#myBooks .selectBook").forEach(x=>x.checked=e.target.checked));
- $("deleteSelected")?.addEventListener("click",()=>{let ids=[...document.querySelectorAll("#myBooks .selectBook:checked")].map(x=>+x.dataset.index).sort((a,b)=>b-a);if(!ids.length){alert("削除する本を選択してください");return}if(!confirm(ids.length+"冊を削除しますか？"))return;ids.forEach(i=>books.splice(i,1));localStorage.setItem(KEY,JSON.stringify(books));render()});
+ $("deleteSelected")?.addEventListener("click",()=>{let ids=[...document.querySelectorAll("#myBooks .selectBook:checked")].map(x=>+x.dataset.index).sort((a,b)=>b-a);if(!ids.length){alert("削除する本を選択してください");return}if(!confirm(ids.length+"冊を削除しますか？"))return;ids.forEach(i=>books.splice(i,1));if(!persistBooks()){alert("蔵書を保存できませんでした。端末の空き容量を確認してください。");return}render()});
 }
 function renderCalendar(){
  let y=calDate.getFullYear(),m=calDate.getMonth(),by={};allEvents().forEach(e=>{if(/^\d{4}-\d{2}-\d{2}$/.test(e.date))(by[e.date]??=[]).push(e)});
@@ -495,10 +633,10 @@ $("skinApply").onclick=()=>{appSettings.skin={primary:$("skinPrimary").value,bg:
 $("autoTextContrast").onchange=()=>{appSettings.autoTextContrast=$("autoTextContrast").checked;saveSettings();applyVisualSettings()};
 $("bgImageInput").onchange=async e=>{let f=e.target.files?.[0];if(!f)return;try{let data=await compressImage(f);appSettings.background.image=data;let stats=await averageImageColor(data);appSettings.background.avgLum=stats?.lum??null;appSettings.background.avgColor=stats?.color??null;saveSettings();applyVisualSettings()}catch(err){alert("背景画像を設定できませんでした。別の画像を試してください。")}};
 $("bgImageRemove").onclick=()=>{appSettings.background={image:"",avgLum:null,avgColor:null};$("bgImageInput").value="";saveSettings();applyVisualSettings()};
-function createBackupData(){let localStorageData={};for(let i=0;i<localStorage.length;i++){let k=localStorage.key(i);if(k)localStorageData[k]=localStorage.getItem(k)}return {schemaVersion:2,appVersion:"4.6.0",exportedAt:new Date().toISOString(),localStorage:localStorageData}}
+function createBackupData(){let localStorageData={};for(const k of APP_STORAGE_KEYS){const v=localStorage.getItem(k);if(v!==null)localStorageData[k]=v}return {schemaVersion:3,appVersion:"4.7.0",exportedAt:new Date().toISOString(),localStorage:localStorageData}}
 $("backupDataBtn").onclick=()=>{let blob=new Blob([JSON.stringify(createBackupData(),null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a"),d=new Date(),stamp=d.toISOString().slice(0,19).replace(/[T:]/g,"-");a.href=url;a.download=`book-tracker-backup-${stamp}.json`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);$("backupStatus").textContent="バックアップファイルを作成しました。"};
 $("restoreDataBtn").onclick=()=>$("restoreDataInput").click();
-$("restoreDataInput").onchange=e=>{let f=e.target.files?.[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!d||!d.localStorage||typeof d.localStorage!=="object")throw Error();if(!confirm("現在の端末内データをバックアップ内容で置き換えます。よろしいですか？"))return;localStorage.clear();Object.entries(d.localStorage).forEach(([k,v])=>{if(typeof k==="string"&&typeof v==="string")localStorage.setItem(k,v)});$("backupStatus").textContent="復元しました。画面を再読み込みします。";setTimeout(()=>location.reload(),500)}catch(err){$("backupStatus").textContent="復元できませんでした。Book TrackerのバックアップJSONを選択してください。"}};r.readAsText(f)};
+$("restoreDataInput").onchange=e=>{let f=e.target.files?.[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!d||!d.localStorage||typeof d.localStorage!=="object")throw Error();if(!confirm("現在の端末内データをバックアップ内容で置き換えます。よろしいですか？"))return;for(const k of APP_STORAGE_KEYS){try{localStorage.removeItem(k)}catch(_){}}Object.entries(d.localStorage).forEach(([k,v])=>{if(APP_STORAGE_KEYS.includes(k)&&typeof v==="string")localStorage.setItem(k,v)});$("backupStatus").textContent="復元しました。画面を再読み込みします。";setTimeout(()=>location.reload(),500)}catch(err){$("backupStatus").textContent="復元できませんでした。Book TrackerのバックアップJSONを選択してください。"}};r.readAsText(f)};
 $("setSearchCount").onchange=()=>{appSettings.search.resultCount=Number($("setSearchCount").value);saveSettings();updateSettingLabels()};$("setSearchSort").onchange=()=>{appSettings.search.sort=$("setSearchSort").value;saveSettings();updateSettingLabels()};$("setJpPriority").onchange=()=>{appSettings.search.jpPriority=$("setJpPriority").checked;saveSettings();updateSettingLabels()};$("setUnownedFirst").onchange=()=>{appSettings.search.unownedFirst=$("setUnownedFirst").checked;saveSettings();updateSettingLabels()};$("setSearchCache").onchange=()=>{appSettings.search.cache=$("setSearchCache").checked;if(!appSettings.search.cache)apiCache.clear();saveSettings()};$("setWeekStart").onchange=()=>{appSettings.calendar.weekStart=Number($("setWeekStart").value);saveSettings();renderCalendar()};$("setCalLibrary").onchange=()=>{$("calFilterLibrary").checked=appSettings.calendar.showLibrary=$("setCalLibrary").checked;saveSettings();renderCalendar()};$("setCalRelated").onchange=()=>{$("calFilterRelated").checked=appSettings.calendar.showRelated=$("setCalRelated").checked;saveSettings();renderCalendar()};$("setCalRecommended").onchange=()=>{$("calFilterRecommended").checked=appSettings.calendar.showRecommended=$("setCalRecommended").checked;saveSettings();renderCalendar()};$("setOpenToday").onchange=()=>{appSettings.calendar.openToday=$("setOpenToday").checked;saveSettings()};$("setICS").onchange=()=>{appSettings.calendar.ics=$("setICS").checked;$("ics").style.display=appSettings.calendar.ics?"block":"none";saveSettings()};
 function render(){try{renderHome()}catch(e){console.error("renderHome",e);showRuntimeError()}try{renderLibrary()}catch(e){console.error("renderLibrary",e);showRuntimeError()}try{renderCalendar()}catch(e){console.error("renderCalendar",e);showRuntimeError()}try{updateClearButtons()}catch(e){console.error("clear buttons",e)}}
 function updateClearButtons(){document.querySelectorAll(".clearbtn").forEach(b=>{let i=$(b.dataset.clear);b.style.display=i&&i.value?"block":"none"})}
@@ -507,8 +645,8 @@ document.querySelectorAll(".clearwrap input,.clearwrap textarea").forEach(i=>i.a
 $("libraryFilter").oninput=renderLibrary;$("librarySort").onchange=renderLibrary;
 ["filterAuthor","filterPublisher","filterYear","filterRelease"].forEach(id=>$(id)?.addEventListener("change",renderLibrary));
 $("libraryFilterToggle").onclick=()=>{$("libraryFilterPanel").classList.toggle("open")};
-$("seriesViewToggle").onclick=()=>{const on=localStorage.getItem("seriesView_v444")!=="off";localStorage.setItem("seriesView_v444",on?"off":"on");$("seriesViewToggle").textContent=on?"📖 個別表示":"📚 シリーズ表示";renderLibrary()};
-$("seriesViewToggle").textContent=localStorage.getItem("seriesView_v444")==="off"?"📖 個別表示":"📚 シリーズ表示";
+$("seriesViewToggle").onclick=()=>{const on=readSeriesView();try{localStorage.setItem("seriesView_v444",on?"off":"on")}catch(e){}$("seriesViewToggle").textContent=on?"📖 個別表示":"📚 シリーズ表示";renderLibrary()};
+$("seriesViewToggle").textContent=!readSeriesView()?"📖 個別表示":"📚 シリーズ表示";
 $("filterReset").onclick=()=>{["filterAuthor","filterPublisher","filterYear","filterRelease"].forEach(id=>$(id).value="");renderLibrary()};
 $("prevMonth").onclick=()=>{calDate.setMonth(calDate.getMonth()-1);selectedDate=null;renderCalendar()};$("nextMonth").onclick=()=>{calDate.setMonth(calDate.getMonth()+1);selectedDate=null;renderCalendar()};
 $("todayMonth").onclick=()=>{let n=new Date();calDate=new Date(n.getFullYear(),n.getMonth(),1);selectedDate=localDateKey(n);renderCalendar();showDay(selectedDate)};
@@ -521,7 +659,7 @@ async function scan(){
 
 function stopScan(){if(timer)clearInterval(timer);timer=null;if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;$("video").srcObject=null;$("scanner").style.display="none"}
 $("scan").onclick=scan;$("closeScan").onclick=stopScan;$("scanSearch").onclick=()=>{stopScan();$("isbnSearch").click()};
-// v4.6.2: swipe is calendar-month navigation only. Tab navigation is tap-only.
+// v4.7.0: swipe is calendar-month navigation only. Tab navigation is tap-only.
 (function(){
  const card=$("calendarMonthCard"); if(!card)return;
  let sx=0,sy=0,tracking=false,swipeConsumed=false;
@@ -552,22 +690,20 @@ async function findSimilarWorks(){const q=($("query").value||$("work").value||""
 /* v4.4 書籍詳細・蔵書から関連検索 */
 const detailOverlay=document.createElement("div");detailOverlay.className="detail-overlay";detailOverlay.innerHTML='<div class="detail-sheet"><div class="detail-head"><h2 id="detailTitle">書籍詳細</h2><button class="clearbtn" id="detailClose">×</button></div><div id="detailBody"></div></div>';document.body.appendChild(detailOverlay);
 function amazonUrl(b){return "https://www.amazon.co.jp/s?k="+encodeURIComponent(b.isbn||b.title||"")}
-window.openBookDetail=function(b){let d=b||{},desc=d.description||"紹介文は取得できませんでした。",cover=d.cachedCover||((books.some(x=>norm(x.isbn)===norm(d.isbn)))?"":(d.cover||""));$("detailTitle").textContent=d.title||"書籍詳細";$("detailBody").innerHTML=`<div class="detail-grid"><div>${cover?`<img class="detail-cover" src="${esc(cover)}">`:""}</div><div><p><b>著者：</b>${esc(d.author||"")}</p><p><b>出版社：</b>${esc(d.publisher||"")}</p><p><b>発売日：</b>${esc(d.date||"")}</p><p><b>ISBN：</b>${esc(d.isbn||"")}</p><p><b>価格：</b><input id="detailPrice" type="number" min="0" step="1" value="${Number(d.price)||0}" placeholder="価格を入力"></p>${books.some(x=>norm(x.isbn)===norm(d.isbn))?'<button type="button" id="savePrice" style="margin-top:4px">価格を保存</button>':""}</div></div><div class="detail-actions"><a href="${amazonUrl(d)}" target="_blank" rel="noopener">Amazonで探す</a>${d.publisher?`<a href="https://www.google.com/search?q=${encodeURIComponent(d.publisher+" "+d.title)}" target="_blank" rel="noopener">出版社を探す</a>`:""}<button type="button" id="detailRelated">関連書籍を検索</button><button type="button" onclick='addCalendarExtra(${JSON.stringify(d).replace(/</g,"\u003c")},"related")'>関連図書としてカレンダー追加</button><button type="button" onclick='addCalendarExtra(${JSON.stringify(d).replace(/</g,"\u003c")},"recommended")'>おすすめとしてカレンダー追加</button></div><div><h3>紹介</h3><p>${esc(desc).replace(/\n/g,"<br>")}</p></div><div id="detailRelatedBox" class="detail-related"></div>`;detailOverlay.style.display="flex";$("detailRelated").onclick=()=>searchRelatedFromBook(d);$("savePrice")?.addEventListener("click",()=>{let b=books.find(x=>norm(x.isbn)===norm(d.isbn));if(!b)return;b.price=Math.max(0,Number($("detailPrice").value)||0);localStorage.setItem(KEY,JSON.stringify(books));renderLibrary();alert("価格を保存しました");})};
+window.openBookDetail=function(b){let d=b||{},desc=d.description||"紹介文は取得できませんでした。",cover=d.cachedCover||((books.some(x=>norm(x.isbn)===norm(d.isbn)))?"":(d.cover||""));$("detailTitle").textContent=d.title||"書籍詳細";$("detailBody").innerHTML=`<div class="detail-grid"><div>${cover?`<img class="detail-cover" src="${esc(cover)}">`:""}</div><div><p><b>著者：</b>${esc(d.author||"")}</p><p><b>出版社：</b>${esc(d.publisher||"")}</p><p><b>発売日：</b>${esc(d.date||"")}</p><p><b>ISBN：</b>${esc(d.isbn||"")}</p><p><b>価格：</b><input id="detailPrice" type="number" min="0" step="1" value="${Number(d.price)||0}" placeholder="価格を入力"></p>${books.some(x=>norm(x.isbn)===norm(d.isbn))?'<button type="button" id="savePrice" style="margin-top:4px">価格を保存</button>':""}</div></div><div class="detail-actions"><a href="${amazonUrl(d)}" target="_blank" rel="noopener">Amazonで探す</a>${d.publisher?`<a href="https://www.google.com/search?q=${encodeURIComponent(d.publisher+" "+d.title)}" target="_blank" rel="noopener">出版社を探す</a>`:""}<button type="button" id="detailRelated">関連書籍を検索</button><button type="button" onclick='addCalendarExtra(${JSON.stringify(d).replace(/</g,"\u003c")},"related")'>関連図書としてカレンダー追加</button><button type="button" onclick='addCalendarExtra(${JSON.stringify(d).replace(/</g,"\u003c")},"recommended")'>おすすめとしてカレンダー追加</button></div><div><h3>紹介</h3><p>${esc(desc).replace(/\n/g,"<br>")}</p></div><div id="detailRelatedBox" class="detail-related"></div>`;detailOverlay.style.display="flex";$("detailRelated").onclick=()=>searchRelatedFromBook(d);$("savePrice")?.addEventListener("click",()=>{let b=books.find(x=>norm(x.isbn)===norm(d.isbn));if(!b)return;b.price=Math.max(0,Number($("detailPrice").value)||0);if(!persistBooks()){alert("価格を保存できませんでした。端末の空き容量を確認してください。");return}renderLibrary();alert("価格を保存しました");})};
 $("detailClose").onclick=()=>detailOverlay.style.display="none";detailOverlay.onclick=e=>{if(e.target===detailOverlay)detailOverlay.style.display="none"};
 async function searchRelatedFromBook(b){let box=$("detailRelatedBox");box.innerHTML="<h3>関連書籍</h3><p>検索中…</p>";let q=b.author?"inauthor:"+b.author:b.title;try{let arr=(await searchGoogle(q)).map(gbook).filter(x=>norm(x.title)!==norm(b.title)).slice(0,10);box.innerHTML=arr.length?"<h3>関連書籍</h3>"+arr.map(x=>`<button class="detail-related-item" type="button"><span><b>${esc(x.title)}</b><br><small>${esc(x.author)}</small></span></button>`).join(""):"<p>関連書籍が見つかりませんでした。</p>";box.querySelectorAll("button").forEach((el,i)=>el.onclick=()=>openBookDetail(arr[i]))}catch(e){box.innerHTML="<p>関連書籍の検索に失敗しました。</p>"}}
 
 $("searchModeBook").onclick=()=>{$("bookSearchPanel").classList.add("active");$("authorSearchPanel").classList.remove("active");$("searchModeBook").classList.add("active");$("searchModeAuthor").classList.remove("active");updateClearButtons()};
 $("searchModeAuthor").onclick=()=>{$("authorSearchPanel").classList.add("active");$("bookSearchPanel").classList.remove("active");$("searchModeAuthor").classList.add("active");$("searchModeBook").classList.remove("active");updateClearButtons()};
-try{loadSettingsUI()}catch(e){console.error("loadSettingsUI",e);showRuntimeError()}try{updateProfileDisplay()}catch(e){console.error("profile display",e);showRuntimeError()}render();setMainTab("home");requestAnimationFrame(()=>{try{renderCalendar()}catch(e){console.error("initial calendar",e);showRuntimeError()}});
+try{loadSettingsUI()}catch(e){console.error("loadSettingsUI",e);showRuntimeError()}try{updateProfileDisplay()}catch(e){console.error("profile display",e);showRuntimeError()}try{render()}catch(e){console.error("initial render",e);showRuntimeError()}setMainTab("home");requestAnimationFrame(()=>{try{renderCalendar()}catch(e){console.error("initial calendar",e);showRuntimeError()}});
 </script>
 
-<script id="v450-offline-js">
-/* v4.5.7 offline guard */
+<script id="v470-final-js">
+/* v4.7.0: single authoritative registration/persistence layer */
 async function cacheBookCover(b){return b?.cover?.startsWith("data:")?{...b,cachedCover:b.cover}:b}
-window.addBook=async b=>{if(books.some(x=>norm(x.isbn)==norm(b.isbn))){alert("すでに登録されています");return}let x=await cacheBookCover(b);books.push(x);localStorage.setItem(KEY,JSON.stringify(books));render();alert("登録しました")};
-window.addAllFound=async()=>{let arr=window.addResultsData||[],n=0;for(const b of arr){if(!books.some(x=>norm(x.isbn)==norm(b.isbn))){books.push(await cacheBookCover(b));n++}}localStorage.setItem(KEY,JSON.stringify(books));render();alert(n+"冊を登録しました（重複は除外）")};
-window.bulkAdd=async id=>{let arr=window[id+"Data"]||[],idx=[...$(id).querySelectorAll(".selectBook:checked")].map(x=>+x.dataset.index),n=0;for(const i of idx){let x=arr[i];if(x&&!books.some(b=>norm(b.isbn)==norm(x.isbn))){books.push(await cacheBookCover(x));n++}}localStorage.setItem(KEY,JSON.stringify(books));render();alert(n+"冊を登録しました（重複は除外）")};
-
-
-</script>
-</body></html>
+async function saveBooksSafely(){if(!persistBooks()){alert("蔵書を保存できませんでした。端末の空き容量を確認してください。");return false}return true}
+window.addBook=async b=>{if(books.some(x=>norm(x.isbn)===norm(b.isbn))){alert("すでに登録されています");return}const x=await cacheBookCover(b);books.push(x);if(!await saveBooksSafely()){books.pop();return}render();alert("登録しました")};
+window.addAllFound=async()=>{const arr=window.addResultsData||[];let n=0;for(const b of arr){if(!books.some(x=>norm(b.isbn)===norm(x.isbn))){books.push(await cacheBookCover(b));n++}}if(!await saveBooksSafely()){return}render();alert(n+"冊を登録しました（重複は除外）")};
+window.bulkAdd=async id=>{const arr=window[id+"Data"]||[],box=$(id);if(!box)return;const idx=[...box.querySelectorAll(".selectBook:checked")].map(x=>+x.dataset.index);let added=[];for(const i of idx){const x=arr[i];if(x&&!books.some(b=>norm(b.isbn)===norm(x.isbn))){added.push(await cacheBookCover(x))}}if(added.length){books.push(...added);if(!await saveBooksSafely()){books.splice(-added.length,added.length);return}}render();alert(added.length+"冊を登録しました（重複は除外）")};
+</script></body></html>
