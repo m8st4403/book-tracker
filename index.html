@@ -374,6 +374,18 @@ input[type="checkbox"]{
 .search-idea-row label,.calendar-filters label,.toggle-row,.similar-grid label{cursor:pointer;}
 .setting-state{margin-left:auto;font-size:12px;font-weight:700;white-space:nowrap;color:var(--theme-muted);}
 .toggle-row{width:100%;box-sizing:border-box;}
+
+/* v4.8.7 visual consistency: home/library stats use the same soft tinted cards. */
+.unified-stats .statbox,.library-stats .statbox{background:var(--surface)!important;border:1px solid var(--border)!important;box-shadow:0 1px 2px #00000008}
+.unified-stats .statbox:first-child,.library-stats .statbox:first-child{background:var(--soft-blue)!important;border-color:#dbeafe!important}
+.unified-stats .statbox:nth-child(2),.library-stats .statbox:nth-child(2){background:var(--soft-green)!important;border-color:#d1fae5!important}
+.unified-stats .statbox:nth-child(3),.library-stats .statbox:nth-child(3){background:color-mix(in srgb,var(--primary) 6%,var(--surface))!important;border-color:color-mix(in srgb,var(--primary) 16%,var(--border))!important}
+.unified-stats .statbox:nth-child(4),.library-stats .statbox:nth-child(4){background:color-mix(in srgb,#f59e0b 7%,var(--surface))!important;border-color:color-mix(in srgb,#f59e0b 18%,var(--border))!important}
+.unified-stats .statbox:nth-child(5),.library-stats .statbox:nth-child(5){background:color-mix(in srgb,#a855f7 6%,var(--surface))!important;border-color:color-mix(in srgb,#a855f7 16%,var(--border))!important}
+/* Calendar: today and selected dates get a subtle fill, while keeping the grid calm. */
+#calendarGrid .day.today{background:color-mix(in srgb,var(--primary) 7%,var(--surface))!important;border:2px solid color-mix(in srgb,var(--primary) 55%,var(--surface))!important}
+#calendarGrid .day.selected{background:color-mix(in srgb,var(--primary) 11%,var(--surface))!important;box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--primary) 42%,transparent)!important}
+#calendarGrid .day.today.selected{background:color-mix(in srgb,var(--primary) 13%,var(--surface))!important;border:2px solid color-mix(in srgb,var(--primary) 65%,var(--surface))!important;box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--primary) 28%,transparent)!important}
 </style>
 </head><body>
 <header><b id="appHeaderTitle">📚 本棚スケジュール</b><div class="muted" id="appHeaderSub">複数ISBN・詳細/関連検索・発売日カレンダー対応</div></header>
