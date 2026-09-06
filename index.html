@@ -415,7 +415,7 @@ input[type="checkbox"]{
 </head><body>
 <header><b id="appHeaderTitle">📚 本棚スケジュール</b><div class="muted" id="appHeaderSub">複数ISBN・詳細/関連検索・発売日カレンダー対応</div></header>
 <main id="content">
-<div id="demoNotice" class="demo-global" hidden role="button" tabindex="0" aria-label="サンプルデータの削除確認"><b>📚 サンプルデータを表示しています</b><span>初回起動時の見え方を確認するためのサンプル蔵書が表示されています。設定内の削除ボタン、またはこのメッセージをタップしてサンプル蔵書を削除できます。</span></div>
+<div id="demoNotice" class="demo-global" hidden role="button" tabindex="0" aria-label="サンプルデータの削除確認"><b>📚 サンプルデータを表示しています</b><span>アプリの見え方を確認するためのサンプル蔵書が表示されています。設定内の削除ボタン、またはこのメッセージをタップしてサンプル蔵書を削除できます。</span></div>
 <section class="active" id="home">
 <div class="card home-welcome"><div class="home-kicker">📚 本棚スケジュール</div><div class="home-title"><span id="homeWelcome">あなたの本棚をはじめよう</span></div><div class="home-date" id="homeDate"></div><div class="home-stats unified-stats"><div class="statbox"><span class="muted">蔵書冊数</span><b id="homeBookCount">0冊</b><span class="muted">登録済み</span></div><div class="statbox"><span class="muted">蔵書総額</span><b id="homeBookTotal">未登録</b><span class="muted" id="homeBookTotalSub">価格データを登録すると集計できます</span></div><div class="statbox"><span class="muted">購入予定</span><b id="homePurchaseCount">0冊</b><span class="muted" id="homePurchaseSub">今日以降の予定</span></div><div class="statbox"><span class="muted">積読</span><b id="homeUnreadCount">0冊</b><span class="muted">未読の蔵書</span></div><div class="statbox"><span class="muted">お気に入り</span><b id="homeFavoriteCount">0冊</b><span class="muted">お気に入りの蔵書</span></div></div></div><div class="home-upcoming-card card"><div class="home-upcoming-head"><div><b>🔥 近日発売の注目書籍</b><div class="muted">これから発売される本をチェック</div></div><button class="home-link-btn" id="homeUpcomingMore" type="button">すべて見る</button></div><div class="home-upcoming-grid" id="homeUpcomingBooks"></div></div>
 </section>
@@ -507,10 +507,12 @@ function readJSONStorage(key,fallback){try{const raw=localStorage.getItem(key);i
 let books=readJSONStorage(KEY,[]);if(!Array.isArray(books))books=[];
 let calendarExtras=readJSONStorage("calendarExtras_v442",[]);if(!Array.isArray(calendarExtras))calendarExtras=[];
 // v4.8.8: first launch demo data so the calendar and library appearance are understandable immediately.
-const DEMO_KEY="bookTrackerDemoSeed_v488";
-const DEMO_DELETED_KEY="bookTrackerDemoDeleted_v499";
+// GitHub Pages prototype: true. Set to false for the App Store production build so public users never receive demo records.
+const DEMO_ENABLED=true;
+// Stable across app versions: once a user deletes demo data, future updates must not recreate it.
+const DEMO_DELETED_KEY="bookTrackerDemoDeleted";
 const DEMO_TITLES=["サンプル本棚：前月の便り","サンプル本棚：月夜の標本","サンプルシリーズ：星の余白 1巻","サンプルシリーズ：星の余白 2巻","サンプル本棚：翌月の灯り"];
-function demoDeleted(){return readJSONStorage(DEMO_DELETED_KEY,false)===true||readJSONStorage(DEMO_DELETED_KEY,false)==="1"}
+function demoDeleted(){const v=readJSONStorage(DEMO_DELETED_KEY,false);return v===true||v===1||v==="1"}
 function demoDateSet(){
  const today=new Date(),y=today.getFullYear(),m=today.getMonth(),d=today.getDate();
  const dayKey=n=>{const x=new Date(y,m,d+n);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0")};
@@ -521,32 +523,26 @@ function demoTemplate(title,isbn,price,date,series="",source="蔵書の発売予
  return {isbn,title,author:"サンプル作家",publisher:"サンプル出版社",date,price,currency:"JPY",cover:"",upcoming:[],demo:true,format:"単行本",series,sourceType:"library",source};
 }
 function ensureDemoData(){
- if(demoDeleted())return false;
+ if(!DEMO_ENABLED||demoDeleted())return false;
  const dates=demoDateSet();
  const existingBooks=books.filter(b=>b&&b.demo&&DEMO_TITLES.includes(b.title));
  const existingExtras=calendarExtras.filter(e=>e&&e.demo&&DEMO_TITLES.includes(e.title));
  const byTitle=new Map([...existingBooks,...existingExtras].map(x=>[x.title,x]));
  const specs=[
-  [DEMO_TITLES[0],"demo-004",760,dates.prev,""],
-  [DEMO_TITLES[1],"demo-001",780,dates.released,""],
-  [DEMO_TITLES[2],"demo-002",920,dates.today,"サンプルシリーズ：星の余白"],
-  [DEMO_TITLES[3],"demo-003",1100,dates.future,"サンプルシリーズ：星の余白"],
-  [DEMO_TITLES[4],"demo-005",980,dates.next,""]
+  [DEMO_TITLES[0],"demo-004",760,dates.prev,""],[DEMO_TITLES[1],"demo-001",780,dates.released,""],
+  [DEMO_TITLES[2],"demo-002",920,dates.today,"サンプルシリーズ：星の余白"],[DEMO_TITLES[3],"demo-003",1100,dates.future,"サンプルシリーズ：星の余白"],[DEMO_TITLES[4],"demo-005",980,dates.next,""]
  ];
- const samples=specs.map(([t,i,p,d,se])=>({...demoTemplate(t,i,p,d,se),...(byTitle.get(t)||{}) ,title:t,isbn:i,date:d,price:p,demo:true,format:"単行本",series:se}));
- // Only the previous-month sample is an initial library item. If a user has already
- // registered another sample, keep it in the library and remove its calendar duplicate.
+ const samples=specs.map(([t,i,p,d,se])=>({...demoTemplate(t,i,p,d,se),...(byTitle.get(t)||{}),title:t,isbn:i,date:d,price:p,demo:true,format:"単行本",series:se}));
  const sampleByTitle=new Map(samples.map(x=>[x.title,x]));
- const regularBooks=books.filter(b=>!(b&&b.demo&&DEMO_TITLES.includes(b.title)));
- const ownedSamples=books.filter(b=>b&&b.demo&&DEMO_TITLES.includes(b.title)).map(b=>sampleByTitle.get(b.title)||b);
+ const regularBooks=books.filter(b=>!(b&&DEMO_TITLES.includes(b.title)));
+ const ownedSamples=books.filter(b=>b&&DEMO_TITLES.includes(b.title)).map(b=>({...sampleByTitle.get(b.title),...b,demo:true}));
  const prevSample=ownedSamples.find(b=>b.title===DEMO_TITLES[0])||sampleByTitle.get(DEMO_TITLES[0]);
  const otherOwned=ownedSamples.filter(b=>b.title!==DEMO_TITLES[0]);
  books=[...regularBooks,prevSample,...otherOwned].filter(Boolean);
  const ownedTitles=new Set(books.filter(b=>b&&b.demo&&DEMO_TITLES.includes(b.title)).map(b=>b.title));
- calendarExtras=calendarExtras.filter(e=>!(e&&e.demo&&DEMO_TITLES.includes(e.title)));
+ calendarExtras=calendarExtras.filter(e=>!(e&&DEMO_TITLES.includes(e.title)));
  for(const sample of samples){if(!ownedTitles.has(sample.title))calendarExtras.push(sample)}
  persistBooks();persistCalendarExtras();
- try{localStorage.setItem(DEMO_KEY,"1")}catch(e){}
  return true;
 }
 ensureDemoData();
@@ -560,7 +556,7 @@ function norm(s){return String(s||"").normalize("NFKC").replace(/[\s‐‑‒–
 function valid13(s){if(!/^97[89]\d{10}$/.test(s))return false;let n=0;for(let i=0;i<13;i++)n+=+s[i]*(i%2?3:1);return n%10===0}
 function valid10(s){if(!/^\d{9}[\dX]$/.test(s))return false;let n=0;for(let i=0;i<10;i++)n+=(s[i]=="X"?10:+s[i])*(10-i);return n%11===0}
 function to13(s){let c="978"+s.slice(0,9),n=0;for(let i=0;i<12;i++)n+=+c[i]*(i%2?3:1);return c+((10-n%10)%10)}
-const APP_STORAGE_KEYS=[KEY,"calendarExtras_v442","book_tracker_settings_v449","seriesView_v444","bookTrackerMeta_v483"];
+const APP_STORAGE_KEYS=[KEY,"calendarExtras_v442","book_tracker_settings_v449","seriesView_v444","bookTrackerMeta_v483",DEMO_DELETED_KEY];
 function persistBooks(){try{localStorage.setItem(KEY,JSON.stringify(books));return true}catch(e){console.error("books save",e);return false}}
 function persistCalendarExtras(){try{localStorage.setItem("calendarExtras_v442",JSON.stringify(calendarExtras));return true}catch(e){console.error("calendar extras save",e);return false}}
 function readSeriesView(){try{return localStorage.getItem("seriesView_v444")!=="off"}catch(e){return true}}
@@ -770,11 +766,12 @@ window.addBookFromCalendar=async function(e,k){
  await window.addBook(b);renderCalendar();if(k){selectedDate=k;showDay(k)}
 };
 window.removeBookFromCalendar=async function(isbn,k){
- const idx=books.findIndex(x=>norm(x.isbn)===norm(isbn));if(idx<0)return;const b=books[idx];
- if(!confirm("この本を蔵書から削除しますか？\n\n"+(b.title||"この本")))return;
+ const idx=books.findIndex(x=>norm(x.isbn)===norm(isbn));if(idx<0)return false;const b=books[idx];
+ if(!confirm("この本を蔵書から削除しますか？\n\n"+(b.title||"この本")))return false;
  const removed=books.splice(idx,1)[0];
- if(!persistBooks()){books.splice(idx,0,removed);alert("蔵書を保存できませんでした。端末の空き容量を確認してください。");return}
+ if(!persistBooks()){books.splice(idx,0,removed);alert("蔵書を保存できませんでした。端末の空き容量を確認してください。");return false}
  render();renderCalendar();if(k){selectedDate=k;showDay(k)}
+ return true;
 };
 function calendarEventHtml(e,k){
  const owned=books.some(x=>norm(x.isbn)===norm(e.isbn)),future=isFutureDate(e.date);
@@ -950,20 +947,19 @@ $("skinApply").onclick=()=>{appSettings.skin={primary:$("skinPrimary").value,bg:
 
 $("bgImageInput").onchange=async e=>{let f=e.target.files?.[0];if(!f)return;try{let data=await compressImage(f);appSettings.background.image=data;let stats=await averageImageColor(data);appSettings.background.avgLum=stats?.lum??null;appSettings.background.avgColor=stats?.color??null;saveSettings();applyVisualSettings()}catch(err){alert("背景画像を設定できませんでした。別の画像を試してください。")}};
 $("bgImageRemove").onclick=()=>{appSettings.background={image:"",avgLum:null,avgColor:null};$("bgImageInput").value="";saveSettings();applyVisualSettings()};
-function createBackupData(){let localStorageData={};for(const k of APP_STORAGE_KEYS){const v=localStorage.getItem(k);if(v!==null)localStorageData[k]=v}return {schemaVersion:3,appVersion:"4.9.10",exportedAt:new Date().toISOString(),localStorage:localStorageData}}
+function createBackupData(){let localStorageData={};for(const k of APP_STORAGE_KEYS){const v=localStorage.getItem(k);if(v!==null)localStorageData[k]=v}return {schemaVersion:3,appVersion:"4.9.11",exportedAt:new Date().toISOString(),localStorage:localStorageData}}
 function performDemoDeletion(){
- const demoBookCount=books.filter(b=>b.demo).length;
- const demoExtraCount=calendarExtras.filter(e=>e.demo||String(e.key||"").startsWith("demo-release|")||String(e.title||"").startsWith("サンプル")).length;
- if(!demoBookCount&&!demoExtraCount){render();return false}
- const oldBooks=books.slice(),oldExtras=calendarExtras.slice();
- books=books.filter(b=>!b.demo);
- calendarExtras=calendarExtras.filter(e=>!(e.demo||String(e.key||"").startsWith("demo-release|")||String(e.title||"").startsWith("サンプル")));
- const okBooks=persistBooks(),okExtras=persistCalendarExtras();
- if(!okBooks||!okExtras){books=oldBooks;calendarExtras=oldExtras;alert("サンプルデータの削除に失敗しました。端末の空き容量を確認してください。");return false}
- try{localStorage.setItem(DEMO_DELETED_KEY,"1");localStorage.setItem(DEMO_KEY,"1")}catch(e){}
- render();
- alert("サンプルデータを削除しました。");
- return true;
+ const demoBooks=books.filter(isDemoRecord),demoExtras=calendarExtras.filter(isDemoExtra);
+ if(!demoBooks.length&&!demoExtras.length){render();return false}
+ const oldBooks=books.slice(),oldExtras=calendarExtras.slice(),oldMeta=JSON.parse(JSON.stringify(bookMeta));
+ const removedIsbns=new Set([...demoBooks,...demoExtras].map(x=>norm(x.isbn)).filter(Boolean));
+ books=books.filter(b=>!isDemoRecord(b));
+ calendarExtras=calendarExtras.filter(e=>!isDemoExtra(e));
+ removedIsbns.forEach(k=>delete bookMeta[k]);
+ const okBooks=persistBooks(),okExtras=persistCalendarExtras(),okMeta=saveMeta();
+ if(!okBooks||!okExtras||!okMeta){books=oldBooks;calendarExtras=oldExtras;bookMeta=oldMeta;persistBooks();persistCalendarExtras();saveMeta();alert("サンプルデータの削除に失敗しました。端末の空き容量を確認してください。");return false}
+ try{localStorage.setItem(DEMO_DELETED_KEY,"1")}catch(e){}
+ render();alert("サンプルデータを削除しました。");return true;
 }
 function openDemoDeleteConfirm(){
  const existing=$("demoDeleteDialog"); if(existing)existing.remove();
@@ -980,7 +976,9 @@ $("backupDataBtn").onclick=()=>{let blob=new Blob([JSON.stringify(createBackupDa
 $("restoreDataBtn").onclick=()=>$("restoreDataInput").click();
 $("restoreDataInput").onchange=e=>{let f=e.target.files?.[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!d||!d.localStorage||typeof d.localStorage!=="object")throw Error();if(!confirm("現在の端末内データをバックアップ内容で置き換えます。よろしいですか？"))return;for(const k of APP_STORAGE_KEYS){try{localStorage.removeItem(k)}catch(_){}}Object.entries(d.localStorage).forEach(([k,v])=>{if(APP_STORAGE_KEYS.includes(k)&&typeof v==="string")localStorage.setItem(k,v)});$("backupStatus").textContent="復元しました。画面を再読み込みします。";setTimeout(()=>location.reload(),500)}catch(err){$("backupStatus").textContent="復元できませんでした。Book TrackerのバックアップJSONを選択してください。"}};r.readAsText(f)};
 $("setSearchCount").onchange=()=>{appSettings.search.resultCount=Number($("setSearchCount").value);saveSettings();updateSettingLabels()};$("setSearchSort").onchange=()=>{appSettings.search.sort=$("setSearchSort").value;saveSettings();updateSettingLabels()};$("setWeekStart").onchange=()=>{appSettings.calendar.weekStart=Number($("setWeekStart").value);saveSettings();renderCalendar()};
-function hasDemoData(){return books.some(b=>b&&b.demo&&DEMO_TITLES.includes(b.title))||calendarExtras.some(e=>e&&e.demo&&DEMO_TITLES.includes(e.title)||String(e?.key||"").startsWith("demo-release|"))}
+function isDemoRecord(b){return !!b&&(!!b.demo||DEMO_TITLES.includes(String(b.title||""))||/^demo-\d+$/.test(String(b.isbn||"")))}
+function isDemoExtra(e){return !!e&&(!!e.demo||DEMO_TITLES.includes(String(e.title||""))||String(e.key||"").startsWith("demo-release|"))}
+function hasDemoData(){return DEMO_ENABLED&&(books.some(isDemoRecord)||calendarExtras.some(isDemoExtra))}
 function updateDemoDeleteButton(){const b=$("deleteDemoBtn");if(b)b.style.display=hasDemoData()?"block":"none"}
 function render(){try{updateProfileDisplay()}catch(e){console.error("profile display",e)}try{renderDemoNotice()}catch(e){console.error("demo notice",e)}try{renderHome()}catch(e){console.error("renderHome",e);showRuntimeError()}try{renderLibrary()}catch(e){console.error("renderLibrary",e);showRuntimeError()}try{renderCalendar()}catch(e){console.error("renderCalendar",e);showRuntimeError()}try{updateClearButtons()}catch(e){console.error("clear buttons",e)}try{updateDemoDeleteButton()}catch(e){console.error("demo delete button",e)}}
 function updateClearButtons(){document.querySelectorAll(".clearbtn").forEach(b=>{let i=$(b.dataset.clear);b.style.display=i&&i.value?"block":"none"})}
@@ -1049,7 +1047,7 @@ window.openBookDetail=function(b){
  $("detailBody").innerHTML=`<div class="detail-grid"><div>${cover?`<img class="detail-cover" src="${esc(cover)}">`:""}</div><div><p><b>著者：</b><button class="detail-person-link" type="button" id="detailAuthorLink">${esc(d.author||"不明")}</button></p><p><b>出版社：</b><button class="detail-person-link" type="button" id="detailPublisherLink">${esc(d.publisher||"不明")}</button></p><p><b>発売日：</b>${esc(d.date||"")}</p><p><b>ISBN：</b>${esc(d.isbn||"")}</p><p><b>価格：</b><input id="detailPrice" type="number" min="0" step="1" value="${Number(d.price)||0}" placeholder="価格を入力"></p>${owned?'<button type="button" id="savePrice" style="margin-top:4px">価格を保存</button>':""}</div></div>${owned?`<div class="status-row"><label>購入状態<select id="detailPurchase"><option value="wanted">欲しい</option><option value="reserved">予約済み</option><option value="purchased">購入済み</option><option value="none">購入しない</option></select></label><div class="detail-check-row"><label class="toggle-row"><input id="detailReading" type="checkbox"> 読了</label><label class="toggle-row"><input id="detailFavorite" type="checkbox"> ★ お気に入り</label></div></div><div style="margin-top:10px"><label>評価<div class="rating" id="detailRating">${[1,2,3,4,5].map(n=>`<button type="button" class="${n<=rating?'active':''}" data-rating="${n}">★</button>`).join("")}</div></label><label style="display:block;margin-top:9px">自分用メモ<textarea id="detailMemo" class="detail-note" placeholder="感想・買う理由・気になったことなど">${esc(m?.memo||"")}</textarea></label><label class="toggle-row"><input id="detailNotify" type="checkbox"> 発売日を知らせる</label><div class="notify-note muted">※試作版ではアプリを開いた際に発売予定を確認します。ネイティブ版ではiPhone通知へ拡張予定です。</div></div>`:""}<div class="detail-actions">${owned?`<button type="button" class="secondary" id="detailRemoveBook">✓ 蔵書登録済み（タップで削除）</button>`:(!d.isbn?"":(future?`<button type="button" class="secondary" disabled>発売前のため登録不可</button>`:`<button type="button" id="detailRegisterBook">＋ 蔵書に登録</button>`))}<a href="${amazonUrl(d)}" target="_blank" rel="noopener">Amazonで探す</a>${d.publisher?`<a href="https://www.google.com/search?q=${encodeURIComponent(d.publisher+" "+d.title)}" target="_blank" rel="noopener">出版社を探す</a>`:""}<button type="button" id="detailRelated">関連書籍を検索</button><button type="button" onclick='addCalendarExtra(${JSON.stringify(d).replace(/</g,"\u003c")},"related")'>関連図書としてカレンダー追加</button><button type="button" onclick='addCalendarExtra(${JSON.stringify(d).replace(/</g,"\u003c")},"recommended")'>おすすめとしてカレンダー追加</button></div><div><h3>紹介</h3><p>${esc(desc).replace(/\n/g,"<br>")}</p></div><div id="detailRelatedBox" class="detail-related"></div>`;
  detailOverlay.style.display="flex";
  $("detailRegisterBook")?.addEventListener("click",async()=>{if(await window.addBook(d))openBookDetail(d)});
- $("detailRemoveBook")?.addEventListener("click",()=>removeBookFromCalendar(d.isbn,null));
+ $("detailRemoveBook")?.addEventListener("click",async()=>{if(await removeBookFromCalendar(d.isbn,null))openBookDetail(d)});
  if(owned){
   $("detailPurchase").value="purchased";$("detailReading").checked=m?.readingStatus==="read";$("detailFavorite").checked=!!m.favorite;$("detailNotify").checked=!!m.notify;
   $("detailPurchase").onchange=()=>updateBookMeta(d.isbn,{purchaseStatus:$("detailPurchase").value});
@@ -1114,8 +1112,8 @@ window.addBook=async b=>{
  if(window.addResultsData)renderResults("addResults",window.addResultsData);
  alert("登録しました（購入状態：購入済み）");return true
 };
-window.addAllFound=async()=>{const arr=window.addResultsData||[];let n=0;for(const b of arr){if(isFutureDate(b.date)||books.some(x=>norm(b.isbn)===norm(x.isbn)))continue;books.push(await cacheBookCover(b));getMeta(b.isbn).purchaseStatus="purchased";n++}if(n){if(!saveMeta()||!await saveBooksSafely())return}render();alert(n+"冊を登録しました（重複・発売前は除外）")};
-window.bulkAdd=async id=>{const arr=window[id+"Data"]||[],box=$(id);if(!box)return;const idx=[...box.querySelectorAll(".selectBook:checked")].map(x=>+x.dataset.index);let added=[];for(const i of idx){const x=arr[i];if(x&&!isFutureDate(x.date)&&!books.some(b=>norm(b.isbn)===norm(x.isbn))){added.push(await cacheBookCover(x));getMeta(x.isbn).purchaseStatus="purchased"}}if(added.length){books.push(...added);if(!saveMeta()||!await saveBooksSafely()){books.splice(-added.length,added.length);return}}render();alert(added.length+"冊を登録しました（重複・発売前は除外）")};
+window.addAllFound=async()=>{const arr=window.addResultsData||[];let n=0;for(const b of arr){if(isFutureDate(b.date)||books.some(x=>norm(b.isbn)===norm(x.isbn)))continue;const x=await cacheBookCover({...b,demo:!!b?.demo});books.push(x);if(x.demo)calendarExtras=calendarExtras.filter(e=>!(isDemoExtra(e)&&norm(e.isbn)===norm(x.isbn)));getMeta(b.isbn).purchaseStatus="purchased";n++}if(n){if(!saveMeta()||!await saveBooksSafely())return}render();if(window.addResultsData)renderResults("addResults",window.addResultsData);alert(n+"冊を登録しました（重複・発売前は除外）")};
+window.bulkAdd=async id=>{const arr=window[id+"Data"]||[],box=$(id);if(!box)return;const idx=[...box.querySelectorAll(".selectBook:checked")].map(x=>+x.dataset.index);let added=[];for(const i of idx){const x=arr[i];if(x&&!isFutureDate(x.date)&&!books.some(b=>norm(b.isbn)===norm(x.isbn))){added.push(await cacheBookCover({...x,demo:!!x?.demo}));getMeta(x.isbn).purchaseStatus="purchased"}}if(added.length){books.push(...added);const demoAdded=new Set(added.filter(b=>b.demo).map(b=>norm(b.isbn)));if(demoAdded.size)calendarExtras=calendarExtras.filter(e=>!(isDemoExtra(e)&&demoAdded.has(norm(e.isbn))));if(!saveMeta()||!await saveBooksSafely()||!persistCalendarExtras()){books.splice(-added.length,added.length);return}}render();if(window[id+"Data"]){if(id==="addResults")renderResults(id,window[id+"Data"]);else renderSelectableResults(id,window[id+"Data"])}alert(added.length+"冊を登録しました（重複・発売前は除外）")};
 
 </script>
 </body></html>
