@@ -417,6 +417,9 @@ input[type="checkbox"]{
 .demo-delete-overlay{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(15,23,42,.42)}
 .demo-delete-dialog{width:min(92vw,420px);background:var(--surface,#fff);color:var(--app-text,#172033);border-radius:18px;padding:20px;box-shadow:0 12px 40px rgba(15,23,42,.22)}
 .demo-delete-dialog>b{display:block;font-size:18px;line-height:1.35}.demo-delete-dialog p{margin:9px 0 16px;color:var(--theme-muted,#64748b);font-size:14px;line-height:1.5}.demo-delete-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.demo-delete-actions button{min-height:44px}
+
+.fixed-status{display:inline-flex;align-items:center;min-height:44px;margin-top:4px;padding:8px 14px;border:1px solid #d8e4ff;border-radius:12px;background:#eef5ff;font-weight:800}
+.status-help{margin-top:4px;font-size:.88em}
 </style>
 </head><body>
 <header><b id="appHeaderTitle">📚 本棚スケジュール</b><div class="muted" id="appHeaderSub">複数ISBN・詳細/関連検索・発売日カレンダー対応</div></header>
@@ -456,7 +459,7 @@ input[type="checkbox"]{
 <div class="card"><b>✍️ 作家検索</b><p class="muted">作家名から作品を探したり、新刊をチェックできます。</p><div class="row"><div class="clearwrap"><input id="author" placeholder="作家名"/><button class="clearbtn" data-clear="author">×</button></div><button id="authorBtn">検索</button></div><button class="secondary" id="authorNewBtn" style="width:100%;margin-top:8px">🆕 この作家の新刊をチェック</button></div><div id="authorResults"></div>
 </div>
 </section>
-<section hidden="" id="settings"><div class="card settings-card"><b>⚙️ 設定</b><p class="muted">プロフィール・見た目・データ管理は、この端末に保存されます。</p></div><div class="card"><h3>👤 プロフィール</h3><div class="settings-grid"><label>表示名<input id="profileName" placeholder="例）まさる"/></label><label>好きなジャンル<input id="profileGenre" placeholder="例）漫画・ミステリー"/></label><label>好きな作家<input id="profileAuthor" placeholder="例）○○先生"/></label><label>メモ<textarea id="profileMemo" placeholder="本棚についてのメモ" rows="3"></textarea></label></div><button id="profileSave" style="width:100%;margin-top:8px">プロフィールを保存</button></div><div class="card"><h3>🎨 テーマ</h3><p class="muted">選んだテーマをアプリ全体へ反映します。</p><div class="theme-grid"><button class="theme-choice" data-theme="blue" type="button">🔵 UIブルー</button><button class="theme-choice" data-theme="green" type="button">🟢 ナチュラル</button><button class="theme-choice" data-theme="dark" type="button">🌙 ダーク</button></div><div class="current-setting" id="themeCurrent">現在：UIブルー</div></div><div class="card"><h3>🔤 文字サイズ</h3><p class="muted">ボタンや一覧の文字も一緒に調整します。折り返しが起きにくいようレイアウトも調整します。</p><div class="font-size-grid"><button class="font-choice" data-font="small" type="button">小</button><button class="font-choice" data-font="medium" type="button">中</button><button class="font-choice" data-font="large" type="button">大</button></div><div class="current-setting" id="fontCurrent">現在：中</div></div><div class="card"><h3>🖌️ 自作スキン</h3><p class="muted">色を決めた簡易スキンを保存して適用できます。</p><div class="skin-grid"><label>メイン色<input id="skinPrimary" type="color" value="#2563eb"/></label><label>背景色<input id="skinBg" type="color" value="#f6f8fc"/></label><label>カード色<input id="skinSurface" type="color" value="#ffffff"/></label><label>文字色<input id="skinText" type="color" value="#172033"/></label></div><button class="secondary" id="skinSave" style="width:100%;margin-top:8px">自作スキンを保存</button><button id="skinApply" style="width:100%;margin-top:8px">自作スキンを適用</button></div><div class="card"><h3>🖼️ 背景画像</h3><p class="muted">iPhone内の写真・画像をアプリ背景に設定できます。画像は端末内に圧縮保存します。</p><input accept="image/*" id="bgImageInput" style="width:100%" type="file"/><button class="secondary" id="bgImageRemove" style="width:100%;margin-top:8px">背景画像を削除</button><div class="muted" id="bgImageStatus" style="margin-top:7px"></div></div><div class="card"><h3>👁️ 文字色の自動補正</h3><p class="muted">スキン／テーマで選んだ文字色の「色味」は保ちつつ、背景色や背景画像に合わせて明るさを自動調整します。</p><label class="toggle-row"><input checked="" id="autoTextContrast" type="checkbox"/> <span>自動補正をオン</span><span class="setting-state" id="stateAutoTextContrast">ON</span></label></div><div class="card"><h3>💾 データ管理</h3><p class="muted">蔵書・発売予定・カレンダー追加・プロフィール・テーマ・背景画像などの端末内データをJSONで保存／復元できます。</p><div class="backup-row"><button id="backupDataBtn" type="button">⬇️ バックアップ</button><button id="restoreDataBtn" type="button">⬆️ 復元</button><button class="secondary" id="deleteDemoBtn" type="button" style="width:100%;margin-top:8px">サンプル蔵書を削除</button><button id="resetDemoBtn" type="button" style="width:100%;margin-top:8px">開発用：サンプルを再表示</button></div><input accept="application/json,.json" hidden="" id="restoreDataInput" type="file"/><div class="muted" id="backupStatus" style="margin-top:7px"></div></div><div class="card settings-card"><h3>🔎 検索設定</h3><div class="settings-grid"><label>検索結果の表示数<select id="setSearchCount"><option value="10">10件</option><option value="20">20件</option><option value="40">40件</option></select></label><label>並び順<select id="setSearchSort"><option value="relevance">関連度順</option><option value="release-desc">発売日が新しい順</option><option value="release-asc">発売日が古い順</option><option value="title-asc">タイトル順</option></select></label></div><label class="toggle-row"><input id="setJpPriority" type="checkbox"/> <span>日本語の書籍を優先</span><span class="setting-state" id="stateSetJpPriority">OFF</span></label><label class="toggle-row"><input id="setUnownedFirst" type="checkbox"/> <span>未登録の本を優先</span><span class="setting-state" id="stateSetUnownedFirst">OFF</span></label><label class="toggle-row"><input id="setSearchCache" type="checkbox"/> <span>検索結果を一時キャッシュ</span><span class="setting-state" id="stateSetSearchCache">OFF</span></label><div class="muted" id="searchSettingStatus" style="margin-top:7px"></div></div><div class="card settings-card"><h3>🗓 カレンダー設定</h3><div class="settings-grid"><label>週の始まり<select id="setWeekStart"><option value="0">日曜日</option><option value="1">月曜日</option></select></label></div><label class="toggle-row"><input id="setCalLibrary" type="checkbox"/> <span>蔵書を表示</span><span class="setting-state" id="stateSetCalLibrary">OFF</span></label><label class="toggle-row"><input id="setCalRelated" type="checkbox"/> <span>関連図書を表示</span><span class="setting-state" id="stateSetCalRelated">OFF</span></label><label class="toggle-row"><input id="setCalRecommended" type="checkbox"/> <span>おすすめを表示</span><span class="setting-state" id="stateSetCalRecommended">OFF</span></label><label class="toggle-row"><input id="setOpenToday" type="checkbox"/> <span>カレンダーを開いたら今日を表示</span><span class="setting-state" id="stateSetOpenToday">OFF</span></label><label class="toggle-row"><input id="setICS" type="checkbox"/> <span>iPhoneカレンダー用ICSボタンを表示</span><span class="setting-state" id="stateSetICS">OFF</span></label><div class="muted" style="margin-top:7px">※ここで設定した表示項目はカレンダーの初期表示に使われます。カレンダータブ内の「表示」は、その場だけの一時的な絞り込みです。カレンダー上部で左右フリックすると月変更。タブ移動はタップのみです。</div></div><div class="card settings-card"><h3>ℹ️ このアプリについて</h3><p><b>本棚スケジュール</b><br/>ISBNで蔵書を登録し、発売予定・関連図書・おすすめをカレンダーで管理する本棚アプリです。</p><p class="muted">バージョン：4.9.12（ISBN重複・登録UI・開発用サンプル改善）<br/>通常の閲覧・蔵書管理・設定・カレンダーは端末内で動作し、書誌情報の検索時だけ通信します。</p><p class="muted">個人情報や蔵書データは、この試作版では外部サーバーへ自動送信しません。App Store公開時にはプライバシーポリシー等を別途整備します。</p></div><div class="card"><h3>🌐 通信</h3><div class="offline-note">検索・ISBN照会など、書誌情報を取得する「検索操作」のときだけインターネットを使用します。蔵書表示・編集・削除・カレンダー・設定・バックアップ／復元は端末内で動作します。</div></div></section>
+<section hidden="" id="settings"><div class="card settings-card"><b>⚙️ 設定</b><p class="muted">プロフィール・見た目・データ管理は、この端末に保存されます。</p></div><div class="card"><h3>👤 プロフィール</h3><div class="settings-grid"><label>表示名<input id="profileName" placeholder="例）まさる"/></label><label>好きなジャンル<input id="profileGenre" placeholder="例）漫画・ミステリー"/></label><label>好きな作家<input id="profileAuthor" placeholder="例）○○先生"/></label><label>メモ<textarea id="profileMemo" placeholder="本棚についてのメモ" rows="3"></textarea></label></div><button id="profileSave" style="width:100%;margin-top:8px">プロフィールを保存</button></div><div class="card"><h3>🎨 テーマ</h3><p class="muted">選んだテーマをアプリ全体へ反映します。</p><div class="theme-grid"><button class="theme-choice" data-theme="blue" type="button">🔵 UIブルー</button><button class="theme-choice" data-theme="green" type="button">🟢 ナチュラル</button><button class="theme-choice" data-theme="dark" type="button">🌙 ダーク</button></div><div class="current-setting" id="themeCurrent">現在：UIブルー</div></div><div class="card"><h3>🔤 文字サイズ</h3><p class="muted">ボタンや一覧の文字も一緒に調整します。折り返しが起きにくいようレイアウトも調整します。</p><div class="font-size-grid"><button class="font-choice" data-font="small" type="button">小</button><button class="font-choice" data-font="medium" type="button">中</button><button class="font-choice" data-font="large" type="button">大</button></div><div class="current-setting" id="fontCurrent">現在：中</div></div><div class="card"><h3>🖌️ 自作スキン</h3><p class="muted">色を決めた簡易スキンを保存して適用できます。</p><div class="skin-grid"><label>メイン色<input id="skinPrimary" type="color" value="#2563eb"/></label><label>背景色<input id="skinBg" type="color" value="#f6f8fc"/></label><label>カード色<input id="skinSurface" type="color" value="#ffffff"/></label><label>文字色<input id="skinText" type="color" value="#172033"/></label></div><button class="secondary" id="skinSave" style="width:100%;margin-top:8px">自作スキンを保存</button><button id="skinApply" style="width:100%;margin-top:8px">自作スキンを適用</button></div><div class="card"><h3>🖼️ 背景画像</h3><p class="muted">iPhone内の写真・画像をアプリ背景に設定できます。画像は端末内に圧縮保存します。</p><input accept="image/*" id="bgImageInput" style="width:100%" type="file"/><button class="secondary" id="bgImageRemove" style="width:100%;margin-top:8px">背景画像を削除</button><div class="muted" id="bgImageStatus" style="margin-top:7px"></div></div><div class="card"><h3>👁️ 文字色の自動補正</h3><p class="muted">スキン／テーマで選んだ文字色の「色味」は保ちつつ、背景色や背景画像に合わせて明るさを自動調整します。</p><label class="toggle-row"><input checked="" id="autoTextContrast" type="checkbox"/> <span>自動補正をオン</span><span class="setting-state" id="stateAutoTextContrast">ON</span></label></div><div class="card"><h3>💾 データ管理</h3><p class="muted">蔵書・発売予定・カレンダー追加・プロフィール・テーマ・背景画像などの端末内データをJSONで保存／復元できます。</p><div class="backup-row"><button id="backupDataBtn" type="button">⬇️ バックアップ</button><button id="restoreDataBtn" type="button">⬆️ 復元</button><button class="secondary" id="deleteDemoBtn" type="button" style="width:100%;margin-top:8px">サンプル蔵書を削除</button><button id="resetDemoBtn" type="button" style="width:100%;margin-top:8px">開発用：サンプルを再表示</button><button id="runDevGuardBtn" type="button" style="width:100%;margin-top:8px">🛡️ 開発用：仕様・回帰チェック</button><div class="muted" id="devGuardStatus" style="margin-top:7px"></div></div><input accept="application/json,.json" hidden="" id="restoreDataInput" type="file"/><div class="muted" id="backupStatus" style="margin-top:7px"></div></div><div class="card settings-card"><h3>🔎 検索設定</h3><div class="settings-grid"><label>検索結果の表示数<select id="setSearchCount"><option value="10">10件</option><option value="20">20件</option><option value="40">40件</option></select></label><label>並び順<select id="setSearchSort"><option value="relevance">関連度順</option><option value="release-desc">発売日が新しい順</option><option value="release-asc">発売日が古い順</option><option value="title-asc">タイトル順</option></select></label></div><label class="toggle-row"><input id="setJpPriority" type="checkbox"/> <span>日本語の書籍を優先</span><span class="setting-state" id="stateSetJpPriority">OFF</span></label><label class="toggle-row"><input id="setUnownedFirst" type="checkbox"/> <span>未登録の本を優先</span><span class="setting-state" id="stateSetUnownedFirst">OFF</span></label><label class="toggle-row"><input id="setSearchCache" type="checkbox"/> <span>検索結果を一時キャッシュ</span><span class="setting-state" id="stateSetSearchCache">OFF</span></label><div class="muted" id="searchSettingStatus" style="margin-top:7px"></div></div><div class="card settings-card"><h3>🗓 カレンダー設定</h3><div class="settings-grid"><label>週の始まり<select id="setWeekStart"><option value="0">日曜日</option><option value="1">月曜日</option></select></label></div><label class="toggle-row"><input id="setCalLibrary" type="checkbox"/> <span>蔵書を表示</span><span class="setting-state" id="stateSetCalLibrary">OFF</span></label><label class="toggle-row"><input id="setCalRelated" type="checkbox"/> <span>関連図書を表示</span><span class="setting-state" id="stateSetCalRelated">OFF</span></label><label class="toggle-row"><input id="setCalRecommended" type="checkbox"/> <span>おすすめを表示</span><span class="setting-state" id="stateSetCalRecommended">OFF</span></label><label class="toggle-row"><input id="setOpenToday" type="checkbox"/> <span>カレンダーを開いたら今日を表示</span><span class="setting-state" id="stateSetOpenToday">OFF</span></label><label class="toggle-row"><input id="setICS" type="checkbox"/> <span>iPhoneカレンダー用ICSボタンを表示</span><span class="setting-state" id="stateSetICS">OFF</span></label><div class="muted" style="margin-top:7px">※ここで設定した表示項目はカレンダーの初期表示に使われます。カレンダータブ内の「表示」は、その場だけの一時的な絞り込みです。カレンダー上部で左右フリックすると月変更。タブ移動はタップのみです。</div></div><div class="card settings-card"><h3>ℹ️ このアプリについて</h3><p><b>本棚スケジュール</b><br/>ISBNで蔵書を登録し、発売予定・関連図書・おすすめをカレンダーで管理する本棚アプリです。</p><p class="muted">バージョン：4.10.0（仕様ガード・回帰チェック・状態整合性保護）<br/>通常の閲覧・蔵書管理・設定・カレンダーは端末内で動作し、書誌情報の検索時だけ通信します。</p><p class="muted">個人情報や蔵書データは、この試作版では外部サーバーへ自動送信しません。App Store公開時にはプライバシーポリシー等を別途整備します。</p></div><div class="card"><h3>🌐 通信</h3><div class="offline-note">検索・ISBN照会など、書誌情報を取得する「検索操作」のときだけインターネットを使用します。蔵書表示・編集・削除・カレンダー・設定・バックアップ／復元は端末内で動作します。</div></div></section>
 <section hidden="" id="calendar"><div class="card" id="calendarMonthCard"><div class="monthbar"><button class="secondary" id="prevMonth">‹</button><button class="secondary today-btn" id="todayMonth">今日</button><b id="monthTitle"></b><button class="secondary" id="nextMonth">›</button></div><p class="muted">「発売」マーク：蔵書の発売予定</p><div class="calhead" id="calHead"></div><div class="calgrid" id="calendarGrid"></div><div class="event-legend"><span class="legend-item"><span class="release-mark">発売</span>蔵書の発売予定</span><span class="legend-item">関連図書・おすすめは日付をタップして確認</span></div><div class="calendar-filters"><b>表示</b><label><input checked="" id="calFilterLibrary" type="checkbox"/> 蔵書</label><label><input checked="" id="calFilterRelated" type="checkbox"/> 関連</label><label><input checked="" id="calFilterRecommended" type="checkbox"/> おすすめ</label></div><button id="ics" style="width:100%;margin-top:12px">iPhoneカレンダー用ICS</button></div><div class="card" id="calendarDayCard"><b id="selectedDateTitle">日付を選択してください</b><div class="muted" id="selectedEvents" style="margin-top:8px">カレンダーの日をタップしてください。</div></div><div class="card" id="calendarMonthReleasedCard"><div class="calendar-month-title"><b id="calendarMonthReleasedTitle">今月に発売された書籍</b><span class="muted" id="calendarMonthReleasedCount"></span></div><div id="calendarMonthReleasedList" class="calendar-month-released-list"><p class="muted">表示中の月に発売された書籍はありません。</p></div></div></section>
 </main>
 <div class="runtime-error" id="runtimeError" style="display:none"></div><div class="profile-sheet" id="profileOverlay"><div class="sheet"><div class="profile-head"><h2 id="profileSheetTitle">プロフィール</h2><button class="clearbtn" id="profileSheetClose">×</button></div><div id="profileSheetBody"></div></div></div><nav id="bottomNav"><button aria-current="page" class="active" data-s="home" type="button">🏠<br/>ホーム</button><button data-s="add" type="button">➕<br/>追加</button><button data-s="library" type="button">📚<br/>蔵書</button><button data-s="search" type="button">🔎<br/>検索</button><button data-s="calendar" type="button">🗓<br/>カレンダー</button><button data-s="settings" type="button">⚙️<br/>設定</button></nav>
@@ -517,10 +520,29 @@ let calendarExtras=readJSONStorage("calendarExtras_v442",[]);if(!Array.isArray(c
 const DEMO_ENABLED=true;
 // Prototype/dev builds: a deleted sample set stays deleted within this build, but a new build/version starts with samples again.
 // Production/App Store builds set DEMO_ENABLED=false, so this logic is never exposed to end users.
-const APP_VERSION="4.9.12";
+const APP_VERSION="4.10.0";
 const DEMO_DELETED_KEY="bookTrackerDemoDeleted";
 const DEMO_RESET_VERSION_KEY="bookTrackerDemoResetVersion";
 const DEMO_TITLES=["サンプル本棚：前月の便り","サンプル本棚：月夜の標本","サンプルシリーズ：星の余白 1巻","サンプルシリーズ：星の余白 2巻","サンプル本棚：翌月の灯り"];
+/*
+============================================================
+[BOOK TRACKER / SPEC GUARD]
+重要仕様・不変条件。既存仕様を変更する場合は、先に
+SPEC.md と DEV_GUARD.md の変更履歴を更新し、回帰チェックも更新する。
+
+OWNERSHIP-001: books に存在する本 = 蔵書（所有済み）。
+OWNERSHIP-002: 蔵書の purchaseStatus は必ず "purchased"。
+OWNERSHIP-003: 欲しい/予約済み/購入しない は未所有本にのみ許可。
+STATE-001: 登録・削除・状態変更は正規化→保存→関連UI再描画までを1操作とする。
+STATE-002: 画面ごとに状態を独自保存・独自判断してはいけない。
+SEARCH-001: 検索結果の蔵書判定は canonical ISBN 等の共通キーで行う。
+SEARCH-002: 同一ISBNは検索結果に1件だけ表示する。
+TIME-001: 発売日と購入/所有は別概念。発売されたことだけで購入済みにしない。
+DEMO-001: サンプルデータは通常データと demo フラグで区別し、公開版では無効化する。
+UI-001: 保存状態と表示状態が食い違わないよう、状態変更後は関連ビューを再描画する。
+ARCH-001: 新機能は既存の正規登録・状態更新関数を迂回して books/localStorage を直接変更しない。
+============================================================
+*/
 function demoDeleted(){
  if(!DEMO_ENABLED)return true;
  try{
@@ -564,8 +586,38 @@ function ensureDemoData(){
 ensureDemoData();
 let bookMeta=readJSONStorage("bookTrackerMeta_v483",{});if(!bookMeta||typeof bookMeta!=="object"||Array.isArray(bookMeta))bookMeta={};
 function getMeta(isbn){let k=norm(isbn);if(!bookMeta[k])bookMeta[k]={purchaseStatus:"wanted",readingStatus:"unread",favorite:false,memo:"",rating:0,notify:false};return bookMeta[k]}
+// STATE-002: purchaseStatus の変更はこの関数か updateBookMeta() を経由する。
+function setPurchaseStatus(isbn,status){
+ const m=getMeta(isbn);
+ const owned=books.some(b=>norm(b.isbn)===norm(isbn));
+ const allowed=owned?["purchased"]:["wanted","reserved","purchased","none"];
+ m.purchaseStatus=allowed.includes(status)?(owned?"purchased":status):(owned?"purchased":"wanted");
+ return m.purchaseStatus;
+}
+// Ownership and purchase state are intentionally kept consistent:
+// a book that exists in `books` is a library book, so its purchase state is always purchased.
+function normalizeOwnedPurchaseStatuses(){
+ let changed=false;
+ for(const b of books){
+  if(!b?.isbn)continue;
+  const m=getMeta(b.isbn);
+  if(m.purchaseStatus!=="purchased"){m.purchaseStatus="purchased";changed=true}
+ }
+ if(changed)saveMeta();
+ return changed;
+}
+normalizeOwnedPurchaseStatuses();
 function saveMeta(){try{localStorage.setItem("bookTrackerMeta_v483",JSON.stringify(bookMeta));return true}catch(e){console.error("meta save",e);return false}}
-function updateBookMeta(isbn,patch){const m=getMeta(isbn);Object.assign(m,patch);saveMeta();render();}
+function updateBookMeta(isbn,patch){
+ const m=getMeta(isbn);
+ const owned=books.some(b=>norm(b.isbn)===norm(isbn));
+ const next={...patch};
+ // A library record is owned by definition, so never allow an impossible purchase state.
+ if(owned&&Object.prototype.hasOwnProperty.call(next,"purchaseStatus"))next.purchaseStatus="purchased";
+ Object.assign(m,next);
+ saveMeta();
+ render();
+}
 let stream=null,timer=null;
 const esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function norm(s){return String(s||"").normalize("NFKC").replace(/[\s‐‑‒–—−-]/g,"").toUpperCase()}
@@ -638,7 +690,7 @@ function card(book,add=true,mode="result",index=-1){
  let chk=`<input class="check selectBook" type="checkbox" data-index="${index}" aria-label="選択">`;
  const owned=books.some(x=>norm(x.isbn)===norm(book.isbn));
  const meta=owned?getMeta(book.isbn):null;
- const status=meta?.purchaseStatus==="purchased"?"購入済み":meta?.purchaseStatus==="reserved"?"予約済み":meta?.purchaseStatus==="none"?"購入しない":"欲しい";
+ const status=owned?"購入済み":(meta?.purchaseStatus==="purchased"?"購入済み":meta?.purchaseStatus==="reserved"?"予約済み":meta?.purchaseStatus==="none"?"購入しない":"欲しい");
  const read=meta?.readingStatus==="read"?"読了":"未読";
  return `<div class="card booktap" data-book='${detail}'><div class="selectline">${chk}<div class="content"><div class="book">${(add?book.cover:(book.cachedCover||""))?`<img class="cover" src="${esc(add?book.cover:book.cachedCover)}">`:`<div class='cover'></div>`}<div><div class="title">${esc(book.title)} ${owned?'<span class="owned-badge">蔵書</span>':'<span class="unowned-badge">未登録</span>'}</div><div class="muted">${esc(book.author)}</div><div class="muted">${esc(book.publisher)} ${esc(book.date)}${Number(book.price)>0?` ・ ¥${Math.round(book.price).toLocaleString()}`:""}</div><div class="muted">ISBN ${esc(book.isbn||"")}</div>${owned?`<div class="meta-badges"><span class="meta-badge">${status}</span><span class="meta-badge">${read}</span>${meta.favorite?'<span class="meta-badge favorite">★ お気に入り</span>':''}</div>`:""}<div class="actions"><button type="button" onclick='event.stopPropagation();openBookDetail(${safe})'>詳細を見る</button>${add?(owned?`<button class="secondary" type="button" onclick='event.stopPropagation();removeBookFromCalendar(${JSON.stringify(book.isbn)})'>✓ 蔵書登録済み（タップで削除）</button>`:(isFutureDate(book.date)?`<button class="secondary" type="button" disabled>発売前のため登録不可</button>`:`<button type="button" onclick='event.stopPropagation();addBook(${safe})'>蔵書に登録</button>`)):""}</div></div></div></div></div></div>`;
 }
@@ -725,7 +777,7 @@ async function registerCheckedIsbnRows(){
  let added=[],seen=new Set();
  for(const b of targets){
   const key=bookResultKey(b); if(seen.has(key)||isFutureDate(b.date)||books.some(x=>bookResultKey(x)===key))continue;
-  seen.add(key); const x=await cacheBookCover({...b,demo:!!b?.demo});delete x._rowEl;delete x._rowEls;delete x._register;added.push(x);getMeta(x.isbn).purchaseStatus="purchased";
+  seen.add(key); const x=await cacheBookCover({...b,demo:!!b?.demo});delete x._rowEl;delete x._rowEls;delete x._register;added.push(x);setPurchaseStatus(x.isbn,"purchased");
  }
  if(added.length){
   const oldBooks=books.slice(),oldExtras=calendarExtras.slice(); books.push(...added);
@@ -1109,13 +1161,12 @@ window.openBookDetail=function(b){
  let d=b||{},desc=d.description||"紹介文は取得できませんでした。",cover=d.cachedCover||((books.some(x=>norm(x.isbn)===norm(d.isbn)))?"":(d.cover||""));
  const owned=books.some(x=>norm(x.isbn)===norm(d.isbn)),m=owned?getMeta(d.isbn):null,rating=Number(m?.rating)||0,future=isFutureDate(d.date);
  $("detailTitle").textContent=d.title||"書籍詳細";
- $("detailBody").innerHTML=`<div class="detail-grid"><div>${cover?`<img class="detail-cover" src="${esc(cover)}">`:""}</div><div><p><b>著者：</b><button class="detail-person-link" type="button" id="detailAuthorLink">${esc(d.author||"不明")}</button></p><p><b>出版社：</b><button class="detail-person-link" type="button" id="detailPublisherLink">${esc(d.publisher||"不明")}</button></p><p><b>発売日：</b>${esc(d.date||"")}</p><p><b>ISBN：</b>${esc(d.isbn||"")}</p><p><b>価格：</b><input id="detailPrice" type="number" min="0" step="1" value="${Number(d.price)||0}" placeholder="価格を入力"></p>${owned?'<button type="button" id="savePrice" style="margin-top:4px">価格を保存</button>':""}</div></div>${owned?`<div class="status-row"><label>購入状態<select id="detailPurchase"><option value="wanted">欲しい</option><option value="reserved">予約済み</option><option value="purchased">購入済み</option><option value="none">購入しない</option></select></label><div class="detail-check-row"><label class="toggle-row"><input id="detailReading" type="checkbox"> 読了</label><label class="toggle-row"><input id="detailFavorite" type="checkbox"> ★ お気に入り</label></div></div><div style="margin-top:10px"><label>評価<div class="rating" id="detailRating">${[1,2,3,4,5].map(n=>`<button type="button" class="${n<=rating?'active':''}" data-rating="${n}">★</button>`).join("")}</div></label><label style="display:block;margin-top:9px">自分用メモ<textarea id="detailMemo" class="detail-note" placeholder="感想・買う理由・気になったことなど">${esc(m?.memo||"")}</textarea></label><label class="toggle-row"><input id="detailNotify" type="checkbox"> 発売日を知らせる</label><div class="notify-note muted">※試作版ではアプリを開いた際に発売予定を確認します。ネイティブ版ではiPhone通知へ拡張予定です。</div></div>`:""}<div class="detail-actions">${owned?`<button type="button" class="secondary" id="detailRemoveBook">✓ 蔵書登録済み（タップで削除）</button>`:(!d.isbn?"":(future?`<button type="button" class="secondary" disabled>発売前のため登録不可</button>`:`<button type="button" id="detailRegisterBook">＋ 蔵書に登録</button>`))}<a href="${amazonUrl(d)}" target="_blank" rel="noopener">Amazonで探す</a>${d.publisher?`<a href="https://www.google.com/search?q=${encodeURIComponent(d.publisher+" "+d.title)}" target="_blank" rel="noopener">出版社を探す</a>`:""}<button type="button" id="detailRelated">関連書籍を検索</button><button type="button" onclick='addCalendarExtra(${JSON.stringify(d).replace(/</g,"\u003c")},"related")'>関連図書としてカレンダー追加</button><button type="button" onclick='addCalendarExtra(${JSON.stringify(d).replace(/</g,"\u003c")},"recommended")'>おすすめとしてカレンダー追加</button></div><div><h3>紹介</h3><p>${esc(desc).replace(/\n/g,"<br>")}</p></div><div id="detailRelatedBox" class="detail-related"></div>`;
+ $("detailBody").innerHTML=`<div class="detail-grid"><div>${cover?`<img class="detail-cover" src="${esc(cover)}">`:""}</div><div><p><b>著者：</b><button class="detail-person-link" type="button" id="detailAuthorLink">${esc(d.author||"不明")}</button></p><p><b>出版社：</b><button class="detail-person-link" type="button" id="detailPublisherLink">${esc(d.publisher||"不明")}</button></p><p><b>発売日：</b>${esc(d.date||"")}</p><p><b>ISBN：</b>${esc(d.isbn||"")}</p><p><b>価格：</b><input id="detailPrice" type="number" min="0" step="1" value="${Number(d.price)||0}" placeholder="価格を入力"></p>${owned?'<button type="button" id="savePrice" style="margin-top:4px">価格を保存</button>':""}</div></div>${owned?`<div class="status-row"><label>購入状態<div class="fixed-status">購入済み</div><div class="muted status-help">蔵書に登録されている本は購入済みとして管理されます。別の状態にする場合は、いったん蔵書から削除してください。</div></label><div class="detail-check-row"><label class="toggle-row"><input id="detailReading" type="checkbox"> 読了</label><label class="toggle-row"><input id="detailFavorite" type="checkbox"> ★ お気に入り</label></div></div><div style="margin-top:10px"><label>評価<div class="rating" id="detailRating">${[1,2,3,4,5].map(n=>`<button type="button" class="${n<=rating?'active':''}" data-rating="${n}">★</button>`).join("")}</div></label><label style="display:block;margin-top:9px">自分用メモ<textarea id="detailMemo" class="detail-note" placeholder="感想・買う理由・気になったことなど">${esc(m?.memo||"")}</textarea></label><label class="toggle-row"><input id="detailNotify" type="checkbox"> 発売日を知らせる</label><div class="notify-note muted">※試作版ではアプリを開いた際に発売予定を確認します。ネイティブ版ではiPhone通知へ拡張予定です。</div></div>`:""}<div class="detail-actions">${owned?`<button type="button" class="secondary" id="detailRemoveBook">✓ 蔵書登録済み（タップで削除）</button>`:(!d.isbn?"":(future?`<button type="button" class="secondary" disabled>発売前のため登録不可</button>`:`<button type="button" id="detailRegisterBook">＋ 蔵書に登録</button>`))}<a href="${amazonUrl(d)}" target="_blank" rel="noopener">Amazonで探す</a>${d.publisher?`<a href="https://www.google.com/search?q=${encodeURIComponent(d.publisher+" "+d.title)}" target="_blank" rel="noopener">出版社を探す</a>`:""}<button type="button" id="detailRelated">関連書籍を検索</button><button type="button" onclick='addCalendarExtra(${JSON.stringify(d).replace(/</g,"\u003c")},"related")'>関連図書としてカレンダー追加</button><button type="button" onclick='addCalendarExtra(${JSON.stringify(d).replace(/</g,"\u003c")},"recommended")'>おすすめとしてカレンダー追加</button></div><div><h3>紹介</h3><p>${esc(desc).replace(/\n/g,"<br>")}</p></div><div id="detailRelatedBox" class="detail-related"></div>`;
  detailOverlay.style.display="flex";
  $("detailRegisterBook")?.addEventListener("click",async()=>{if(await window.addBook(d))openBookDetail(d)});
  $("detailRemoveBook")?.addEventListener("click",async()=>{if(await removeBookFromCalendar(d.isbn,null))openBookDetail(d)});
  if(owned){
-  $("detailPurchase").value=m?.purchaseStatus||"wanted";$("detailReading").checked=m?.readingStatus==="read";$("detailFavorite").checked=!!m.favorite;$("detailNotify").checked=!!m.notify;
-  $("detailPurchase").onchange=()=>updateBookMeta(d.isbn,{purchaseStatus:$("detailPurchase").value});
+  $("detailReading").checked=m?.readingStatus==="read";$("detailFavorite").checked=!!m.favorite;$("detailNotify").checked=!!m.notify;
   $("detailReading").onchange=()=>updateBookMeta(d.isbn,{readingStatus:$("detailReading").checked?"read":"unread"});
   $("detailFavorite").onchange=()=>updateBookMeta(d.isbn,{favorite:$("detailFavorite").checked});
   $("detailNotify").onchange=async()=>{if($("detailNotify").checked&&"Notification" in window&&Notification.permission==="default"){try{await Notification.requestPermission()}catch(e){}}updateBookMeta(d.isbn,{notify:$("detailNotify").checked})};
@@ -1170,7 +1221,7 @@ window.addBook=async b=>{
  const x=await cacheBookCover({...b,demo:!!b?.demo});delete x._rowEl;delete x._rowEls;delete x._register;
  books.push(x);
  if(x.demo)calendarExtras=calendarExtras.filter(e=>!(isDemoExtra(e)&&canonicalIsbn(e.isbn)===canonicalIsbn(x.isbn)));
- getMeta(x.isbn).purchaseStatus="purchased";
+ setPurchaseStatus(x.isbn,"purchased");
  if(!saveMeta()||!await saveBooksSafely()||!persistCalendarExtras()){books=oldBooks;calendarExtras=oldExtras;return false}
  render();
  if(window.addResultsData){if(addResultsMode==="isbn")renderIsbnResults(window.addResultsData);else renderResults("addResults",window.addResultsData)}
@@ -1178,7 +1229,7 @@ window.addBook=async b=>{
 };
 window.addAllFound=async()=>{
  const arr=dedupeBookResults(window.addResultsData||[]),seen=new Set(books.map(bookResultKey)),added=[];
- for(const b of arr){const key=bookResultKey(b);if(!key||seen.has(key)||isFutureDate(b.date))continue;seen.add(key);const x=await cacheBookCover({...b,demo:!!b?.demo});delete x._rowEl;delete x._rowEls;delete x._register;added.push(x);getMeta(x.isbn).purchaseStatus="purchased"}
+ for(const b of arr){const key=bookResultKey(b);if(!key||seen.has(key)||isFutureDate(b.date))continue;seen.add(key);const x=await cacheBookCover({...b,demo:!!b?.demo});delete x._rowEl;delete x._rowEls;delete x._register;added.push(x);setPurchaseStatus(x.isbn,"purchased")}
  if(added.length){const oldBooks=books.slice(),oldExtras=calendarExtras.slice();books.push(...added);const demoAdded=new Set(added.filter(b=>b.demo).map(b=>canonicalIsbn(b.isbn)));if(demoAdded.size)calendarExtras=calendarExtras.filter(e=>!(isDemoExtra(e)&&demoAdded.has(canonicalIsbn(e.isbn))));if(!saveMeta()||!await saveBooksSafely()||!persistCalendarExtras()){books=oldBooks;calendarExtras=oldExtras;return}}
  render();if(window.addResultsData){if(addResultsMode==="isbn")renderIsbnResults(window.addResultsData);else renderResults("addResults",window.addResultsData)}alert(added.length+"冊を登録しました（重複・発売前は除外）")
 };
@@ -1186,7 +1237,7 @@ window.bulkAdd=async id=>{
  const arr=dedupeBookResults(window[id+"Data"]||[]),box=$(id);if(!box)return;
  const idx=[...box.querySelectorAll(".selectBook:checked")].map(x=>+x.dataset.index);if(!idx.length){alert("登録する本を選択してください");return}
  const seen=new Set(books.map(bookResultKey)),added=[];
- for(const i of idx){const x=arr[i];if(!x)continue;const key=bookResultKey(x);if(!key||seen.has(key)||isFutureDate(x.date))continue;seen.add(key);const b=await cacheBookCover({...x,demo:!!x?.demo});delete b._rowEl;delete b._rowEls;delete b._register;added.push(b);getMeta(b.isbn).purchaseStatus="purchased"}
+ for(const i of idx){const x=arr[i];if(!x)continue;const key=bookResultKey(x);if(!key||seen.has(key)||isFutureDate(x.date))continue;seen.add(key);const b=await cacheBookCover({...x,demo:!!x?.demo});delete b._rowEl;delete b._rowEls;delete b._register;added.push(b);setPurchaseStatus(b.isbn,"purchased")}
  if(added.length){const oldBooks=books.slice(),oldExtras=calendarExtras.slice();books.push(...added);const demoAdded=new Set(added.filter(b=>b.demo).map(b=>canonicalIsbn(b.isbn)));if(demoAdded.size)calendarExtras=calendarExtras.filter(e=>!(isDemoExtra(e)&&demoAdded.has(canonicalIsbn(e.isbn))));if(!saveMeta()||!await saveBooksSafely()||!await persistCalendarExtras()){books=oldBooks;calendarExtras=oldExtras;return}}
  render();
  const current=dedupeBookResults(window[id+"Data"]||arr);window[id+"Data"]=current;
@@ -1194,5 +1245,54 @@ window.bulkAdd=async id=>{
  alert(added.length+"冊を登録しました（重複・発売前は除外）")
 };
 
+</script>
+
+<script id="v410-spec-guard">
+/* v4.10.0: Runtime specification guard + lightweight regression checks.
+   Development build only. These checks intentionally fail loudly instead of silently masking regressions. */
+(function(){
+ const DEV_GUARD_VERSION="4.10.0";
+ const validPurchase=new Set(["wanted","reserved","purchased","none"]);
+ function add(name,ok,detail){return {name,ok,detail:detail||""}}
+ function runSpecGuard(){
+  const results=[];
+  // OWNERSHIP-001/002: every library record must be purchased.
+  const badOwned=books.filter(b=>{const m=getMeta(b.isbn);return m.purchaseStatus!=="purchased"});
+  results.push(add("蔵書の購入状態",badOwned.length===0,badOwned.length?badOwned.map(b=>b.title).join(" / "):"OK"));
+  // STATE: metadata values must be from the known state set.
+  const badMeta=Object.entries(bookMeta).filter(([k,m])=>!validPurchase.has(String(m?.purchaseStatus||"")));
+  results.push(add("購入状態の値",badMeta.length===0,badMeta.length?badMeta.map(([k])=>k).join(" / "):"OK"));
+  // SEARCH-002: current result collections must be deduplicated.
+  ["addResultsData","searchResultsData","authorResultsData","similarResultsData"].forEach(key=>{
+   if(!Array.isArray(window[key]))return;
+   const arr=window[key],dedup=dedupeBookResults(arr);
+   results.push(add("検索結果重複: "+key,arr.length===dedup.length,arr.length===dedup.length?"OK":`${arr.length-dedup.length}件の重複`));
+  });
+  // UI-001: all select-all controls must be actual checkboxes.
+  const badChecks=[...document.querySelectorAll(".selectAll,.similarAll")].filter(x=>x.tagName!=="INPUT"||x.type!=="checkbox");
+  results.push(add("全選択チェックボックス",badChecks.length===0,badChecks.length?`${badChecks.length}件が不正`:"OK"));
+  // UI-001: rendered library/search state must agree with canonical ownership.
+  const visibleCards=[...document.querySelectorAll(".card[data-book]")]; let mismatch=0;
+  for(const el of visibleCards){try{const b=JSON.parse(el.dataset.book),owned=books.some(x=>bookResultKey(x)===bookResultKey(b));const badge=el.querySelector(".owned-badge");if(owned&&!badge)mismatch++;if(!owned&&badge)mismatch++}catch(e){}}
+  results.push(add("表示と蔵書状態",mismatch===0,mismatch?`${mismatch}件の表示不一致`:"OK"));
+  // ARCH-001: expected single authoritative registration layer.
+  results.push(add("正規登録関数",typeof window.addBook==="function"&&typeof window.bulkAdd==="function","OK"));
+  const ok=results.every(x=>x.ok);
+  return {version:DEV_GUARD_VERSION,ok,results};
+ }
+ window.runBookTrackerSpecGuard=runSpecGuard;
+ const btn=$("runDevGuardBtn");
+ if(btn)btn.addEventListener("click",()=>{
+  normalizeOwnedPurchaseStatuses();
+  const r=runSpecGuard();
+  const el=$("devGuardStatus");
+  el.textContent=(r.ok?"✅ 仕様・回帰チェックOK":"⚠️ 仕様違反／回帰候補あり")+"（v"+r.version+"） "+r.results.filter(x=>!x.ok).map(x=>x.name+"："+x.detail).join(" / ");
+  el.style.color=r.ok?"#16803c":"#b42318";
+  console.table(r.results);
+  if(!r.ok)showRuntimeError("開発用仕様ガードで問題を検出しました。設定の診断結果を確認してください。");
+ });
+ // Run silently on startup in development so regressions are noticed immediately.
+ if(DEMO_ENABLED){try{const r=runSpecGuard();if(!r.ok)console.warn("[SPEC GUARD]",r.results.filter(x=>!x.ok))}catch(e){console.warn("[SPEC GUARD ERROR]",e)}}
+})();
 </script>
 </body></html>
