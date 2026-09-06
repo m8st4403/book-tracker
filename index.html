@@ -1114,7 +1114,7 @@ window.openBookDetail=function(b){
  $("detailRegisterBook")?.addEventListener("click",async()=>{if(await window.addBook(d))openBookDetail(d)});
  $("detailRemoveBook")?.addEventListener("click",async()=>{if(await removeBookFromCalendar(d.isbn,null))openBookDetail(d)});
  if(owned){
-  $("detailPurchase").value="purchased";$("detailReading").checked=m?.readingStatus==="read";$("detailFavorite").checked=!!m.favorite;$("detailNotify").checked=!!m.notify;
+  $("detailPurchase").value=m?.purchaseStatus||"wanted";$("detailReading").checked=m?.readingStatus==="read";$("detailFavorite").checked=!!m.favorite;$("detailNotify").checked=!!m.notify;
   $("detailPurchase").onchange=()=>updateBookMeta(d.isbn,{purchaseStatus:$("detailPurchase").value});
   $("detailReading").onchange=()=>updateBookMeta(d.isbn,{readingStatus:$("detailReading").checked?"read":"unread"});
   $("detailFavorite").onchange=()=>updateBookMeta(d.isbn,{favorite:$("detailFavorite").checked});
