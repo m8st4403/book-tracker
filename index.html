@@ -617,6 +617,13 @@ function dedupeBookResults(arr){
  for(const b of Array.isArray(arr)?arr:[]){const key=bookResultKey(b);if(!key||seen.has(key))continue;seen.add(key);out.push(b)}
  return out;
 }
+function refreshAddResults(){
+ if(!window.addResultsData)return;
+ const current=dedupeBookResults(window.addResultsData);
+ window.addResultsData=current;
+ if(addResultsMode==="isbn")renderIsbnResults(current);
+ else renderResults("addResults",current);
+}
 function renderResults(id,arr){renderSelectableResults(id,arr)}
 function renderSelectableResults(id,arr){
  arr=dedupeBookResults(arr);
@@ -633,7 +640,7 @@ function card(book,add=true,mode="result",index=-1){
  const meta=owned?getMeta(book.isbn):null;
  const status=meta?.purchaseStatus==="purchased"?"購入済み":meta?.purchaseStatus==="reserved"?"予約済み":meta?.purchaseStatus==="none"?"購入しない":"欲しい";
  const read=meta?.readingStatus==="read"?"読了":"未読";
- return `<div class="card booktap" data-book='${detail}'><div class="selectline">${chk}<div class="content"><div class="book">${(add?book.cover:(book.cachedCover||""))?`<img class="cover" src="${esc(add?book.cover:book.cachedCover)}">`:`<div class='cover'></div>`}<div><div class="title">${esc(book.title)} ${owned?'<span class="owned-badge">蔵書</span>':'<span class="unowned-badge">未登録</span>'}</div><div class="muted">${esc(book.author)}</div><div class="muted">${esc(book.publisher)} ${esc(book.date)}${Number(book.price)>0?` ・ ¥${Math.round(book.price).toLocaleString()}`:""}</div><div class="muted">ISBN ${esc(book.isbn||"")}</div>${owned?`<div class="meta-badges"><span class="meta-badge">${status}</span><span class="meta-badge">${read}</span>${meta.favorite?'<span class="meta-badge favorite">★ お気に入り</span>':''}</div>`:""}<div class="actions"><button type="button" onclick='event.stopPropagation();openBookDetail(${safe})'>詳細を見る</button>${add?(owned?`<button class="secondary" type="button" disabled>✓ 蔵書登録済み</button>`:(isFutureDate(book.date)?`<button class="secondary" type="button" disabled>発売前のため登録不可</button>`:`<button type="button" onclick='event.stopPropagation();addBook(${safe})'>蔵書に登録</button>`)):""}</div></div></div></div></div></div>`;
+ return `<div class="card booktap" data-book='${detail}'><div class="selectline">${chk}<div class="content"><div class="book">${(add?book.cover:(book.cachedCover||""))?`<img class="cover" src="${esc(add?book.cover:book.cachedCover)}">`:`<div class='cover'></div>`}<div><div class="title">${esc(book.title)} ${owned?'<span class="owned-badge">蔵書</span>':'<span class="unowned-badge">未登録</span>'}</div><div class="muted">${esc(book.author)}</div><div class="muted">${esc(book.publisher)} ${esc(book.date)}${Number(book.price)>0?` ・ ¥${Math.round(book.price).toLocaleString()}`:""}</div><div class="muted">ISBN ${esc(book.isbn||"")}</div>${owned?`<div class="meta-badges"><span class="meta-badge">${status}</span><span class="meta-badge">${read}</span>${meta.favorite?'<span class="meta-badge favorite">★ お気に入り</span>':''}</div>`:""}<div class="actions"><button type="button" onclick='event.stopPropagation();openBookDetail(${safe})'>詳細を見る</button>${add?(owned?`<button class="secondary" type="button" onclick='event.stopPropagation();removeBookFromCalendar(${JSON.stringify(book.isbn)})'>✓ 蔵書登録済み（タップで削除）</button>`:(isFutureDate(book.date)?`<button class="secondary" type="button" disabled>発売前のため登録不可</button>`:`<button type="button" onclick='event.stopPropagation();addBook(${safe})'>蔵書に登録</button>`)):""}</div></div></div></div></div></div>`;
 }
 
 function isbnDigits(v){return String(v||"").normalize("NFKC").replace(/[^0-9]/g,"").slice(0,13)}
@@ -825,7 +832,9 @@ window.removeBookFromCalendar=async function(isbn,k){
  if(!confirm("この本を蔵書から削除しますか？\n\n"+(b.title||"この本")))return false;
  const removed=books.splice(idx,1)[0];
  if(!persistBooks()){books.splice(idx,0,removed);alert("蔵書を保存できませんでした。端末の空き容量を確認してください。");return false}
- render();renderCalendar();if(k){selectedDate=k;showDay(k)}
+ render();
+ refreshAddResults();
+ renderCalendar();if(k){selectedDate=k;showDay(k)}
  return true;
 };
 function calendarEventHtml(e,k){
