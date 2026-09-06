@@ -508,8 +508,9 @@ let books=readJSONStorage(KEY,[]);if(!Array.isArray(books))books=[];
 let calendarExtras=readJSONStorage("calendarExtras_v442",[]);if(!Array.isArray(calendarExtras))calendarExtras=[];
 // v4.8.8: first launch demo data so the calendar and library appearance are understandable immediately.
 const DEMO_KEY="bookTrackerDemoSeed_v488";
+const DEMO_DELETED_KEY="bookTrackerDemoDeleted_v499";
 function seedDemoBooks(){
- if(books.length||readJSONStorage(DEMO_KEY,false))return;
+ if(books.length||calendarExtras.length||readJSONStorage(DEMO_DELETED_KEY,false))return;
  const today=new Date(), y=today.getFullYear(), m=today.getMonth(), d=today.getDate();
  const dayKey=n=>{const x=new Date(y,m,d+n);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0")};
  const monthKey=offset=>{const x=new Date(y,m+offset,15);return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-15"};
@@ -522,7 +523,7 @@ function seedDemoBooks(){
   {isbn:"demo-003",title:"サンプルシリーズ：星の余白 2巻",author:"サンプル作家",publisher:"サンプル出版社",date:dayKey(7),price:1100,currency:"JPY",cover:"",demo:true,format:"単行本",series:"サンプルシリーズ：星の余白",sourceType:"library",source:"蔵書の発売予定"},
   {isbn:"demo-005",title:"サンプル本棚：翌月の灯り",author:"サンプル作家",publisher:"サンプル出版社",date:monthKey(1),price:980,currency:"JPY",cover:"",demo:true,format:"単行本",series:"",sourceType:"library",source:"蔵書の発売予定"}
  ];
- try{localStorage.setItem(KEY,JSON.stringify(books));localStorage.setItem("calendarExtras_v442",JSON.stringify(demoFuture));localStorage.setItem(DEMO_KEY,"1")}catch(e){}
+ try{localStorage.setItem(KEY,JSON.stringify(books));localStorage.setItem("calendarExtras_v442",JSON.stringify(demoFuture));localStorage.setItem(DEMO_KEY,"1");localStorage.removeItem(DEMO_DELETED_KEY)}catch(e){}
 }
 seedDemoBooks();
 // Demo calendar data is kept separate from the library: only the previous-month sample is an owned book.
@@ -957,7 +958,7 @@ function performDemoDeletion(){
  calendarExtras=calendarExtras.filter(e=>!(e.demo||String(e.key||"").startsWith("demo-release|")||String(e.title||"").startsWith("サンプル")));
  const okBooks=persistBooks(),okExtras=persistCalendarExtras();
  if(!okBooks||!okExtras){books=oldBooks;calendarExtras=oldExtras;alert("サンプルデータの削除に失敗しました。端末の空き容量を確認してください。");return false}
- try{localStorage.setItem(DEMO_KEY,"1")}catch(e){}
+ try{localStorage.setItem(DEMO_DELETED_KEY,"1");localStorage.setItem(DEMO_KEY,"1")}catch(e){}
  render();
  alert("サンプルデータを削除しました。");
  return true;
