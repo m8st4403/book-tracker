@@ -1,32 +1,5 @@
-# Book Tracker Prototype v4.9.11
+# Book Tracker v4.9.11
 
-GitHub Pages向けiPhone用プロトタイプ。
+v4.9.11 final fix: sample notice now reliably disappears after sample deletion. The notice uses an explicit `[hidden]` CSS rule because the normal `.demo-global{display:flex}` rule otherwise overrides the browser's hidden presentation.
 
-## v4.9.11 の点検・修正
-
-### 機能・再描画
-- 詳細情報で「✓ 蔵書登録済み（タップで削除）」を押して蔵書登録を解除すると、削除成功後に詳細画面自身を再描画し、「＋ 蔵書に登録」へ正しく切り替える。
-- 個別登録だけでなく、検索結果の「見つかった本を全部登録」「選択した本を一括登録」でも登録状態を再描画。
-- 発売前の本は引き続き蔵書登録不可。
-- カレンダーと蔵書の重複表示を抑制。
-
-### サンプルデータ
-- サンプルは通常の蔵書の有無に関係なく、プロトタイプ初期表示用として独立管理。
-- サンプルを蔵書登録しても `demo:true` を保持するため、正規データへ昇格しない。
-- サンプル削除時は、蔵書・カレンダー発売予定・サンプルに紐づくメタデータをまとめて削除。
-- 旧バージョンのサンプル削除フラグには依存しない。
-- 削除済み状態はバージョン番号を含まない安定したキーで保存し、将来のアップデートでサンプルが勝手に再出現しない設計。
-- 削除ボタンとサンプル表示メッセージは、サンプルが存在するときだけ表示。
-- サンプル削除状態はバックアップ対象に含める。
-
-### 公開版への切り替え
-- `DEMO_ENABLED=true` はGitHub Pagesプロトタイプ用。
-- App Store公開版では `DEMO_ENABLED=false` に変更し、一般ユーザーへサンプルデータを自動投入しない。
-- 開発者は `DEMO_ENABLED=true` の開発用ビルドでサンプル表示を確認できる。
-
-## サンプルの想定状態
-- 前月15日：蔵書登録済み
-- 7日前：発売済み・蔵書未登録
-- 当日：発売済み・蔵書未登録
-- 7日後：発売予定・蔵書登録不可
-- 翌月15日：発売予定・蔵書登録不可
+Sample data remains development/prototype-only via DEMO_ENABLED. User-registered sample records retain demo state and are removed together with sample metadata when samples are deleted.
