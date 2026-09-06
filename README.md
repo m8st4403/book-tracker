@@ -1,5 +1,15 @@
-# Book Tracker v4.9.11
+# 本棚スケジュール v4.9.12
 
-v4.9.11 final fix: sample notice now reliably disappears after sample deletion. The notice uses an explicit `[hidden]` CSS rule because the normal `.demo-global{display:flex}` rule otherwise overrides the browser's hidden presentation.
+今回の修正：
+- 検索結果をISBN（ISBN-10/13は同一ISBNとして正規化）で重複排除。
+- ISBNが取得できない検索結果は「タイトル＋著者＋出版社＋発売日」で重複排除。
+- 追加タブで蔵書登録後、検索結果のボタンを「✓ 蔵書登録済み（無効）」へ更新。
+- 一括登録後も検索結果を再描画し、登録状態を即時反映。
+- 一括登録ツールバーをiPhone幅で崩れにくいグリッド表示へ変更。
+- 同じISBNを複数行に入力した場合も、結果カードは1冊に統合。登録対象チェックは重複行のいずれかがONなら対象。
+- 一括登録時もISBN重複・発売前を除外。
+- 開発用サンプルは「このビルド内で削除」は維持しつつ、APP_VERSIONが変わると削除フラグを自動リセットして再生成。
+- 設定に「開発用：サンプルを再表示」を追加。操作テスト後に即座にサンプルを戻せる。
+- App Store公開版では DEMO_ENABLED=false にする設計なので、一般ユーザーにはサンプルを出さない。
 
-Sample data remains development/prototype-only via DEMO_ENABLED. User-registered sample records retain demo state and are removed together with sample metadata when samples are deleted.
+静的チェック：JS 2本とも node --check OK、重複IDなし。
