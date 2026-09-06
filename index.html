@@ -520,7 +520,7 @@ let calendarExtras=readJSONStorage("calendarExtras_v442",[]);if(!Array.isArray(c
 const DEMO_ENABLED=true;
 // Prototype/dev builds: a deleted sample set stays deleted within this build, but a new build/version starts with samples again.
 // Production/App Store builds set DEMO_ENABLED=false, so this logic is never exposed to end users.
-const APP_VERSION="4.10.0";
+const APP_VERSION="4.10.1";
 const DEMO_DELETED_KEY="bookTrackerDemoDeleted";
 const DEMO_RESET_VERSION_KEY="bookTrackerDemoResetVersion";
 const DEMO_TITLES=["サンプル本棚：前月の便り","サンプル本棚：月夜の標本","サンプルシリーズ：星の余白 1巻","サンプルシリーズ：星の余白 2巻","サンプル本棚：翌月の灯り"];
@@ -1063,7 +1063,7 @@ $("skinApply").onclick=()=>{appSettings.skin={primary:$("skinPrimary").value,bg:
 
 $("bgImageInput").onchange=async e=>{let f=e.target.files?.[0];if(!f)return;try{let data=await compressImage(f);appSettings.background.image=data;let stats=await averageImageColor(data);appSettings.background.avgLum=stats?.lum??null;appSettings.background.avgColor=stats?.color??null;saveSettings();applyVisualSettings()}catch(err){alert("背景画像を設定できませんでした。別の画像を試してください。")}};
 $("bgImageRemove").onclick=()=>{appSettings.background={image:"",avgLum:null,avgColor:null};$("bgImageInput").value="";saveSettings();applyVisualSettings()};
-function createBackupData(){let localStorageData={};for(const k of APP_STORAGE_KEYS){const v=localStorage.getItem(k);if(v!==null)localStorageData[k]=v}return {schemaVersion:3,appVersion:"4.9.11",exportedAt:new Date().toISOString(),localStorage:localStorageData}}
+function createBackupData(){let localStorageData={};for(const k of APP_STORAGE_KEYS){const v=localStorage.getItem(k);if(v!==null)localStorageData[k]=v}return {schemaVersion:3,appVersion:APP_VERSION,exportedAt:new Date().toISOString(),localStorage:localStorageData}}
 function performDemoDeletion(){
  const demoBooks=books.filter(isDemoRecord),demoExtras=calendarExtras.filter(isDemoExtra);
  if(!demoBooks.length&&!demoExtras.length){render();return false}
