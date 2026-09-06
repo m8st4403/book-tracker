@@ -621,7 +621,7 @@ function renderResults(id,arr){renderSelectableResults(id,arr)}
 function renderSelectableResults(id,arr){
  arr=dedupeBookResults(arr);
  window[id+"Data"]=arr;
- $(id).innerHTML=(arr.length?`<div class="selectbar result-toolbar"><label><input class="check selectAll"> 全選択</label><button type="button" onclick="bulkAdd('${id}')">選択した本を一括登録</button><button type="button" onclick="cycleSort('${id}')">↕ 並べ替え</button></div>`:"")+arr.map((x,i)=>card(x,true,"result",i)).join("")||"結果なし";
+ $(id).innerHTML=(arr.length?`<div class="selectbar result-toolbar"><label><input class="check selectAll" type="checkbox"> 全選択</label><button type="button" onclick="bulkAdd('${id}')">選択した本を一括登録</button><button type="button" onclick="cycleSort('${id}')">↕ 並べ替え</button></div>`:"")+arr.map((x,i)=>card(x,true,"result",i)).join("")||"結果なし";
  $(id).querySelector(".selectAll")?.addEventListener("change",e=>$(id).querySelectorAll(".selectBook").forEach(x=>x.checked=e.target.checked));
 }
 function cycleSort(id){const modes=["release-desc","release-asc","volume-desc","volume-asc"];sortState[id]=((sortState[id]??0)+1)%4;renderSelectableResults(id,sortBooks(window[id+"Data"]||[],modes[sortState[id]]))}
@@ -680,7 +680,15 @@ function updateIsbnRowCount(){const n=[...$("isbnRows").querySelectorAll(".isbn-
 function updateIsbnRow(el){const raw=el.querySelector(".isbn-input").value,d=isbnDigits(raw),st=el.querySelector(".isbn-row-status");el.classList.remove("has-result");st.className="isbn-row-status muted";st.textContent="";if(!d)return;if(valid13(d)||valid10(d)||/^\d{9}$/.test(d)){const c=isbnCandidates(d);if(c.length){st.className="isbn-row-status ok";st.textContent=c.length>1?"ISBN候補を確認して検索します。":"検索可能です。"}else{st.className="isbn-row-status error";st.textContent="ISBNとして確認できません。"}}else st.textContent="13桁、10桁、またはISBN-10の先頭9桁を入力"}
 function getIsbnRows(){return [...$("isbnRows").querySelectorAll(".isbn-row")].map(el=>({el,raw:el.querySelector(".isbn-input").value.trim(),checked:el.querySelector(".isbn-check").checked})).filter(x=>x.raw)}
 
+let addResultsMode="generic";
+function renderIsbnResults(arr=window.addResultsData||[]){
+ arr=dedupeBookResults(arr);
+ window.addResultsData=arr;
+ $("addResults").innerHTML=(arr.length?`<div class="selectbar result-toolbar single-action"><button id="registerIsbnRows" type="button">☑️ チェックした本を一括登録</button></div>`:"")+arr.map((x,i)=>card(x,true,"result",i)).join("")||"結果なし";
+ $("registerIsbnRows")?.addEventListener("click",registerCheckedIsbnRows);
+}
 $("isbnSearch").onclick=async()=>{
+ addResultsMode="isbn";
  const rows=getIsbnRows();
  if(!rows.length){$("addResults").innerHTML='<div class="error">ISBNを1冊以上入力してください。</div>';return}
  $("addResults").innerHTML="検索中…（"+rows.length+"冊）";
@@ -702,8 +710,7 @@ $("isbnSearch").onclick=async()=>{
  const found=[...byKey.values()];
  window.addResultsData=found;
  if(!found.length){$("addResults").innerHTML='<div class="error">一致する書籍が見つかりませんでした。</div>';return}
- $("addResults").innerHTML=`<div class="selectbar result-toolbar single-action"><button id="registerIsbnRows" type="button">☑️ チェックした本を一括登録</button></div>`+found.map((x,i)=>card(x,true,"result",i)).join("");
- $("registerIsbnRows").onclick=()=>registerCheckedIsbnRows();
+ renderIsbnResults(found);
 };
 async function registerCheckedIsbnRows(){
  const found=window.addResultsData||[],targets=found.filter(x=>(x._rowEls||[x._rowEl]).some(el=>el?.querySelector?.(".isbn-check")?.checked));
@@ -720,13 +727,13 @@ async function registerCheckedIsbnRows(){
   if(!saveMeta()||!await saveBooksSafely()||!persistCalendarExtras()){books=oldBooks;calendarExtras=oldExtras;return}
  }
  render();
- if(window.addResultsData)renderResults("addResults",window.addResultsData);
+ if(window.addResultsData)renderIsbnResults(window.addResultsData);
  alert(added.length+"冊を登録しました（重複・発売前は除外）");
 }
 
 $("isbnRows").addEventListener("change",e=>{if(e.target.classList.contains("isbn-check")){const row=e.target.closest(".isbn-row");if(row?.querySelector(".isbn-row-status")?.textContent.includes("✓"))row.querySelector(".isbn-row-status").textContent=row.querySelector(".isbn-row-status").textContent.replace(/・ 登録対象(外)?$/,"・ "+(e.target.checked?"登録対象":"登録対象外"));}});
 addIsbnRow();
-$("workSearch").onclick=async()=>{let q=$("work").value.trim(),v=$("vol").value.trim();if(!q)return;$("addResults").innerHTML="検索中…";try{let arr=(await searchGoogle("intitle:"+q+(v?" "+v:""))).map(gbook);arr=dedupeBookResults(arr);if(!v)arr=sortBooks(arr,"release-desc");renderSelectableResults("addResults",arr);if(!v&&arr.length)$("addResults").insertAdjacentHTML("afterbegin",'<div class="ok">巻数未入力：全巻検索です。発売日が新しい順に表示しています。</div>')}catch(e){$("addResults").innerHTML=esc(e.message)}};
+$("workSearch").onclick=async()=>{addResultsMode="generic";let q=$("work").value.trim(),v=$("vol").value.trim();if(!q)return;$("addResults").innerHTML="検索中…";try{let arr=(await searchGoogle("intitle:"+q+(v?" "+v:""))).map(gbook);arr=dedupeBookResults(arr);if(!v)arr=sortBooks(arr,"release-desc");renderSelectableResults("addResults",arr);if(!v&&arr.length)$("addResults").insertAdjacentHTML("afterbegin",'<div class="ok">巻数未入力：全巻検索です。発売日が新しい順に表示しています。</div>')}catch(e){$("addResults").innerHTML=esc(e.message)}};
 $("searchBtn").onclick=async()=>{let q=$("query").value.trim();if(!q)return;$("searchResults").innerHTML="検索中…";try{let arr=await searchGoogle(q);if($("searchUnownedOnly").checked)arr=arr.filter(x=>!books.some(b=>norm(b.isbn)===norm(gbook(x).isbn)));renderResults("searchResults",arr)}catch(e){$("searchResults").innerHTML=esc(e.message)}};
 $("searchUnownedOnly").addEventListener("change",()=>{if($("query").value.trim())$("searchBtn").click()});
 $("authorBtn").onclick=async()=>{let q=$("author").value.trim();if(!q)return;$("authorResults").innerHTML="検索中…";try{renderResults("authorResults",await searchGoogle("inauthor:"+q))}catch(e){$("authorResults").innerHTML=esc(e.message)}};
@@ -1157,14 +1164,14 @@ window.addBook=async b=>{
  getMeta(x.isbn).purchaseStatus="purchased";
  if(!saveMeta()||!await saveBooksSafely()||!persistCalendarExtras()){books=oldBooks;calendarExtras=oldExtras;return false}
  render();
- if(window.addResultsData)renderResults("addResults",window.addResultsData);
+ if(window.addResultsData){if(addResultsMode==="isbn")renderIsbnResults(window.addResultsData);else renderResults("addResults",window.addResultsData)}
  alert("登録しました（購入状態：購入済み）");return true;
 };
 window.addAllFound=async()=>{
  const arr=dedupeBookResults(window.addResultsData||[]),seen=new Set(books.map(bookResultKey)),added=[];
  for(const b of arr){const key=bookResultKey(b);if(!key||seen.has(key)||isFutureDate(b.date))continue;seen.add(key);const x=await cacheBookCover({...b,demo:!!b?.demo});delete x._rowEl;delete x._rowEls;delete x._register;added.push(x);getMeta(x.isbn).purchaseStatus="purchased"}
  if(added.length){const oldBooks=books.slice(),oldExtras=calendarExtras.slice();books.push(...added);const demoAdded=new Set(added.filter(b=>b.demo).map(b=>canonicalIsbn(b.isbn)));if(demoAdded.size)calendarExtras=calendarExtras.filter(e=>!(isDemoExtra(e)&&demoAdded.has(canonicalIsbn(e.isbn))));if(!saveMeta()||!await saveBooksSafely()||!persistCalendarExtras()){books=oldBooks;calendarExtras=oldExtras;return}}
- render();if(window.addResultsData)renderResults("addResults",window.addResultsData);alert(added.length+"冊を登録しました（重複・発売前は除外）")
+ render();if(window.addResultsData){if(addResultsMode==="isbn")renderIsbnResults(window.addResultsData);else renderResults("addResults",window.addResultsData)}alert(added.length+"冊を登録しました（重複・発売前は除外）")
 };
 window.bulkAdd=async id=>{
  const arr=dedupeBookResults(window[id+"Data"]||[]),box=$(id);if(!box)return;
@@ -1174,7 +1181,7 @@ window.bulkAdd=async id=>{
  if(added.length){const oldBooks=books.slice(),oldExtras=calendarExtras.slice();books.push(...added);const demoAdded=new Set(added.filter(b=>b.demo).map(b=>canonicalIsbn(b.isbn)));if(demoAdded.size)calendarExtras=calendarExtras.filter(e=>!(isDemoExtra(e)&&demoAdded.has(canonicalIsbn(e.isbn))));if(!saveMeta()||!await saveBooksSafely()||!await persistCalendarExtras()){books=oldBooks;calendarExtras=oldExtras;return}}
  render();
  const current=dedupeBookResults(window[id+"Data"]||arr);window[id+"Data"]=current;
- if(id==="addResults")renderResults(id,current);else renderSelectableResults(id,current);
+ if(id==="addResults"){if(addResultsMode==="isbn")renderIsbnResults(current);else renderResults(id,current)}else renderSelectableResults(id,current);
  alert(added.length+"冊を登録しました（重複・発売前は除外）")
 };
 
