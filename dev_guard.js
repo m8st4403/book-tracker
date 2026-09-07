@@ -20,7 +20,7 @@ const fn=[...s.matchAll(/\bfunction\s+([A-Za-z_$][\w$]*)\s*\(/g)].map(m=>m[1]);
 const dupFn=fn.filter((x,i)=>fn.indexOf(x)!==i);add('重複した名前付きfunction',dupFn.length===0,dupFn.length?dupFn.join(', '):'OK');
 add('localStorage.clear() 不使用',!/localStorage\.clear\s*\(/.test(s),'OK');
 add('仕様ガードコメント',s.includes('[BOOK TRACKER / SPEC GUARD]'),'OK');
-add('APP_VERSION 4.11.5',/const\s+APP_VERSION\s*=\s*["']4\.11\.5["']/.test(s),'OK');
+add('APP_VERSION 4.11.6',/const\s+APP_VERSION\s*=\s*["']4\.11\.6["']/.test(s),'OK');
 add('DEMO_ENABLED 定義',/const\s+DEMO_ENABLED\s*=/.test(s),'OK');
 add('正規登録関数',/window\.addBook\s*=/.test(s)&&/window\.bulkAdd\s*=/.test(s),'OK');
 add('全選択は checkbox',/class="check selectAll" type="checkbox"/.test(s)&&/class="check similarAll" type="checkbox"/.test(s),'OK');
