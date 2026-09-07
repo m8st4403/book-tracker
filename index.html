@@ -520,7 +520,7 @@ let calendarExtras=readJSONStorage("calendarExtras_v442",[]);if(!Array.isArray(c
 const DEMO_ENABLED=true;
 // Prototype/dev builds: a deleted sample set stays deleted within this build, but a new build/version starts with samples again.
 // Production/App Store builds set DEMO_ENABLED=false, so this logic is never exposed to end users.
-const APP_VERSION="4.11.0";
+const APP_VERSION="4.11.1";
 const DEMO_DELETED_KEY="bookTrackerDemoDeleted";
 const DEMO_RESET_VERSION_KEY="bookTrackerDemoResetVersion";
 const DEMO_TITLES=["サンプル本棚：前月の便り","サンプル本棚：月夜の標本","サンプルシリーズ：星の余白 1巻","サンプルシリーズ：星の余白 2巻","サンプル本棚：翌月の灯り"];
@@ -655,7 +655,26 @@ async function openbd(isbn){try{let a=await getJSON("https://api.openbd.jp/v1/ge
 async function isbnLookup(isbn){let b=await openbd(isbn);if(b?.title)return b;let a=(await getJSON("https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent("isbn:"+isbn)+"&maxResults=20&country=JP",{searchOnline:true})).items||[];let exact=a.map(x=>gbook(x)).find(x=>norm(x.isbn)==isbn);if(exact?.title)return exact;if(a[0])return gbook(a[0],isbn);a=(await getJSON("https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent('"'+isbn+'"')+"&maxResults=20&country=JP",{searchOnline:true})).items||[];exact=a.map(x=>gbook(x)).find(x=>norm(x.isbn)==isbn);if(exact?.title)return exact;throw Error("このISBNに一致する書誌情報が見つかりませんでした。")}
 async function searchGoogle(q){let lim=Number(appSettings.search?.resultCount)||20;let a=(await getJSON("https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent(q)+"&maxResults="+Math.min(40,lim)+"&country=JP&langRestrict=ja",{searchOnline:true})).items||[];let z=q.toLowerCase();if(appSettings.search?.sort==="release-desc")a.sort((x,y)=>releaseTime(gbook(y))-releaseTime(gbook(x)));else if(appSettings.search?.sort==="release-asc")a.sort((x,y)=>releaseTime(gbook(x))-releaseTime(gbook(y)));else if(appSettings.search?.sort==="title-asc")a.sort((x,y)=>(x.volumeInfo?.title||"").localeCompare(y.volumeInfo?.title||"","ja"));else a.sort((x,y)=>Number((x.volumeInfo?.title||"").toLowerCase().includes(z))-Number((y.volumeInfo?.title||"").toLowerCase().includes(z)));if(appSettings.search?.jpPriority)a.sort((x,y)=>Number((x.volumeInfo?.language||"")!=="ja")-Number((y.volumeInfo?.language||"")!=="ja"));a=a.slice(0,lim);if(appSettings.search?.unownedFirst)a.sort((x,y)=>{let xo=books.some(b=>norm(b.isbn)===norm(gbook(x).isbn)),yo=books.some(b=>norm(b.isbn)===norm(gbook(y).isbn));return Number(xo)-Number(yo)});return a}
 function releaseTime(b){const t=Date.parse(b.date||"");return Number.isNaN(t)?0:t}
-function volumeNo(b){const m=(b.title||"").match(/(?:第\s*)?(\d+)\s*(?:巻|集)/i);return m?parseInt(m[1],10):0}
+function volumeNo(b){
+ const t=String(b?.title||"").trim();
+ const m=t.match(/(?:第\s*)?(\d+)\s*(?:巻|集)?$/i);
+ return m?parseInt(m[1],10):0;
+}
+function compareLibraryItems(x,y){
+ const mode=$("librarySort")?.value||"registered-desc";
+ const text=v=>String(v||"").toLowerCase();
+ let r=0;
+ if(mode==="registered-desc")r=y.i-x.i;
+ else if(mode==="registered-asc")r=x.i-y.i;
+ else if(mode==="title-asc")r=text(x.b.title).localeCompare(text(y.b.title),"ja");
+ else if(mode==="author-asc")r=text(x.b.author).localeCompare(text(y.b.author),"ja");
+ else if(mode==="publisher-asc")r=text(x.b.publisher).localeCompare(text(y.b.publisher),"ja");
+ else if(mode==="volume-asc")r=volumeNo(x.b)-volumeNo(y.b);
+ else if(mode==="volume-desc")r=volumeNo(y.b)-volumeNo(x.b);
+ else if(mode==="release-asc")r=releaseTime(x.b)-releaseTime(y.b);
+ else if(mode==="release-desc")r=releaseTime(y.b)-releaseTime(x.b);
+ return r||x.i-y.i;
+}
 function sortBooks(a,mode){return [...a].sort((x,y)=>mode==="release-desc"?releaseTime(y)-releaseTime(x):mode==="release-asc"?releaseTime(x)-releaseTime(y):mode==="volume-desc"?volumeNo(y)-volumeNo(x):volumeNo(x)-volumeNo(y))}
 const sortState={};
 function canonicalIsbn(v){
@@ -852,12 +871,14 @@ function renderLibrary(){
    &&(!fre||meta.readingStatus===fre)
    &&(!ff||(ff==="yes"?meta.favorite===true:meta.favorite!==true));
  });
- const mode=$("librarySort")?.value||"registered-desc", text=v=>String(v||"").toLowerCase();
- a.sort((x,y)=>{if(mode==="registered-desc")return y.i-x.i;if(mode==="registered-asc")return x.i-y.i;if(mode==="title-asc")return text(x.b.title).localeCompare(text(y.b.title),"ja");if(mode==="author-asc")return text(x.b.author).localeCompare(text(y.b.author),"ja");if(mode==="publisher-asc")return text(x.b.publisher).localeCompare(text(y.b.publisher),"ja");if(mode==="volume-asc")return volumeNo(x.b)-volumeNo(y.b);if(mode==="volume-desc")return volumeNo(y.b)-volumeNo(x.b);if(mode==="release-asc")return releaseTime(x.b)-releaseTime(y.b);if(mode==="release-desc")return releaseTime(y.b)-releaseTime(x.b);return 0});
+ const mode=$("librarySort")?.value||"registered-desc";
+ a.sort(compareLibraryItems);
  let body="";
  if(seriesView){
   const groups={}; a.forEach(x=>{const k=seriesKey(x.b);(groups[k]??=[]).push(x)});
-  body=Object.entries(groups).sort((x,y)=>x[0].localeCompare(y[0],"ja")).map(([name,items])=>{items.sort((x,y)=>volumeNo(x.b)-volumeNo(y.b)||x.i-y.i);return `<details class="series-group" open><summary><b>${esc(name)}</b><span class="muted">${items.length}冊</span></summary><div class="series-books">${items.map(x=>card(x.b,false,"library",x.i)).join("")}</div></details>`}).join("");
+  const grouped=Object.entries(groups).map(([name,items])=>[name,items.sort(compareLibraryItems)]);
+  grouped.sort((g1,g2)=>compareLibraryItems(g1[1][0],g2[1][0])||g1[0].localeCompare(g2[0],"ja"));
+  body=grouped.map(([name,items])=>`<details class="series-group" open><summary><b>${esc(name)}</b><span class="muted">${items.length}冊</span></summary><div class="series-books">${items.map(x=>card(x.b,false,"library",x.i)).join("")}</div></details>`).join("");
  }else body=a.map(x=>card(x.b,false,"library",x.i)).join("");
  $("myBooks").innerHTML=a.length?`<div class="selectbar library-bulkbar">
  <label><input id="libAll" class="check" type="checkbox" aria-label="蔵書を全選択"> 全選択</label>
@@ -952,9 +973,14 @@ function showDay(k){
  $("selectedEvents").innerHTML=a.length?a.map(e=>calendarEventHtml(e,k)).join(""):"<p class='muted'>なし</p>";
  renderMonthReleased();
 }
-function seriesKey(b){let t=String(b.title||"").replace(/[：:・･]?(?:第\s*)?\d+\s*(?:巻|集)\s*$/i,"").replace(/\s+/g,"").trim();return t||String(b.title||"")}
+function seriesKey(b){
+ let t=String(b?.title||"").trim();
+ t=t.replace(/[：:・･]?\s*(?:第\s*)?\d+\s*(?:巻|集)?\s*$/i,"").replace(/\s+/g,"").trim();
+ return t||String(b?.title||"");
+}
 function runSeriesCheck(){let groups={};books.forEach(b=>{let n=volumeNo(b);if(!n)return;(groups[seriesKey(b)]??=[]).push(n)});let rows=Object.entries(groups).filter(([,v])=>new Set(v).size>=2).map(([k,v])=>{let u=[...new Set(v)].sort((a,b)=>a-b),max=Math.max(...u),miss=[];for(let i=1;i<=max;i++)if(!u.includes(i))miss.push(i);return {k,u,miss}}).filter(x=>x.miss.length);if(rows.length){let html='<div class="series-box"><b>巻抜け候補</b>';rows.forEach(x=>{html+='<div class="series-box"><b>'+esc(x.k)+'</b><br><span class="muted">登録：'+x.u.join('・')+'巻</span><br><span class="series-missing">未登録の可能性：'+x.miss.join('・')+'巻</span></div>'});html+='</div>';$('seriesCheckResults').innerHTML=html}else $('seriesCheckResults').innerHTML='<div class="series-box">巻抜け候補は見つかりませんでした。<br><span class="muted">タイトルから巻数を判定できる蔵書を対象にしています。</span></div>'}
-$("seriesCheckBtn").onclick=runSeriesCheck;$("unreadOnlyBtn").onclick=()=>{window.libraryUnreadOnly=!window.libraryUnreadOnly;$("unreadOnlyBtn").textContent=window.libraryUnreadOnly?"📖 積読表示中":"📖 積読だけ表示";renderLibrary()};
+$("seriesCheckBtn").onclick=runSeriesCheck;
+$("unreadOnlyBtn").onclick=()=>{window.libraryUnreadOnly=!window.libraryUnreadOnly;$("unreadOnlyBtn").textContent=window.libraryUnreadOnly?"📖 積読表示中":"📖 積読だけ表示";renderLibrary()};
 function localDateKey(d=new Date()){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function addDaysKey(key,n){let [y,m,d]=key.split("-").map(Number),dt=new Date(y,m-1,d);dt.setDate(dt.getDate()+n);return localDateKey(dt)}
 function formatHomeDate(key){let [y,m,d]=key.split("-").map(Number);return y+"年"+m+"月"+d+"日（"+["日","月","火","水","木","金","土"][new Date(y,m-1,d).getDay()]+"）"}
@@ -1146,7 +1172,14 @@ $("libraryFilter").oninput=renderLibrary;$("librarySort").onchange=renderLibrary
 $("libraryFilterToggle").onclick=()=>{$("libraryFilterPanel").classList.toggle("open")};
 $("seriesViewToggle").onclick=()=>{const on=readSeriesView();try{localStorage.setItem("seriesView_v444",on?"off":"on")}catch(e){}$("seriesViewToggle").textContent=on?"📖 個別表示":"📚 シリーズ表示";renderLibrary()};
 $("seriesViewToggle").textContent=!readSeriesView()?"📖 個別表示":"📚 シリーズ表示";
-$("filterReset").onclick=()=>{["filterAuthor","filterPublisher","filterYear","filterRelease"].forEach(id=>$(id).value="");renderLibrary()};
+function resetLibraryFilters({render=true}={}){
+ ["filterAuthor","filterPublisher","filterYear","filterRelease","filterReading","filterFavorite"].forEach(id=>{const el=$(id);if(el)el.value=""});
+ const input=$("libraryFilter");if(input)input.value="";
+ window.libraryUnreadOnly=false;
+ const btn=$("unreadOnlyBtn");if(btn)btn.textContent="📖 積読だけ表示";
+ if(render)renderLibrary();
+}
+$("filterReset").onclick=()=>resetLibraryFilters();
 $("prevMonth").onclick=()=>{calDate.setMonth(calDate.getMonth()-1);selectedDate=null;renderCalendar()};$("nextMonth").onclick=()=>{calDate.setMonth(calDate.getMonth()+1);selectedDate=null;renderCalendar()};
 $("todayMonth").onclick=()=>{let n=new Date();calDate=new Date(n.getFullYear(),n.getMonth(),1);selectedDate=localDateKey(n);renderCalendar();showDay(selectedDate)};
 ["Library","Related","Recommended"].forEach(t=>{const el=$("calFilter"+t);if(!el)return;el.addEventListener("change",()=>{const key=t.toLowerCase();calFilters[key]=!!el.checked;renderCalendar()})});
@@ -1291,7 +1324,7 @@ window.bulkAdd=async id=>{
 /* v4.10.0: Runtime specification guard + lightweight regression checks.
    Development build only. These checks intentionally fail loudly instead of silently masking regressions. */
 (function(){
- const DEV_GUARD_VERSION="4.11.0";
+ const DEV_GUARD_VERSION="4.11.1";
  const validPurchase=new Set(["wanted","reserved","purchased","none"]);
  function add(name,ok,detail){return {name,ok,detail:detail||""}}
  function runSpecGuard(){
@@ -1326,6 +1359,62 @@ window.bulkAdd=async id=>{
   results.push(add("表示と蔵書状態",mismatch===0,mismatch?`${mismatch}件の表示不一致`:"OK"));
   // ARCH-001: expected single authoritative registration layer.
   results.push(add("正規登録関数",typeof window.addBook==="function"&&typeof window.bulkAdd==="function","OK"));
+  // REG-001: filter reset must clear every library filter and search text.
+  const filterIds=["filterAuthor","filterPublisher","filterYear","filterRelease","filterReading","filterFavorite"];
+  const savedFilterValues=Object.fromEntries(filterIds.map(id=>[id,$(id)?.value||""]));
+  const savedLibraryFilter=$("libraryFilter")?.value||"";
+  const savedUnreadOnly=window.libraryUnreadOnly===true;
+  try{
+    filterIds.forEach(id=>{const el=$(id);if(el&&el.options.length>1)el.value=el.options[1].value;});
+    if($("libraryFilter"))$("libraryFilter").value="__guard__";
+    window.libraryUnreadOnly=true;
+    resetLibraryFilters({render:false});
+    const resetOk=filterIds.every(id=>!$(id)?.value)&&!$("libraryFilter")?.value&&!window.libraryUnreadOnly;
+    results.push(add("フィルターリセット",resetOk,resetOk?"OK":"リセット漏れあり"));
+  }catch(e){results.push(add("フィルターリセット",false,e.message))}
+  finally{
+    filterIds.forEach(id=>{const el=$(id);if(el)el.value=savedFilterValues[id]||"";});
+    if($("libraryFilter"))$("libraryFilter").value=savedLibraryFilter;
+    window.libraryUnreadOnly=savedUnreadOnly;
+  }
+
+  // REG-002: sort must change rendered order for a controlled in-memory set.
+  const savedBooks=books.slice(),savedSort=$("librarySort")?.value||"registered-desc",savedHtml=$("myBooks")?.innerHTML||"";
+  try{
+    books=[
+      {isbn:"guard-1",title:"ZZZ 20",author:"A",publisher:"P",date:"2025-01-01",price:100},
+      {isbn:"guard-2",title:"AAA 2",author:"A",publisher:"P",date:"2025-02-01",price:100}
+    ];
+    $("librarySort").value="title-asc";renderLibrary();
+    const cards=[...document.querySelectorAll("#myBooks .card[data-book]")];
+    let firstTitle="";
+    if(cards[0]){try{firstTitle=JSON.parse(cards[0].dataset.book).title}catch(e){}}
+    results.push(add("蔵書並び順",firstTitle==="AAA 2",firstTitle?`先頭=${firstTitle}`:"カード取得失敗"));
+  }catch(e){results.push(add("蔵書並び順",false,e.message))}
+  finally{
+    books=savedBooks;
+    $("librarySort").value=savedSort;
+    renderLibrary();
+  }
+
+  // REG-003: titles ending in bare numbers must participate in series/missing-volume detection.
+  const savedBooks2=books.slice(),savedSeriesHtml=$("seriesCheckResults")?.innerHTML||"";
+  try{
+    books=[
+      {isbn:"guard-20",title:"ガードテスト 20",author:"A",publisher:"P",date:"2025-01-01",price:100},
+      {isbn:"guard-24",title:"ガードテスト 24",author:"A",publisher:"P",date:"2025-05-01",price:100}
+    ];
+    runSeriesCheck();
+    const html=$("seriesCheckResults")?.textContent||"";
+    const seriesOk=html.includes("20")&&html.includes("24")&&html.includes("21")&&html.includes("23");
+    results.push(add("シリーズ巻抜け検出",seriesOk,seriesOk?"20・24から欠番を検出":"巻数末尾数字のシリーズ判定失敗"));
+  }catch(e){results.push(add("シリーズ巻抜け検出",false,e.message))}
+  finally{
+    books=savedBooks2;
+    if($("seriesCheckResults"))$("seriesCheckResults").innerHTML=savedSeriesHtml;
+    renderLibrary();
+  }
+
   const ok=results.every(x=>x.ok);
   return {version:DEV_GUARD_VERSION,ok,results};
  }

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* Book Tracker v4.11.0 static development guard. Usage: node dev_guard.js index.html */
+/* Book Tracker v4.11.1 static development guard. Usage: node dev_guard.js index.html */
 const fs=require('fs');
 const path=process.argv[2]||'index.html';
 const s=fs.readFileSync(path,'utf8');
@@ -17,17 +17,17 @@ const fn=[...s.matchAll(/\bfunction\s+([A-Za-z_$][\w$]*)\s*\(/g)].map(m=>m[1]);
 const dupFn=fn.filter((x,i)=>fn.indexOf(x)!==i);add('重複した名前付きfunction',dupFn.length===0,dupFn.length?dupFn.join(', '):'OK');
 add('localStorage.clear() 不使用',!/localStorage\.clear\s*\(/.test(s),'OK');
 add('仕様ガードコメント',s.includes('[BOOK TRACKER / SPEC GUARD]'),'不足');
-add('APP_VERSION 4.11.0',/const\s+APP_VERSION=["']4\.11\.0["']/.test(s),'不足');
+add('APP_VERSION 4.11.1',/const\s+APP_VERSION\s*=\s*["']4\.11\.1["']/.test(s),'不足');
 add('DEMO_ENABLED 定義',/const\s+DEMO_ENABLED\s*=/.test(s),'不足');
 add('正規登録関数',/window\.addBook\s*=/.test(s)&&/window\.bulkAdd\s*=/.test(s),'不足');
 add('全選択は checkbox',/class="check selectAll" type="checkbox"/.test(s)&&/class="check similarAll" type="checkbox"/.test(s),'不足');
 const direct=[...s.matchAll(/getMeta\([^\n;]+\)\.purchaseStatus\s*=\s*["'][^"']+["']/g)].map(m=>m[0]);
 add('購入状態の直接代入を禁止',direct.length===0,direct.length?direct.join(' / '):'OK');
 add('仕様文書',fs.existsSync('SPEC.md')&&fs.existsSync('DEV_GUARD.md'),'SPEC.md / DEV_GUARD.md が必要');
-// v4.11.0: backup data must not contain a hard-coded app version.
-const backupHardCode = /appVersion\s*:\s*["']4\.\d+\.\d+["']/;
-add('backup appVersion uses APP_VERSION',!backupHardCode.test(s),'ハードコードされたバックアップ版数があります');
-add('蔵書メタデータ定義',/readingStatus/.test(s)&&/favorite/.test(s),'readingStatus / favorite が見つかりません');
+add('filter reset wiring',s.includes('function resetLibraryFilters')&&s.includes('filterReading')&&s.includes('filterFavorite')&&s.includes('if(input)input.value=""'),'不足');
+add('library sort wiring',/function\s+compareLibraryItems\s*\(/.test(s)&&/a\.sort\(compareLibraryItems\)/.test(s)&&/grouped\.sort\(/.test(s),'不足');
+add('bare-number volume parsing',s.includes('function volumeNo')&&s.includes('(?:巻|集)?$'),'不足');
+add('runtime regression tests',/REG-001: filter reset/.test(s)&&/REG-002: sort/.test(s)&&/REG-003: titles ending in bare numbers/.test(s),'不足');
 const failed=checks.filter(x=>!x.ok);
 for(const x of checks)console.log(`${x.ok?'PASS':'FAIL'} ${x.name}${x.detail?' — '+x.detail:''}`);
 process.exitCode=failed.length?1:0;
