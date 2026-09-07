@@ -420,6 +420,22 @@ input[type="checkbox"]{
 
 .fixed-status{display:inline-flex;align-items:center;min-height:44px;margin-top:4px;padding:8px 14px;border:1px solid #d8e4ff;border-radius:12px;background:#eef5ff;font-weight:800}
 .status-help{margin-top:4px;font-size:.88em}
+
+/* ===== v4.11.2 Library layout stabilization ===== */
+/* Long series names must not push the count badge to an unintended line. */
+.series-group summary{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;min-width:0}
+.series-group summary b{min-width:0;overflow-wrap:anywhere;word-break:break-word;line-height:1.35}
+.series-group summary span{flex:0 0 auto;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;min-width:3.6em}
+/* Keep the ownership badge in a stable column instead of attaching it to the last title line. */
+.book-title-row{display:flex;align-items:flex-start;gap:6px;min-width:0;width:100%}
+.book-title-text{min-width:0;flex:1 1 auto;overflow-wrap:anywhere;word-break:break-word;line-height:1.35}
+.book-title-row .owned-badge,.book-title-row .unowned-badge{flex:0 0 auto;white-space:nowrap;margin-left:0;margin-top:1px}
+/* Five compact summary panels: one horizontal row, sticky while the Library is scrolled. */
+.library-stats{display:flex;gap:5px;margin:10px -4px 12px;padding:6px 4px;background:color-mix(in srgb,var(--surface) 96%,transparent);position:sticky;top:68px;z-index:4;border-bottom:1px solid color-mix(in srgb,var(--app-text) 10%,transparent);box-shadow:0 3px 8px rgba(15,23,42,.06)}
+.library-stats .statbox{flex:1 1 0;min-width:0;padding:7px 3px;border-radius:10px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:2px;box-shadow:none}
+.library-stats .library-stat-label{display:block;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px;line-height:1.15;color:var(--theme-muted)}
+.library-stats .statbox b{display:block;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px;line-height:1.15;margin:0}
+@media(max-width:380px){.library-stats{gap:3px;margin-left:-2px;margin-right:-2px}.library-stats .statbox{padding-left:2px;padding-right:2px}.library-stats .library-stat-label{font-size:9px}.library-stats .statbox b{font-size:13px}}
 </style>
 </head><body>
 <header><b id="appHeaderTitle">📚 本棚スケジュール</b><div class="muted" id="appHeaderSub">複数ISBN・詳細/関連検索・発売日カレンダー対応</div></header>
@@ -520,7 +536,7 @@ let calendarExtras=readJSONStorage("calendarExtras_v442",[]);if(!Array.isArray(c
 const DEMO_ENABLED=true;
 // Prototype/dev builds: a deleted sample set stays deleted within this build, but a new build/version starts with samples again.
 // Production/App Store builds set DEMO_ENABLED=false, so this logic is never exposed to end users.
-const APP_VERSION="4.11.1";
+const APP_VERSION="4.11.2";
 const DEMO_DELETED_KEY="bookTrackerDemoDeleted";
 const DEMO_RESET_VERSION_KEY="bookTrackerDemoResetVersion";
 const DEMO_TITLES=["サンプル本棚：前月の便り","サンプル本棚：月夜の標本","サンプルシリーズ：星の余白 1巻","サンプルシリーズ：星の余白 2巻","サンプル本棚：翌月の灯り"];
@@ -715,7 +731,7 @@ function card(book,add=true,mode="result",index=-1){
  const meta=owned?getMeta(book.isbn):null;
  const status=owned?"購入済み":(meta?.purchaseStatus==="purchased"?"購入済み":meta?.purchaseStatus==="reserved"?"予約済み":meta?.purchaseStatus==="none"?"購入しない":"欲しい");
  const read=meta?.readingStatus==="read"?"読了":"未読";
- return `<div class="card booktap" data-book='${detail}'><div class="selectline">${chk}<div class="content"><div class="book">${(add?book.cover:(book.cachedCover||""))?`<img class="cover" src="${esc(add?book.cover:book.cachedCover)}">`:`<div class='cover'></div>`}<div><div class="title">${esc(book.title)} ${owned?'<span class="owned-badge">蔵書</span>':'<span class="unowned-badge">未登録</span>'}</div><div class="muted">${esc(book.author)}</div><div class="muted">${esc(book.publisher)} ${esc(book.date)}${Number(book.price)>0?` ・ ¥${Math.round(book.price).toLocaleString()}`:""}</div><div class="muted">ISBN ${esc(book.isbn||"")}</div>${owned?`<div class="meta-badges"><span class="meta-badge">${status}</span><span class="meta-badge">${read}</span>${meta.favorite?'<span class="meta-badge favorite">★ お気に入り</span>':''}</div>`:""}<div class="actions"><button type="button" onclick='event.stopPropagation();openBookDetail(${safe})'>詳細を見る</button>${add?(owned?`<button class="secondary" type="button" onclick='event.stopPropagation();removeBookFromCalendar(${JSON.stringify(book.isbn)})'>✓ 蔵書登録済み（タップで削除）</button>`:(isFutureDate(book.date)?`<button class="secondary" type="button" disabled>発売前のため登録不可</button>`:`<button type="button" onclick='event.stopPropagation();addBook(${safe})'>蔵書に登録</button>`)):""}</div></div></div></div></div></div>`;
+ return `<div class="card booktap" data-book='${detail}'><div class="selectline">${chk}<div class="content"><div class="book">${(add?book.cover:(book.cachedCover||""))?`<img class="cover" src="${esc(add?book.cover:book.cachedCover)}">`:`<div class='cover'></div>`}<div><div class="book-title-row"><div class="title book-title-text">${esc(book.title)}</div>${owned?'<span class="owned-badge">蔵書</span>':'<span class="unowned-badge">未登録</span>'}</div><div class="muted">${esc(book.author)}</div><div class="muted">${esc(book.publisher)} ${esc(book.date)}${Number(book.price)>0?` ・ ¥${Math.round(book.price).toLocaleString()}`:""}</div><div class="muted">ISBN ${esc(book.isbn||"")}</div>${owned?`<div class="meta-badges"><span class="meta-badge">${status}</span><span class="meta-badge">${read}</span>${meta.favorite?'<span class="meta-badge favorite">★ お気に入り</span>':''}</div>`:""}<div class="actions"><button type="button" onclick='event.stopPropagation();openBookDetail(${safe})'>詳細を見る</button>${add?(owned?`<button class="secondary" type="button" onclick='event.stopPropagation();removeBookFromCalendar(${JSON.stringify(book.isbn)})'>✓ 蔵書登録済み（タップで削除）</button>`:(isFutureDate(book.date)?`<button class="secondary" type="button" disabled>発売前のため登録不可</button>`:`<button type="button" onclick='event.stopPropagation();addBook(${safe})'>蔵書に登録</button>`)):""}</div></div></div></div></div></div>`;
 }
 
 function isbnDigits(v){return String(v||"").normalize("NFKC").replace(/[^0-9]/g,"").slice(0,13)}
@@ -1032,11 +1048,11 @@ function deriveLibraryStats(){
  return {count:books.length,pricedCount:priced.length,total,unread,favorite,purchaseCount:purchaseEvents.length,purchaseEvents};
 }
 function renderStatBoxes(stats){
- return `<div class="statbox"><span class="muted">蔵書冊数</span><b>${stats.count.toLocaleString()}冊</b><span class="muted">登録済み</span></div>
- <div class="statbox"><span class="muted">蔵書総額</span><b>${stats.total?"¥"+Math.round(stats.total).toLocaleString():"未登録"}</b><span class="muted">${stats.total?`${stats.pricedCount}/${stats.count}冊の価格を集計`:'価格データを登録すると集計できます'}</span></div>
- <div class="statbox"><span class="muted">購入予定</span><b>${stats.purchaseCount.toLocaleString()}冊</b><span class="muted">${stats.purchaseCount?"今月の未登録予定":"購入予定はありません"}</span></div>
- <div class="statbox"><span class="muted">積読</span><b>${stats.unread.toLocaleString()}冊</b><span class="muted">未読の蔵書</span></div>
- <div class="statbox"><span class="muted">お気に入り</span><b>${stats.favorite.toLocaleString()}冊</b><span class="muted">お気に入りの蔵書</span></div>`;
+ return `<div class="statbox"><span class="library-stat-label">蔵書冊数</span><b>${stats.count.toLocaleString()}冊</b></div>
+ <div class="statbox"><span class="library-stat-label">蔵書総額</span><b>${stats.total?"¥"+Math.round(stats.total).toLocaleString():"未登録"}</b></div>
+ <div class="statbox"><span class="library-stat-label">購入予定</span><b>${stats.purchaseCount.toLocaleString()}冊</b></div>
+ <div class="statbox"><span class="library-stat-label">積読</span><b>${stats.unread.toLocaleString()}冊</b></div>
+ <div class="statbox"><span class="library-stat-label">お気に入り</span><b>${stats.favorite.toLocaleString()}冊</b></div>`;
 }
 function updateSharedStats(){
  const stats=deriveLibraryStats();
@@ -1324,7 +1340,7 @@ window.bulkAdd=async id=>{
 /* v4.10.0: Runtime specification guard + lightweight regression checks.
    Development build only. These checks intentionally fail loudly instead of silently masking regressions. */
 (function(){
- const DEV_GUARD_VERSION="4.11.1";
+ const DEV_GUARD_VERSION="4.11.2";
  const validPurchase=new Set(["wanted","reserved","purchased","none"]);
  function add(name,ok,detail){return {name,ok,detail:detail||""}}
  function runSpecGuard(){
@@ -1414,6 +1430,24 @@ window.bulkAdd=async id=>{
     if($("seriesCheckResults"))$("seriesCheckResults").innerHTML=savedSeriesHtml;
     renderLibrary();
   }
+
+  // REG-004: compact library stats must render exactly five label/value panels without subtext.
+  try{
+    const statHtml=renderStatBoxes({count:5,total:12345,pricedCount:5,purchaseCount:2,unread:3,favorite:1});
+    const statCount=(statHtml.match(/class="statbox"/g)||[]).length;
+    const hasFiveLabels=["蔵書冊数","蔵書総額","購入予定","積読","お気に入り"].every(x=>statHtml.includes(x));
+    const hasSubText=/登録済み|今月の未登録予定|未読の蔵書|お気に入りの蔵書|価格データを登録/.test(statHtml);
+    results.push(add("蔵書サマリー表示",statCount===5&&hasFiveLabels&&!hasSubText,"5枚・タイトル/数値のみ"));
+  }catch(e){results.push(add("蔵書サマリー表示",false,e.message))}
+
+  // REG-005: long titles/series headers must keep badges in dedicated non-wrapping elements.
+  try{
+    const longBook={isbn:"guard-layout-1",title:"とても長い作品タイトルが画面幅いっぱいまで続いてもレイアウトが崩れないためのガードテスト 24",author:"A",publisher:"P",date:"2026-08-01",price:100};
+    const cardHtml=card(longBook,false,"library",0);
+    const seriesHtml='<details class="series-group"><summary><b>'+esc(longBook.title)+'</b><span class="muted">2冊</span></summary></details>';
+    const layoutOk=cardHtml.includes('book-title-row')&&cardHtml.includes('book-title-text')&&seriesHtml.includes('series-group');
+    results.push(add("長文レイアウト",layoutOk,layoutOk?"タイトルとバッジを分離":"タイトル／バッジ構造を確認"));
+  }catch(e){results.push(add("長文レイアウト",false,e.message))}
 
   const ok=results.every(x=>x.ok);
   return {version:DEV_GUARD_VERSION,ok,results};
