@@ -455,11 +455,21 @@ input[type="checkbox"]{
 .library-info-line{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:-.012em}
 @media(max-width:390px){.library-card>.library-select{left:7px;top:7px;width:29px!important;height:29px!important;min-width:29px!important;min-height:29px!important}.library-book-layout{gap:9px}.library-cover-col{flex-basis:96px;width:96px}.library-cover-col .cover{width:88px;height:125px}.library-detail-btn{width:88px;font-size:12px}.library-title-status{gap:6px;grid-template-columns:minmax(0,1fr) 76px}.library-status-stack{width:76px;min-width:76px;max-width:76px;flex-basis:76px}.library-status-chip{width:76px;min-width:76px;max-width:76px;font-size:10.5px;padding-left:4px;padding-right:4px}}
 
+/* v4.11.7 VISUAL BASELINE: behavior-only controls must retain the pre-existing visual language.
+   Tappable does not mean primary-blue button. New behavior is attached to existing-looking controls. */
+.series-cyclic-head,.series-title-item .series-title-name,.library-status-chip{font-family:inherit}
+.series-cyclic-head:hover,.series-cyclic-head:active{background:#f4f8fd!important;color:#172033!important}
+.series-title-item .series-title-name:hover,.series-title-item .series-title-name:active{background:transparent!important;color:var(--app-text)!important}
+.library-status-chip:hover,.library-status-chip:active{background:var(--surface)!important;color:var(--app-text)!important}
+.library-status-chip.owned:hover,.library-status-chip.owned:active{background:#dcfce7!important;color:#15803d!important}
+.library-status-chip.favorite-on:hover,.library-status-chip.favorite-on:active{background:var(--surface)!important;color:#a16207!important}
+/* Never let the status column widen because a label became tappable. */
+.library-status-stack,.series-title-status-stack{overflow:visible}
 /* v4.11.6 Series deck: 5+ books cycle through layered deck -> title rows -> full list. */
 .series-group.is-cyclic{border-color:color-mix(in srgb,var(--primary) 22%,var(--border))!important}
-.series-cyclic-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;padding:12px 14px;border:0;background:color-mix(in srgb,var(--surface) 91%,var(--primary) 9%);color:var(--app-text);font:inherit;text-align:left;cursor:pointer}
+.series-cyclic-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;min-width:0;padding:13px 14px;border:0;border-radius:0!important;background:#f4f8fd!important;color:#172033!important;box-shadow:none!important;font:inherit;text-align:left;cursor:pointer;white-space:normal!important;-webkit-appearance:none;appearance:none}
 .series-cyclic-head:focus-visible{outline:2px solid var(--primary);outline-offset:-2px}
-.series-cyclic-title{min-width:0;font-weight:800;line-height:1.35;overflow-wrap:anywhere;word-break:break-word;letter-spacing:-.015em}
+.series-cyclic-title{display:block;min-width:0;max-width:100%;font-weight:800;line-height:1.35;overflow-wrap:anywhere;word-break:break-word;white-space:normal!important;letter-spacing:-.015em}
 .series-cyclic-count{display:inline-flex;align-items:center;justify-content:center;min-width:3.6em;white-space:nowrap;padding:3px 8px;border-radius:999px;background:#dcfce7;color:#15803d;font-size:13px}
 .series-cyclic-hint{padding:0 14px 8px;font-size:11px;color:var(--theme-muted);text-align:right;background:color-mix(in srgb,var(--surface) 91%,var(--primary) 9%)}
 .series-cyclic-body{padding:8px;background:var(--surface)}
@@ -472,7 +482,7 @@ input[type="checkbox"]{
 .series-title-list{display:grid;gap:5px}
 .series-title-item{display:grid;grid-template-columns:28px minmax(0,1fr) 78px;gap:7px;align-items:center;min-width:0;padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
 .series-title-item .series-title-index{font-size:11px;color:var(--theme-muted);text-align:center}
-.series-title-item .series-title-name{min-width:0;font-weight:750;line-height:1.3;overflow-wrap:anywhere;word-break:break-word;letter-spacing:-.018em;cursor:pointer}
+.series-title-item .series-title-name{display:block;min-width:0;width:100%;margin:0;padding:0;background:transparent!important;color:var(--app-text)!important;border:0!important;border-radius:0!important;box-shadow:none!important;font:inherit;font-weight:750;line-height:1.3;overflow-wrap:anywhere;word-break:break-word;white-space:normal!important;text-align:left;letter-spacing:-.018em;cursor:pointer;-webkit-appearance:none;appearance:none}
 .series-title-item .series-title-name:active{opacity:.7}
 .series-title-status-stack{display:flex;flex-direction:column;align-items:stretch;gap:3px;width:78px;min-width:78px;max-width:78px}
 .series-title-status-stack .library-status-chip{width:78px;min-width:78px;max-width:78px;min-height:28px;font-size:10px}
@@ -587,7 +597,7 @@ let calendarExtras=readJSONStorage("calendarExtras_v442",[]);if(!Array.isArray(c
 const DEMO_ENABLED=true;
 // Prototype/dev builds: a deleted sample set stays deleted within this build, but a new build/version starts with samples again.
 // Production/App Store builds set DEMO_ENABLED=false, so this logic is never exposed to end users.
-const APP_VERSION="4.11.6";
+const APP_VERSION="4.11.7";
 const DEMO_DELETED_KEY="bookTrackerDemoDeleted";
 const DEMO_RESET_VERSION_KEY="bookTrackerDemoResetVersion";
 const DEMO_TITLES=["サンプル本棚：前月の便り","サンプル本棚：月夜の標本","サンプルシリーズ：星の余白 1巻","サンプルシリーズ：星の余白 2巻","サンプル本棚：翌月の灯り"];
@@ -1451,7 +1461,7 @@ window.bulkAdd=async id=>{
 /* v4.10.0: Runtime specification guard + lightweight regression checks.
    Development build only. These checks intentionally fail loudly instead of silently masking regressions. */
 (function(){
- const DEV_GUARD_VERSION="4.11.6";
+ const DEV_GUARD_VERSION="4.11.7";
  const validPurchase=new Set(["wanted","reserved","purchased","none"]);
  function add(name,ok,detail){return {name,ok,detail:detail||""}}
  function runSpecGuard(){
@@ -1585,6 +1595,15 @@ window.bulkAdd=async id=>{
     const statusOk=statusHtml.includes("toggleLibraryReading")&&statusHtml.includes("toggleLibraryFavorite")&&statusHtml.includes("deleteLibraryStatus")&&statusHtml.includes("★ お気に入り")&&statusHtml.includes("library-status-chip")&&statusHtml.includes("library-info-line");
     results.push(add("蔵書ステータス操作",statusOk,"読了／お気に入り切替・蔵書削除・固定幅チップ"));
   }catch(e){results.push(add("蔵書ステータス操作",false,e.message))}
+
+  // REG-007C: behavior-only controls must not inherit the global primary-blue button appearance.
+  try{
+    const css=[...document.querySelectorAll("style")].map(x=>x.textContent).join("\n");
+    const visualOk=/\.series-cyclic-head[^\{]*\{[\s\S]*?background:#f4f8fd!important/.test(css)
+      &&/\.series-title-item \.series-title-name[^\{]*\{[\s\S]*?background:transparent!important/.test(css)
+      &&/\.library-status-chip[^\{]*\{[\s\S]*?background:var\(--surface\)!important/.test(css);
+    results.push(add("既存UI見た目維持",visualOk,"タップ可能でも青い汎用ボタンへ変化させない"));
+  }catch(e){results.push(add("既存UI見た目維持",false,e.message))}
 
   // REG-008: series with 5+ books uses a three-state display cycle.
   try{

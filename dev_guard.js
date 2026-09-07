@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* Book Tracker v4.11.3 static development guard. Usage: node dev_guard.js index.html */
+/* Book Tracker v4.11.7 static development guard. Usage: node dev_guard.js index.html */
 const fs=require('fs');
 const path=require('path');
 const target=process.argv[2]||'index.html';
@@ -20,7 +20,7 @@ const fn=[...s.matchAll(/\bfunction\s+([A-Za-z_$][\w$]*)\s*\(/g)].map(m=>m[1]);
 const dupFn=fn.filter((x,i)=>fn.indexOf(x)!==i);add('重複した名前付きfunction',dupFn.length===0,dupFn.length?dupFn.join(', '):'OK');
 add('localStorage.clear() 不使用',!/localStorage\.clear\s*\(/.test(s),'OK');
 add('仕様ガードコメント',s.includes('[BOOK TRACKER / SPEC GUARD]'),'OK');
-add('APP_VERSION 4.11.6',/const\s+APP_VERSION\s*=\s*["']4\.11\.6["']/.test(s),'OK');
+add('APP_VERSION 4.11.7',/const\s+APP_VERSION\s*=\s*["']4\.11\.7["']/.test(s),'OK');
 add('DEMO_ENABLED 定義',/const\s+DEMO_ENABLED\s*=/.test(s),'OK');
 add('正規登録関数',/window\.addBook\s*=/.test(s)&&/window\.bulkAdd\s*=/.test(s),'OK');
 add('全選択は checkbox',/class="check selectAll" type="checkbox"/.test(s)&&/class="check similarAll" type="checkbox"/.test(s),'OK');
@@ -30,7 +30,10 @@ add('仕様文書',fs.existsSync(path.join(baseDir,'SPEC.md'))&&fs.existsSync(pa
 add('filter reset wiring',s.includes('function resetLibraryFilters')&&s.includes('filterReading')&&s.includes('filterFavorite')&&s.includes('if(input)input.value=""'),'OK');
 add('library sort wiring',/function\s+compareLibraryItems\s*\(/.test(s)&&/a\.sort\(compareLibraryItems\)/.test(s)&&/grouped\.sort\(/.test(s),'OK');
 add('bare-number volume parsing',s.includes('function volumeNo')&&s.includes('(?:巻|集)?$'),'OK');
-add('runtime regression tests',/REG-001: filter reset/.test(s)&&/REG-002: sort/.test(s)&&/REG-003: titles ending in bare numbers/.test(s)&&/REG-004: compact library stats/.test(s)&&/REG-005: long titles\/series headers/.test(s)&&/REG-006: summary opens/.test(s)&&/REG-007: library cards stack/.test(s)&&/REG-008: series with 5\+ books/.test(s),'REG-001〜008');
+add('runtime regression tests',/REG-001: filter reset/.test(s)&&/REG-002: sort/.test(s)&&/REG-003: titles ending in bare numbers/.test(s)&&/REG-004: compact library stats/.test(s)&&/REG-005: long titles\/series headers/.test(s)&&/REG-006: summary opens/.test(s)&&/REG-007: library cards stack/.test(s)&&/REG-008: series with 5\+ books/.test(s),'REG-001〜008 + visual baseline');
+add('visual baseline: series header',/series-cyclic-head\{[^}]*background:#f4f8fd!important/.test(s)&&/series-cyclic-head[^}]*white-space:normal!important/.test(s),'青い汎用ボタン化を禁止');
+add('visual baseline: title row',/series-title-item \.series-title-name\{[^}]*background:transparent!important/.test(s)&&/series-title-item \.series-title-name\{[^}]*color:var\(--app-text\)!important/.test(s),'タイトル行の元表示を維持');
+add('visual baseline: status chip',/library-status-chip\{[^}]*background:var\(--surface\);/.test(s)&&/library-status-chip\{[^}]*width:78px/.test(s),'ステータスの見た目・固定幅を維持');
 add('library stats compact',/library-stats\.is-compact/.test(s)&&/updateLibraryStatsCompact/.test(s),'初期2列→スクロール時5列固定');
 const failed=checks.filter(x=>!x.ok);
 for(const x of checks)console.log(`${x.ok?'PASS':'FAIL'} ${x.name}${x.detail?' — '+x.detail:''}`);
