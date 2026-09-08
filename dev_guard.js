@@ -7,7 +7,7 @@ const ids=[...s.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);check('重複ID
 const fn=[...s.matchAll(/function\s+([A-Za-z_$][\w$]*)\s*\(/g)].map(m=>m[1]);check('重複した名前付きfunction',new Set(fn).size===fn.length,'OK');
 check('localStorage.clear() 不使用',!s.includes('localStorage.clear('),'OK');
 check('4.11.3 Visual Baseline',/4\.11\.3.*Visual Baseline|Visual Baseline.*4\.11\.3/i.test(s+fs.readFileSync(path.join(root,'SPEC.md'),'utf8')),'OK');
-check('APP_VERSION 4.11.9',/APP_VERSION\s*=\s*["']4\.11\.9["']/.test(s),'OK');
+check('APP_VERSION 4.12.1',/APP_VERSION\s*=\s*["']4\.12\.1["']/.test(s),'OK');
 check('DEMO_ENABLED 定義',/DEMO_ENABLED\s*=/.test(s),'OK');
 check('正規登録関数',/window\.addBook|window\.bulkAdd/.test(s),'OK');
 check('全選択は checkbox',/id="libAll"[^>]*type="checkbox"/.test(s),'OK');
@@ -16,5 +16,5 @@ check('仕様文書',fs.existsSync(path.join(root,'SPEC.md'))&&fs.existsSync(pat
 check('ステータス固定幅',s.includes('.library-status-stack{')&&s.includes('width:78px;min-width:78px')&&s.includes('.series-title-status-stack{')&&s.includes('box-sizing:border-box;width:78px'),'78px');
 check('折りたたみ状態保持',/seriesOpenKey|setSeriesOpenState/.test(s)&&/data-series-open/.test(s),'OK');
 check('タイトル一覧戻るUI',/series-title-collapse\{[^}]*background:transparent!important/.test(s),'元表示');
-check('地層型シリーズ積層',/series-deck::before/.test(s)&&/series-deck::after/.test(s)&&/11px 0 0/.test(s),'OK');
+check('地層型シリーズ積層',/series-deck\{[^}]*padding:8px 0 28px/.test(s)&&/series-deck::before/.test(s)&&/series-deck::after/.test(s),'OK');
 process.exit(pass?0:1);
