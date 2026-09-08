@@ -442,11 +442,14 @@ input[type="checkbox"]{
 .library-stats.is-compact .library-stat-label{display:block;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px;line-height:1.15;color:var(--theme-muted)}
 .library-stats.is-compact .statbox b{display:block;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px;line-height:1.15;margin:0}
 @media(max-width:380px){.library-stats.is-compact{gap:3px;margin-left:-2px;margin-right:-2px}.library-stats.is-compact .statbox{padding-left:2px;padding-right:2px}.library-stats.is-compact .library-stat-label{font-size:9px}.library-stats.is-compact .statbox b{font-size:13px}}
-/* v4.12.2: only 5+ series deck visuals; preserve the v4.11.3 baseline elsewhere. */
-.series-cyclic-title{color:#0b1220!important;font-weight:850!important}
-.series-deck::before{transform:translate(10px,10px) rotate(-1.4deg)!important;transform-origin:center bottom}
-.series-deck::after{transform:translate(19px,17px) rotate(1.4deg)!important;transform-origin:center bottom}
-.series-deck .card{box-shadow:0 2px 6px rgba(15,23,42,.08)!important}
+/* v4.12.4: 5+ series header background only. Title text keeps the v4.11.3 text color. */
+.series-group.is-cyclic .series-cyclic-head{background:color-mix(in srgb,var(--primary) 8%,var(--surface))!important;border-radius:14px 14px 0 0}
+.series-group.is-cyclic .series-cyclic-title{color:var(--app-text)!important;font-weight:800!important}
+.series-group.is-cyclic .series-deck{padding-left:8px;padding-right:8px;padding-bottom:34px!important}
+.series-group.is-cyclic .series-deck::before,.series-group.is-cyclic .series-deck::after{background:var(--surface)!important;border:1px solid #d5deeb!important;box-shadow:0 3px 7px rgba(15,23,42,.10)!important;z-index:1}
+.series-group.is-cyclic .series-deck::before{left:10px;right:10px;top:18px;bottom:12px;transform:translate(-7px,10px) rotate(-2.1deg)!important;transform-origin:center bottom}
+.series-group.is-cyclic .series-deck::after{left:10px;right:10px;top:18px;bottom:12px;transform:translate(7px,20px) rotate(2.1deg)!important;transform-origin:center bottom}
+.series-group.is-cyclic .series-deck .card{z-index:3;box-shadow:0 3px 9px rgba(15,23,42,.12)!important}
 </style>
 </head><body>
 <header><b id="appHeaderTitle">📚 本棚スケジュール</b><div class="muted" id="appHeaderSub">複数ISBN・詳細/関連検索・発売日カレンダー対応</div></header>
@@ -547,7 +550,7 @@ let calendarExtras=readJSONStorage("calendarExtras_v442",[]);if(!Array.isArray(c
 const DEMO_ENABLED=true;
 // Prototype/dev builds: a deleted sample set stays deleted within this build, but a new build/version starts with samples again.
 // Production/App Store builds set DEMO_ENABLED=false, so this logic is never exposed to end users.
-const APP_VERSION="4.12.2";
+const APP_VERSION="4.12.4";
 const DEMO_DELETED_KEY="bookTrackerDemoDeleted";
 const DEMO_RESET_VERSION_KEY="bookTrackerDemoResetVersion";
 const DEMO_TITLES=["サンプル本棚：前月の便り","サンプル本棚：月夜の標本","サンプルシリーズ：星の余白 1巻","サンプルシリーズ：星の余白 2巻","サンプル本棚：翌月の灯り"];
@@ -1396,7 +1399,7 @@ window.bulkAdd=async id=>{
 /* v4.10.0: Runtime specification guard + lightweight regression checks.
    Development build only. These checks intentionally fail loudly instead of silently masking regressions. */
 (function(){
- const DEV_GUARD_VERSION="4.12.2";
+ const DEV_GUARD_VERSION="4.12.4";
  const validPurchase=new Set(["wanted","reserved","purchased","none"]);
  function add(name,ok,detail){return {name,ok,detail:detail||""}}
  function runSpecGuard(){
@@ -1524,15 +1527,16 @@ window.bulkAdd=async id=>{
     results.push(add("ステータス固定幅",fixed,fixed?"78px固定":"固定幅指定を確認"));
   }catch(e){results.push(add("ステータス固定幅",false,e.message))}
 
-  // REG-009: v4.12.2 visual corrections for series deck/title list.
+  // REG-009: v4.12.4 visual corrections for series header/deck/title list.
   try{
     const css=[...document.querySelectorAll("style")].map(x=>x.textContent).join("\n");
     const noDeckCount=/\.series-deck-count\{display:none\}/.test(css);
-    const layered=/\.series-deck::before/.test(css)&&/\.series-deck::after/.test(css);
+    const layered=/\.series-group\.is-cyclic \.series-deck::before/.test(css)&&/\.series-group\.is-cyclic \.series-deck::after/.test(css);
     const fixedTitleStatus=/grid-template-columns:auto minmax\(0,1fr\) 78px/.test(css);
-    const darkerTitle=/\.series-cyclic-title\{[^}]*color:#0f172a/.test(css);
-    results.push(add("シリーズ表示v4.12.2",noDeckCount&&layered&&fixedTitleStatus&&darkerTitle,"全○冊削除＋地層表示＋固定幅＋濃色タイトル"));
-  }catch(e){results.push(add("シリーズ表示v4.12.2",false,e.message))}
+    const headerBg=/\.series-group\.is-cyclic \.series-cyclic-head\{[^}]*background:color-mix\(in srgb,var\(--primary\) 8%,var\(--surface\)\)!important/.test(css);
+    const keepsTextColor=/\.series-group\.is-cyclic \.series-cyclic-title\{[^}]*color:var\(--app-text\)!important/.test(css);
+    results.push(add("シリーズ表示v4.12.4",noDeckCount&&layered&&fixedTitleStatus&&headerBg&&keepsTextColor,"5冊以上はタイトル行背景のみ変更＋固定幅＋積層構造"));
+  }catch(e){results.push(add("シリーズ表示v4.12.3",false,e.message))}
 
   // REG-008: non-cyclic series open/closed state is persisted independently.
   try{
