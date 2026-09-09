@@ -458,7 +458,56 @@ input[type="checkbox"]{
 /* v4.13.2 fixed: full-list cards remain on the same layout/size rules as the <=4-series cards. */
 .series-group.is-cyclic .series-cyclic-body:has(.series-books){padding-left:0!important;padding-right:0!important}
 </style>
-</head><body>
+<style id="v4139-font-accessibility">
+/* ===== v4.13.9 font-size accessibility / overflow hardening =====
+   The v4.13.8 visual baseline is unchanged at the default (medium) size.
+   Small/large modes scale fixed-size text that previously bypassed --font-scale.
+   Large text may wrap inside controls rather than being clipped or forced outside.
+*/
+body.font-small .theme-choice,body.font-medium .theme-choice,body.font-large .theme-choice,
+body.font-small .font-choice,body.font-medium .font-choice,body.font-large .font-choice{white-space:normal;overflow-wrap:anywhere;word-break:break-word;line-height:1.25;height:auto}
+body.font-small .theme-choice,body.font-small .font-choice{font-size:calc(15px * var(--font-scale))!important}
+body.font-large .theme-choice,body.font-large .font-choice{font-size:calc(15px * var(--font-scale))!important}
+body.font-small .library-detail-btn,body.font-large .library-detail-btn{font-size:calc(13px * var(--font-scale))!important;white-space:normal;overflow-wrap:anywhere;word-break:break-word;line-height:1.25;height:auto;min-height:40px!important}
+body.font-small .library-status-stack .meta-badge,body.font-small .library-status-stack .owned-badge,body.font-small .library-status-stack .unowned-badge,
+body.font-large .library-status-stack .meta-badge,body.font-large .library-status-stack .owned-badge,body.font-large .library-status-stack .unowned-badge{font-size:calc(12px * var(--font-scale))!important;white-space:normal;overflow-wrap:anywhere;word-break:break-word;line-height:1.2;height:auto;min-height:22px}
+body.font-small .series-title-status-stack .meta-badge,body.font-large .series-title-status-stack .meta-badge{font-size:calc(12px * var(--font-scale))!important;white-space:normal;overflow-wrap:anywhere;word-break:break-word;line-height:1.2;height:auto}
+body.font-small .selectbar button,body.font-large .selectbar button{font-size:calc(13px * var(--font-scale))!important;white-space:normal;overflow-wrap:anywhere;word-break:break-word;line-height:1.25;height:auto;min-height:40px!important}
+body.font-small .library-filterbar>button,body.font-large .library-filterbar>button{font-size:calc(15px * var(--font-scale))!important;white-space:normal;overflow-wrap:anywhere;word-break:break-word;line-height:1.25;height:auto;min-height:44px!important}
+body.font-small .home-link-btn,body.font-large .home-link-btn{font-size:calc(12px * var(--font-scale))!important;white-space:normal;overflow-wrap:anywhere;word-break:break-word;line-height:1.25;height:auto;min-height:44px}
+body.font-small .setting-state,body.font-large .setting-state{font-size:calc(12px * var(--font-scale))!important;white-space:normal;overflow-wrap:anywhere;line-height:1.2;text-align:right}
+body.font-small .release-badge,body.font-large .release-badge{font-size:calc(11px * var(--font-scale))!important;white-space:normal;overflow-wrap:anywhere;line-height:1.2}
+body.font-small .release-mark,body.font-large .release-mark{font-size:calc(9px * var(--font-scale))!important;white-space:normal;line-height:1.15;height:auto;min-height:16px}
+body.font-small .demo-badge,body.font-large .demo-badge{font-size:calc(10px * var(--font-scale))!important;white-space:normal;line-height:1.15}
+body.font-small .demo-global b,body.font-large .demo-global b{font-size:calc(12px * var(--font-scale))!important}
+body.font-small .demo-banner,body.font-large .demo-banner{font-size:calc(12px * var(--font-scale))!important}
+body.font-small .demo-global,body.font-large .demo-global{font-size:calc(12px * var(--font-scale))!important}
+body.font-small .demo-delete-dialog>b,body.font-large .demo-delete-dialog>b{font-size:calc(18px * var(--font-scale))!important}
+body.font-small .demo-delete-dialog p,body.font-large .demo-delete-dialog p{font-size:calc(14px * var(--font-scale))!important}
+body.font-small .status-help,body.font-large .status-help{font-size:calc(.88 * 15px * var(--font-scale))!important}
+body.font-small .filter-summary,body.font-large .filter-summary{font-size:calc(13px * var(--font-scale))!important}
+body.font-small .library-filterbar .library-sort .muted,body.font-large .library-filterbar .library-sort .muted{font-size:calc(13px * var(--font-scale))!important;white-space:normal;overflow-wrap:anywhere}
+body.font-small .monthbar b,body.font-large .monthbar b{font-size:calc(18px * var(--font-scale))!important;white-space:normal;overflow-wrap:anywhere;text-align:center;line-height:1.2}
+body.font-small .calendar-filters label,body.font-large .calendar-filters label{font-size:calc(13px * var(--font-scale))!important;white-space:normal;overflow-wrap:anywhere;line-height:1.25}
+body.font-small .event-legend,body.font-large .event-legend{font-size:calc(12px * var(--font-scale))!important}
+body.font-small .series-cyclic-count,body.font-large .series-cyclic-count{font-size:calc(13px * var(--font-scale))!important;white-space:normal;line-height:1.2}
+body.font-small .series-cyclic-hint,body.font-large .series-cyclic-hint{font-size:calc(11px * var(--font-scale))!important}
+body.font-small .series-group summary,body.font-large .series-group summary{font-size:calc(15px * var(--font-scale))!important}
+body.font-small .current-setting,body.font-large .current-setting{font-size:calc(13px * var(--font-scale))!important;white-space:normal;overflow-wrap:anywhere;line-height:1.25}
+body.font-small .settings-grid label,body.font-large .settings-grid label,body.font-small .skin-grid label,body.font-large .skin-grid label{font-size:calc(13px * var(--font-scale))!important;line-height:1.25}
+body.font-small .isbn-help,body.font-large .isbn-help,body.font-small .multi-isbn-hint,body.font-large .multi-isbn-hint{font-size:calc(12px * var(--font-scale))!important;line-height:1.35}
+body.font-small .scan-actions button,body.font-large .scan-actions button{font-size:calc(15px * var(--font-scale))!important;white-space:normal;overflow-wrap:anywhere;line-height:1.25;height:auto;min-height:44px}
+body.font-small .detail-actions a,body.font-small .detail-actions button,body.font-large .detail-actions a,body.font-large .detail-actions button{font-size:calc(15px * var(--font-scale))!important;white-space:normal;overflow-wrap:anywhere;word-break:break-word;line-height:1.25;height:auto;min-height:44px!important}
+body.font-small .detail-related-item,body.font-large .detail-related-item{font-size:calc(15px * var(--font-scale))!important;line-height:1.25}
+body.font-small .home-upcoming-head b,body.font-large .home-upcoming-head b{font-size:calc(15px * var(--font-scale))!important}
+body.font-small .home-upcoming-title,body.font-large .home-upcoming-title{font-size:calc(11px * var(--font-scale))!important}
+body.font-small .home-upcoming-date,body.font-large .home-upcoming-date{font-size:calc(10px * var(--font-scale))!important}
+body.font-small .home-upcoming-badge,body.font-large .home-upcoming-badge{font-size:calc(9px * var(--font-scale))!important}
+/* Text inside controls must remain inside their boxes at every app font setting. */
+body.font-small button,body.font-large button{white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+/* Keep the fixed-width library status column, but let its labels wrap at larger sizes. */
+body.font-small .library-status-stack,body.font-large .library-status-stack{overflow:visible}
+</style></head><body>
 <header><b id="appHeaderTitle">📚 本棚スケジュール</b><div class="muted" id="appHeaderSub">複数ISBN・詳細/関連検索・発売日カレンダー対応</div></header>
 <main id="content">
 <div id="demoNotice" class="demo-global" hidden role="button" tabindex="0" aria-label="サンプルデータの削除確認"><b>📚 サンプルデータを表示しています</b><span>アプリの見え方を確認するためのサンプル蔵書が表示されています。設定内の削除ボタン、またはこのメッセージをタップしてサンプル蔵書を削除できます。</span></div>
@@ -557,7 +606,7 @@ let calendarExtras=readJSONStorage("calendarExtras_v442",[]);if(!Array.isArray(c
 const DEMO_ENABLED=true;
 // Prototype/dev builds: a deleted sample set stays deleted within this build, but a new build/version starts with samples again.
 // Production/App Store builds set DEMO_ENABLED=false, so this logic is never exposed to end users.
-const APP_VERSION="4.13.8";
+const APP_VERSION="4.13.9";
 const DEMO_DELETED_KEY="bookTrackerDemoDeleted";
 const DEMO_RESET_VERSION_KEY="bookTrackerDemoResetVersion";
 const DEMO_TITLES=["サンプル本棚：前月の便り","サンプル本棚：月夜の標本","サンプルシリーズ：星の余白 1巻","サンプルシリーズ：星の余白 2巻","サンプル本棚：翌月の灯り"];
@@ -1406,7 +1455,7 @@ window.bulkAdd=async id=>{
 /* v4.10.0: Runtime specification guard + lightweight regression checks.
    Development build only. These checks intentionally fail loudly instead of silently masking regressions. */
 (function(){
- const DEV_GUARD_VERSION="4.13.8";
+ const DEV_GUARD_VERSION="4.13.9";
  const validPurchase=new Set(["wanted","reserved","purchased","none"]);
  function add(name,ok,detail){return {name,ok,detail:detail||""}}
  function runSpecGuard(){
