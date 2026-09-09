@@ -446,15 +446,17 @@ input[type="checkbox"]{
 .series-group.is-cyclic .series-cyclic-head{background:color-mix(in srgb,var(--primary) 8%,var(--surface))!important;border-radius:14px!important}
 .series-group.is-cyclic .series-cyclic-title{color:var(--app-text)!important;font-weight:800!important}
 .series-group.is-cyclic .series-deck{padding-left:8px;padding-right:8px;padding-bottom:42px!important}
-/* v4.13.3: 5+ deck uses the v4.13.1 full-view card size; rear outlines align to the front card box so only the stepped lower edges remain visible. */
+/* v4.13.4: one-card deck keeps the v4.13.2 size; rear outlines are aligned to the front card and step right .5px and down 3px each. */
 .series-group.is-cyclic .series-deck{position:relative;padding-left:0!important;padding-right:0!important;padding-bottom:42px!important;overflow:visible!important}
 .series-group.is-cyclic .series-deck::before,.series-group.is-cyclic .series-deck::after{display:none!important}
-.series-group.is-cyclic .series-deck .series-stack-layer{position:absolute;left:0;right:0;top:16px;bottom:42px;background:transparent!important;border:1px solid var(--line);border-radius:16px;box-shadow:none!important;z-index:1;pointer-events:none}
-.series-group.is-cyclic .series-deck .series-stack-1{transform:translate(-1px,3px)}
-.series-group.is-cyclic .series-deck .series-stack-2{transform:translate(0,6px)}
-.series-group.is-cyclic .series-deck .series-stack-3{transform:translate(1px,9px)}
+.series-group.is-cyclic .series-deck .series-stack-layer{position:absolute;left:0;right:0;top:8px;bottom:42px;background:transparent!important;border:1px solid var(--line);border-radius:16px;box-shadow:none!important;z-index:1;pointer-events:none}
+.series-group.is-cyclic .series-deck .series-stack-1{transform:translate(.5px,3px)}
+.series-group.is-cyclic .series-deck .series-stack-2{transform:translate(1px,6px)}
+.series-group.is-cyclic .series-deck .series-stack-3{transform:translate(1.5px,9px)}
 .series-group.is-cyclic .series-deck .series-stack-4{transform:translate(2px,12px)}
 .series-group.is-cyclic .series-deck .card{position:relative;z-index:3;margin:8px 0!important;transform:translateX(-2px);box-shadow:0 1px 3px rgba(15,23,42,.08)!important}
+/* v4.13.2: full-list cards use the same horizontal content width as the <=4-series layout. */
+.series-group.is-cyclic .series-cyclic-body:has(.series-books){padding-left:0!important;padding-right:0!important}
 </style>
 </head><body>
 <header><b id="appHeaderTitle">📚 本棚スケジュール</b><div class="muted" id="appHeaderSub">複数ISBN・詳細/関連検索・発売日カレンダー対応</div></header>
@@ -555,7 +557,7 @@ let calendarExtras=readJSONStorage("calendarExtras_v442",[]);if(!Array.isArray(c
 const DEMO_ENABLED=true;
 // Prototype/dev builds: a deleted sample set stays deleted within this build, but a new build/version starts with samples again.
 // Production/App Store builds set DEMO_ENABLED=false, so this logic is never exposed to end users.
-const APP_VERSION="4.13.3";
+const APP_VERSION="4.13.4";
 const DEMO_DELETED_KEY="bookTrackerDemoDeleted";
 const DEMO_RESET_VERSION_KEY="bookTrackerDemoResetVersion";
 const DEMO_TITLES=["サンプル本棚：前月の便り","サンプル本棚：月夜の標本","サンプルシリーズ：星の余白 1巻","サンプルシリーズ：星の余白 2巻","サンプル本棚：翌月の灯り"];
@@ -1404,7 +1406,7 @@ window.bulkAdd=async id=>{
 /* v4.10.0: Runtime specification guard + lightweight regression checks.
    Development build only. These checks intentionally fail loudly instead of silently masking regressions. */
 (function(){
- const DEV_GUARD_VERSION="4.13.3";
+ const DEV_GUARD_VERSION="4.13.4";
  const validPurchase=new Set(["wanted","reserved","purchased","none"]);
  function add(name,ok,detail){return {name,ok,detail:detail||""}}
  function runSpecGuard(){
