@@ -18,10 +18,19 @@ check('折りたたみ状態保持',/seriesOpenKey|setSeriesOpenState/.test(s)&&
 check('タイトル一覧戻るUI',/series-title-collapse\{[^}]*background:transparent!important/.test(s),'元表示');
 check('後ろ4枚5px刻み枠線',/series-stack-4/.test(s)&&/translate\(\.5px,5px\)/.test(s)&&/translate\(1px,10px\)/.test(s)&&/translate\(1\.5px,15px\)/.test(s)&&/translate\(2px,20px\)/.test(s)&&/transform:none/.test(s)&&/background:transparent!important/.test(s)&&!/series-stack-5/.test(s),'後ろ4枚・縦5px刻み・枠線のみ');
 check('5冊以上タイトル行背景',/\.series-group\.is-cyclic \.series-cyclic-head\{[^}]*background:color-mix\(in srgb,var\(--primary\) 8%,var\(--surface\)\)!important/.test(s)&&/\.series-group\.is-cyclic \.series-cyclic-title\{[^}]*color:var\(--app-text\)!important/.test(s),'5冊以上のみ背景色を少し濃く');
+check('背景画像cover/center',/background-size:cover!important/.test(s)&&/background-position:center center!important/.test(s),'cover + center');
+check('背景パネル約70%透明',/--panel-surface-alpha:30%/.test(s)&&/color-mix\(in srgb,var\(--surface\) var\(--panel-surface-alpha\),transparent\)!important/.test(s),'パネル不透明30%');
+check('シリーズ表示の選択ソート経路',/grouped\.sort\(\(g1,g2\)=>\{[^}]*compareLibraryItems\(a1,a2\)/.test(s),'compareLibraryItemsを使用');
+check('一括変更はupdateBookMeta経由',/ids\.forEach\(i=>updateBookMeta\(books\[i\]\.isbn,patch,false\)\)/.test(s),'updateBookMeta経由');
+check('一括削除は保存後再描画',s.includes('ids.forEach(i=>books.splice(i,1));')&&s.includes('persistBooks()')&&s.includes('render();'),'persistBooks→render');
+check('登録後検索結果再描画',/if\(window\.addResultsData\)[\s\S]*renderResults\("addResults"/.test(s),'addBook後に検索結果再描画');
+check('削除後検索結果再描画',/removeBookFromCalendar[\s\S]*refreshAddResults\(\)/.test(s),'削除後refreshAddResults');
+check('状態変更は保存→render',/function updateBookMeta\([\s\S]*saveMeta\(\);[\s\S]*if\(doRender\)render\(\)/.test(s),'updateBookMetaの一連性');
 
 
 
-// ===== Browser UI regression tests (v4.13.11) =====
+
+// ===== Browser UI regression tests (v4.13.12) =====
 // Uses Chromium + DevTools Protocol only; no npm/browser automation dependency is required.
 // The test intentionally measures rendered geometry, not source-code guesses.
 function browserUIRegression(){
@@ -35,6 +44,7 @@ function browserUIRegression(){
 
   const port=9300+(process.pid%500),profile=`/tmp/book_tracker_ui_${process.pid}`;
   const child=cp.spawn(chrome,['--headless=new','--no-sandbox','--disable-gpu','--no-proxy-server',`--remote-debugging-port=${port}`,`--user-data-dir=${profile}`,'about:blank'],{stdio:'ignore'});
+  const storageShim=`<script>(function(){try{window.localStorage.getItem("__bt_guard_probe__")}catch(e){const m=new Map();Object.defineProperty(window,"localStorage",{configurable:true,value:{getItem:k=>m.has(k)?m.get(k):null,setItem:(k,v)=>m.set(String(k),String(v)),removeItem:k=>m.delete(k),clear:()=>m.clear(),key:i=>Array.from(m.keys())[i]??null,get length(){return m.size}}})}})();</script>`;
   let ok=true;
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const getTarget=()=>new Promise((resolve,reject)=>{
@@ -52,7 +62,7 @@ function browserUIRegression(){
     const send=(method,params={})=>new Promise((resolve,reject)=>{const id=++seq;pending.set(id,m=>m.error?reject(new Error(JSON.stringify(m.error))):resolve(m.result));ws.send(JSON.stringify({id,method,params}))});
     await send('Page.enable'); await send('Runtime.enable');
     await send('Page.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
-    await send('Page.setDocumentContent',{frameId:target.id,html:s});
+    await send('Page.setDocumentContent',{frameId:target.id,html:storageShim+s});
     await sleep(1200);
     const expression=`(async()=>{
       // Deterministic, non-persistent calendar fixture: exercise the real calendarEventHtml path.
@@ -71,7 +81,7 @@ function browserUIRegression(){
       const setFont=fs=>{document.body.classList.remove('font-small','font-medium','font-large');document.body.classList.add(fs);void document.body.offsetHeight};
       const visible=e=>{if(!e)return false;const r=e.getBoundingClientRect(),cs=getComputedStyle(e);return cs.display!=='none'&&cs.visibility!=='hidden'&&r.width>0&&r.height>0};
       const targetInfo=()=>[...document.querySelectorAll('button')].filter(b=>/開発用：仕様・回帰チェック|蔵書登録済み（タップで削除）|詳細を見る|ナチュラル/.test(b.innerText)).filter(visible).map(b=>({text:b.innerText,rect:rect(b)}));
-      const out={fonts:{},cardBaseline:null,errors:[]};
+      const out={fonts:{},cardBaseline:null,errors:[]}; const specChecks=[]; const specAdd=(name,ok,detail)=>specChecks.push({name,ok,detail:detail||''});
       for(const fs of ['font-small','font-medium','font-large']){
         setFont(fs); out.generic = out.generic || []; out.fonts[fs]={};
         for(const tab of ['home','add','library','search','calendar','settings']){
@@ -103,24 +113,124 @@ function browserUIRegression(){
         click('#bottomNav button[data-s="calendar"]'); await sleep(30);
         for(const b of document.querySelectorAll('.calendar-register-btn')) if(visible(b)) checks.push({kind:'calendar-register',font:fs,rect:rect(b)});
       }
-      // REG-010: the front card in a 5+ series deck must have exactly the same
-      // rendered dimensions as the normal <=4-series card at the same font size.
-      const savedBooksForCardSize=books;
-      const savedSeriesViewForCardSize=readSeriesView();
-      const cardSizeFixture=n=>Array.from({length:n},(_,i)=>({isbn:"guard-card-"+n+"-"+i,title:"カードサイズ回帰 "+(i+1),author:"A",publisher:"P",date:"2025-01-01",price:100}));
-      const measureSeriesCardSize=n=>{books=cardSizeFixture(n);try{localStorage.setItem('seriesView_v444','on');localStorage.removeItem(seriesCycleKey('カードサイズ回帰'))}catch(e){};click('#bottomNav button[data-s=\"library\"]');renderLibrary();const c=document.querySelector('#myBooks .library-card');return c?rect(c):null};
-      const cardSize4=measureSeriesCardSize(4),cardSize5=measureSeriesCardSize(5);
-      out.seriesCardSize={four:cardSize4,five:cardSize5};
-      books=savedBooksForCardSize;
-      try{localStorage.setItem('seriesView_v444',savedSeriesViewForCardSize?'on':'off')}catch(e){}
-      renderLibrary();
+      // ===== v4.13.12 full SPEC coverage audit =====
+      const savedAlert=window.alert, savedConfirm=window.confirm;
+      const savedBooks3=books.slice(), savedMeta3=JSON.parse(JSON.stringify(bookMeta)), savedExtras3=calendarExtras.slice();
+      const savedSort3=$("librarySort")?.value||"registered-desc", savedFilter3=$("libraryFilter")?.value||"", savedSeriesView3=localStorage.getItem("seriesView_v444");
+      try{
+        const c10=canonicalIsbn("0306406152"), c13=canonicalIsbn("9780306406157");
+        specAdd("ISBN-10/13 canonical一致",c10===c13,c10+" / "+c13);
+        const dup=dedupeBookResults([{isbn:"0306406152",title:"A"},{isbn:"9780306406157",title:"A"},{isbn:"9780000000000",title:"B"}]);
+        specAdd("検索結果ISBN重複排除",dup.filter(x=>canonicalIsbn(x.isbn)===c10).length===1,"結果"+dup.length+"件");
 
-      return {out,checks};
+        window.alert=()=>{}; window.confirm=()=>true;
+        books=[]; calendarExtras=[]; bookMeta={};
+        const future=addDaysKey(localDateKey(),1);
+        const futureOk=await window.addBook({isbn:"guard-future",title:"Future",author:"A",publisher:"P",date:future,price:100});
+        specAdd("発売前登録禁止",futureOk===false&&books.length===0,"future add rejected");
+        const past=localDateKey();
+        const addOk=await window.addBook({isbn:"guard-owned",title:"Owned",author:"A",publisher:"P",date:past,price:100});
+        const ownedMeta=getMeta("guard-owned");
+        specAdd("登録=蔵書=購入済み",addOk&&books.length===1&&ownedMeta.purchaseStatus==="purchased",JSON.stringify(ownedMeta));
+        updateBookMeta("guard-owned",{readingStatus:"read",favorite:1},false);
+        const um=getMeta("guard-owned");
+        specAdd("読了/お気に入り正規化",um.readingStatus==="read"&&um.favorite===true,JSON.stringify(um));
+        updateBookMeta("guard-owned",{readingStatus:"invalid",favorite:0},false); const umInvalid=getMeta("guard-owned");
+        specAdd("不正メタデータの正規化",umInvalid.readingStatus==="unread"&&umInvalid.favorite===false,JSON.stringify(umInvalid));
+        const persistedMeta=JSON.parse(localStorage.getItem("bookTrackerMeta_v483")||"{}");
+        specAdd("メタデータ保存",persistedMeta[canonicalIsbn("guard-owned")]?.readingStatus==="unread"&&persistedMeta[canonicalIsbn("guard-owned")]?.favorite===false,"localStorage一致");
+
+        const fids=["filterAuthor","filterPublisher","filterYear","filterRelease","filterReading","filterFavorite"];
+        fids.forEach(id=>{if($(id))$(id).value="x"}); if($("libraryFilter"))$("libraryFilter").value="x"; window.libraryUnreadOnly=true; resetLibraryFilters({render:false});
+        specAdd("フィルター全解除",fids.every(id=>!$(id)?.value)&&!$("libraryFilter")?.value&&!window.libraryUnreadOnly,"検索文字列・全フィルター・積読");
+
+        specAdd("シリーズ表示循環",nextSeriesCycleState("deck")==="list"&&nextSeriesCycleState("list")==="title"&&nextSeriesCycleState("title")==="deck","deck→list→title→deck");
+        setSeriesOpenState("guard-series",false); const openPersist=getSeriesOpenState("guard-series"); setSeriesOpenState("guard-series",true);
+        specAdd("シリーズ開閉状態保持",openPersist===false&&getSeriesOpenState("guard-series")===true,"localStorage");
+
+        books=[
+          {isbn:"ga1",title:"シリーズA 1",author:"A",publisher:"P",date:"2025-01-01",price:100},
+          {isbn:"gb1",title:"シリーズB 1",author:"B",publisher:"P",date:"2026-01-01",price:100},
+          {isbn:"ga2",title:"シリーズA 2",author:"A",publisher:"P",date:"2025-02-01",price:100},
+          {isbn:"gb2",title:"シリーズB 2",author:"B",publisher:"P",date:"2026-02-02",price:100}
+        ];
+        localStorage.setItem("seriesView_v444","on"); $("librarySort").value="release-desc"; renderLibrary();
+        const groupOrder=[...document.querySelectorAll("#myBooks .series-group")].map(e=>e.dataset.seriesCycle||e.dataset.seriesOpen||"");
+        specAdd("シリーズ表示の並び順",groupOrder[0]=== "シリーズB",JSON.stringify(groupOrder));
+
+        books=[]; for(let i=1;i<=4;i++)books.push({isbn:"g4-"+i,title:"比較シリーズ4 "+i,author:"A",publisher:"P",date:"2025-01-01",price:100});
+        for(let i=1;i<=5;i++)books.push({isbn:"g5-"+i,title:"比較シリーズ5 "+i,author:"A",publisher:"P",date:"2025-01-01",price:100});
+        setSeriesCycleState("比較シリーズ5","deck"); setSeriesOpenState("比較シリーズ4",true); $("librarySort").value="registered-desc"; setMainTab("library"); renderLibrary();
+        const c4=document.querySelector(".series-group:not(.is-cyclic) .library-card"), c5=document.querySelector(".series-group.is-cyclic .series-deck .library-card");
+        const r4=c4?.getBoundingClientRect(),r5=c5?.getBoundingClientRect();
+        specAdd("5冊以上一枚表示カード寸法",!!r4&&!!r5&&Math.abs(r4.width-r5.width)<=0.5&&Math.abs(r4.height-r5.height)<=0.5,"4冊="+(r4?r4.width+"x"+r4.height:"none")+" / 5冊="+(r5?r5.width+"x"+r5.height:"none"));
+        setSeriesCycleState("比較シリーズ5","list"); renderLibrary(); const c5list=document.querySelector(".series-group.is-cyclic .series-books .library-card"); const r5list=c5list?.getBoundingClientRect();
+        specAdd("5冊以上全巻表示カード寸法",!!r4&&!!r5list&&Math.abs(r4.width-r5list.width)<=0.5&&Math.abs(r4.height-r5list.height)<=0.5,"4冊="+(r4?r4.width+"x"+r4.height:"none")+" / 5冊全巻="+(r5list?r5list.width+"x"+r5list.height:"none"));
+
+        books=[{isbn:"bulk-a",title:"Bulk A",author:"A",publisher:"P",date:"2025-01-01",price:100},{isbn:"bulk-b",title:"Bulk B",author:"B",publisher:"P",date:"2025-01-01",price:100}]; bookMeta={}; localStorage.setItem("bookTrackerMeta_v483",JSON.stringify(bookMeta)); localStorage.setItem("seriesView_v444","off"); $("librarySort").value="registered-desc"; renderLibrary();
+        $("libraryFilter").value="Bulk A"; renderLibrary(); const only=document.querySelector("#myBooks .selectBook"); if(only)only.checked=true; $("markReadSelected")?.click();
+        specAdd("一括操作は現在のフィルター対象のみ",getMeta("bulk-a").readingStatus==="read"&&getMeta("bulk-b").readingStatus==="unread","Aのみ読了");
+
+        // STATE/UI: updateBookMeta must persist and immediately update the rendered library card.
+        books=[{isbn:"rerender-1",title:"再描画テスト",author:"A",publisher:"P",date:"2025-01-01",price:100}]; bookMeta={}; $("libraryFilter").value=""; localStorage.setItem("bookTrackerMeta_v483",JSON.stringify(bookMeta)); localStorage.setItem("seriesView_v444","off"); setMainTab("library"); renderLibrary(); updateBookMeta("rerender-1",{readingStatus:"read"});
+        const rerenderText=[...document.querySelectorAll("#myBooks .library-card .meta-badge")].map(x=>x.textContent.trim());
+        specAdd("状態変更後の関連UI再描画",rerenderText.includes("読了"),rerenderText.join(" / "));
+
+        // Registration/deletion: search result ownership state must refresh after both operations.
+        const flowBook={isbn:"flow-1",title:"登録削除フロー",author:"A",publisher:"P",date:localDateKey(),price:100}; books=[]; bookMeta={}; window.addResultsData=[flowBook]; addResultsMode="normal"; renderResults("addResults",window.addResultsData); await window.addBook(flowBook);
+        const afterAdd=!!document.querySelector("#addResults .owned-badge"); await window.removeBookFromCalendar(flowBook.isbn,null); const afterDelete=!!document.querySelector("#addResults .owned-badge");
+        specAdd("登録/削除後の検索結果表示",afterAdd&&!afterDelete,"登録後=蔵書 / 削除後=未登録");
+
+        // Deletion must remove ownership and persist the resulting list.
+        books=[{isbn:"delete-1",title:"削除テスト",author:"A",publisher:"P",date:"2025-01-01",price:100}]; bookMeta={}; localStorage.setItem("bookTrackerMeta_v483",JSON.stringify(bookMeta)); persistBooks(); setMainTab("library"); renderLibrary(); await window.removeBookFromCalendar("delete-1",null);
+        const storedAfterDelete=JSON.parse(localStorage.getItem(KEY)||"[]"); specAdd("蔵書削除=所有解除+保存",books.length===0&&storedAfterDelete.length===0,"remaining="+books.length);
+
+        // TIME-001: a released calendar event alone is not an owned book.
+        books=[]; const releasedEvent={isbn:"release-only",title:"発売済みだが未所有",author:"A",publisher:"P",date:localDateKey(),sourceType:"library",source:"蔵書"};
+        const releaseHtml=calendarEventHtml(releasedEvent,localDateKey()); specAdd("発売日=購入ではない",releaseHtml.includes("＋ 蔵書に登録")&&!releaseHtml.includes("蔵書登録済み（タップで削除）"),"未所有イベントは登録ボタン");
+
+        // Demo cleanup: demo books/extras and their metadata are removed, normal books remain.
+        const normalDemoTest={isbn:"normal-keep",title:"通常本",author:"A",publisher:"P",date:"2025-01-01"}, demoTest={isbn:"demo-clean",title:"サンプル本棚：削除テスト",author:"A",publisher:"P",date:"2025-01-01",demo:true};
+        books=[normalDemoTest,demoTest]; calendarExtras=[{...demoTest,sourceType:"recommended"}]; bookMeta={}; bookMeta[canonicalIsbn(demoTest.isbn)]={purchaseStatus:"purchased",readingStatus:"unread",favorite:false};
+        localStorage.setItem("bookTrackerMeta_v483",JSON.stringify(bookMeta)); persistBooks(); persistCalendarExtras(); await performDemoDeletion();
+        const demoKey=canonicalIsbn(demoTest.isbn); const storedExtras=JSON.parse(localStorage.getItem("calendarExtras_v442")||"[]"); const storedMeta=JSON.parse(localStorage.getItem("bookTrackerMeta_v483")||"{}");
+        specAdd("サンプル削除の連動",books.length===1&&books[0].isbn===normalDemoTest.isbn&&calendarExtras.length===0&&!storedExtras.some(e=>e.isbn===demoTest.isbn)&&!storedMeta[demoKey],"通常本維持・demo/予定/メタ削除");
+
+        // Series title-list expansion: exactly one selected volume is expanded and can return to the list.
+        books=[]; for(let i=1;i<=5;i++)books.push({isbn:"title-list-"+i,title:"タイトル一覧シリーズ "+i,author:"A",publisher:"P",date:"2025-01-01",price:100});
+        localStorage.setItem("seriesView_v444","on"); $("libraryFilter").value=""; setSeriesCycleState("タイトル一覧シリーズ","title"); setSeriesTitleOpen("タイトル一覧シリーズ","title-list-3"); setMainTab("library"); renderLibrary();
+        const expandedCount=document.querySelectorAll(".series-group.is-cyclic .series-title-expanded .library-card").length, collapseUi=!!document.querySelector(".series-title-collapse");
+        specAdd("タイトル一覧から単巻展開",expandedCount===1&&collapseUi,"expanded="+expandedCount);
+        setSeriesTitleOpen("タイトル一覧シリーズ","");
+
+        const bk=createBackupData(); specAdd("バックアップappVersion",bk.appVersion===APP_VERSION,bk.appVersion+"==="+APP_VERSION);
+        const demoBad=books.filter(isDemoRecord).some(b=>b.demo!==true); specAdd("サンプルdemo分離",!demoBad,"demoフラグ");
+
+        const tiny="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/3G8oGAAAAABJRU5ErkJggg==";
+        appSettings.background.image=tiny; appSettings.background.avgColor="#ffffff"; appSettings.background.avgLum=1; applyVisualSettings();
+        const bs=getComputedStyle(document.body), panel=document.createElement("div"); panel.className="card"; panel.textContent="guard"; document.body.appendChild(panel); const pcs=getComputedStyle(panel).backgroundColor;
+        const alphaSlash=pcs.lastIndexOf("/"); const alpha=alphaSlash>=0?Number(pcs.slice(alphaSlash+1).replace(")","").trim()):NaN;
+        const bgSizes=bs.backgroundSize.split(",").map(x=>x.trim()), bgPositions=bs.backgroundPosition.split(",").map(x=>x.trim());
+        specAdd("背景画像cover/center",bgSizes[0]==="cover"&&bgPositions[0]==="50% 50%"&&bs.backgroundImage.includes("data:image"),bs.backgroundSize+" / "+bs.backgroundPosition);
+        specAdd("パネル約70%透明",Number.isFinite(alpha)&&Math.abs(alpha-0.3)<=0.03,pcs); panel.remove();
+      }catch(e){specAdd("全量仕様回帰",false,e.message)}
+      finally{
+        books=savedBooks3; bookMeta=savedMeta3; calendarExtras=savedExtras3;
+        $("librarySort").value=savedSort3; $("libraryFilter").value=savedFilter3; window.libraryUnreadOnly=false;
+        if(savedSeriesView3===null)localStorage.removeItem("seriesView_v444");else localStorage.setItem("seriesView_v444",savedSeriesView3);
+        try{localStorage.removeItem("seriesOpen:guard-series")}catch(e){}
+        appSettings.background.image="";appSettings.background.avgColor=null;appSettings.background.avgLum=null;applyVisualSettings(); render();
+        window.alert=savedAlert; window.confirm=savedConfirm;
+      }
+      return {out,checks,specChecks};
     })()`;
     const evalResult=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});
     if(evalResult.exceptionDetails) throw new Error(evalResult.exceptionDetails.exception?.description||evalResult.exceptionDetails.text||'UI回帰テスト内で例外が発生しました');
     const result=evalResult.result?.value;
     if(!result)throw new Error('UI回帰テストの結果を取得できませんでした');
+    const failedSpec=(result.specChecks||[]).filter(x=>!x.ok);
+    if(failedSpec.length)failedSpec.forEach(x=>fail('仕様カバレッジ「'+x.name+'」',x.detail));
+    else check('仕様カバレッジ全量回帰',true,(result.specChecks||[]).length+'項目 PASS');
 
     const offenders=[];
     // Generic guard: every visible button and every visible nowrap status/badge must fit its box.
@@ -155,10 +265,6 @@ function browserUIRegression(){
       else if(found.some(x=>x.rect.sw>x.rect.w+1||x.rect.sh>x.rect.h+1))fail(`必須UIケース「${t}」`,'文字がコンテナを超えています');
       else check(`必須UIケース「${t}」`,true,'小・中・大 PASS');
     }
-    const size4=result.out.seriesCardSize?.four, size5=result.out.seriesCardSize?.five;
-    if(!size4||!size5) fail('5冊以上シリーズ一枚表示のカードサイズ統一','比較対象カードを取得できませんでした');
-    else if(Math.abs(size4.w-size5.w)>0.5||Math.abs(size4.h-size5.h)>0.5) fail('5冊以上シリーズ一枚表示のカードサイズ統一',`4冊=${size4.w}x${size4.h}, 5冊=${size5.w}x${size5.h}`);
-    else check('5冊以上シリーズ一枚表示のカードサイズ統一',true,`${size4.w}x${size4.h}`);
     ws.close();
   };
   return run().then(()=>{try{child.kill()}catch(e){};return ok}).catch(e=>{fail('UIブラウザ回帰テスト',e.message);try{child.kill()}catch(x){};return false});
