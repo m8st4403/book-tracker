@@ -7,7 +7,7 @@ const ids=[...s.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);check('重複ID
 const fn=[...s.matchAll(/function\s+([A-Za-z_$][\w$]*)\s*\(/g)].map(m=>m[1]);check('重複した名前付きfunction',new Set(fn).size===fn.length,'OK');
 check('localStorage.clear() 不使用',!s.includes('localStorage.clear('),'OK');
 check('4.11.3 Visual Baseline',/4\.11\.3.*Visual Baseline|Visual Baseline.*4\.11\.3/i.test(s+fs.readFileSync(path.join(root,'SPEC.md'),'utf8')),'OK');
-check('APP_VERSION 4.13.11',/APP_VERSION\s*=\s*["']4\.13\.11["']/.test(s),'OK');
+check('APP_VERSION 4.13.12',/APP_VERSION\s*=\s*["']4\.13\.12["']/.test(s),'OK');
 check('DEMO_ENABLED 定義',/DEMO_ENABLED\s*=/.test(s),'OK');
 check('正規登録関数',/window\.addBook|window\.bulkAdd/.test(s),'OK');
 check('全選択は checkbox',/id="libAll"[^>]*type="checkbox"/.test(s),'OK');
@@ -103,6 +103,18 @@ function browserUIRegression(){
         click('#bottomNav button[data-s="calendar"]'); await sleep(30);
         for(const b of document.querySelectorAll('.calendar-register-btn')) if(visible(b)) checks.push({kind:'calendar-register',font:fs,rect:rect(b)});
       }
+      // REG-010: the front card in a 5+ series deck must have exactly the same
+      // rendered dimensions as the normal <=4-series card at the same font size.
+      const savedBooksForCardSize=books;
+      const savedSeriesViewForCardSize=readSeriesView();
+      const cardSizeFixture=n=>Array.from({length:n},(_,i)=>({isbn:"guard-card-"+n+"-"+i,title:"カードサイズ回帰 "+(i+1),author:"A",publisher:"P",date:"2025-01-01",price:100}));
+      const measureSeriesCardSize=n=>{books=cardSizeFixture(n);try{localStorage.setItem('seriesView_v444','on');localStorage.removeItem(seriesCycleKey('カードサイズ回帰'))}catch(e){};click('#bottomNav button[data-s=\"library\"]');renderLibrary();const c=document.querySelector('#myBooks .library-card');return c?rect(c):null};
+      const cardSize4=measureSeriesCardSize(4),cardSize5=measureSeriesCardSize(5);
+      out.seriesCardSize={four:cardSize4,five:cardSize5};
+      books=savedBooksForCardSize;
+      try{localStorage.setItem('seriesView_v444',savedSeriesViewForCardSize?'on':'off')}catch(e){}
+      renderLibrary();
+
       return {out,checks};
     })()`;
     const evalResult=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});
@@ -143,6 +155,10 @@ function browserUIRegression(){
       else if(found.some(x=>x.rect.sw>x.rect.w+1||x.rect.sh>x.rect.h+1))fail(`必須UIケース「${t}」`,'文字がコンテナを超えています');
       else check(`必須UIケース「${t}」`,true,'小・中・大 PASS');
     }
+    const size4=result.out.seriesCardSize?.four, size5=result.out.seriesCardSize?.five;
+    if(!size4||!size5) fail('5冊以上シリーズ一枚表示のカードサイズ統一','比較対象カードを取得できませんでした');
+    else if(Math.abs(size4.w-size5.w)>0.5||Math.abs(size4.h-size5.h)>0.5) fail('5冊以上シリーズ一枚表示のカードサイズ統一',`4冊=${size4.w}x${size4.h}, 5冊=${size5.w}x${size5.h}`);
+    else check('5冊以上シリーズ一枚表示のカードサイズ統一',true,`${size4.w}x${size4.h}`);
     ws.close();
   };
   return run().then(()=>{try{child.kill()}catch(e){};return ok}).catch(e=>{fail('UIブラウザ回帰テスト',e.message);try{child.kill()}catch(x){};return false});

@@ -447,9 +447,9 @@ input[type="checkbox"]{
 .series-group.is-cyclic .series-cyclic-title{color:var(--app-text)!important;font-weight:800!important}
 .series-group.is-cyclic .series-deck{padding-left:8px;padding-right:8px;padding-bottom:42px!important}
 /* v4.13.5: one-card deck rear outlines use the exact front-card top/bottom box as the base, then step right .5px and down 3px each. */
-.series-group.is-cyclic .series-deck{position:relative;padding-top:0!important;padding-left:8px!important;padding-right:8px!important;padding-bottom:42px!important;overflow:visible!important}
+.series-group.is-cyclic .series-deck{position:relative;padding-top:0!important;padding-left:0!important;padding-right:0!important;padding-bottom:42px!important;overflow:visible!important}
 .series-group.is-cyclic .series-deck::before,.series-group.is-cyclic .series-deck::after{display:none!important}
-.series-group.is-cyclic .series-deck .series-stack-layer{position:absolute;left:8px;right:8px;top:16px;bottom:50px;background:transparent!important;border:1px solid var(--line);border-radius:16px;box-shadow:none!important;z-index:1;pointer-events:none}
+.series-group.is-cyclic .series-deck .series-stack-layer{position:absolute;left:0;right:0;top:16px;bottom:50px;background:transparent!important;border:1px solid var(--line);border-radius:16px;box-shadow:none!important;z-index:1;pointer-events:none}
 .series-group.is-cyclic .series-deck .series-stack-1{transform:translate(.5px,5px)}
 .series-group.is-cyclic .series-deck .series-stack-2{transform:translate(1px,10px)}
 .series-group.is-cyclic .series-deck .series-stack-3{transform:translate(1.5px,15px)}
@@ -573,7 +573,7 @@ let calendarExtras=readJSONStorage("calendarExtras_v442",[]);if(!Array.isArray(c
 const DEMO_ENABLED=true;
 // Prototype/dev builds: a deleted sample set stays deleted within this build, but a new build/version starts with samples again.
 // Production/App Store builds set DEMO_ENABLED=false, so this logic is never exposed to end users.
-const APP_VERSION="4.13.11";
+const APP_VERSION="4.13.12";
 const DEMO_DELETED_KEY="bookTrackerDemoDeleted";
 const DEMO_RESET_VERSION_KEY="bookTrackerDemoResetVersion";
 const DEMO_TITLES=["サンプル本棚：前月の便り","サンプル本棚：月夜の標本","サンプルシリーズ：星の余白 1巻","サンプルシリーズ：星の余白 2巻","サンプル本棚：翌月の灯り"];
