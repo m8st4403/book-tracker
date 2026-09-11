@@ -7,8 +7,9 @@ const ids=[...s.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);check('重複ID
 const fn=[...s.matchAll(/function\s+([A-Za-z_$][\w$]*)\s*\(/g)].map(m=>m[1]);check('重複した名前付きfunction',new Set(fn).size===fn.length,'OK');
 check('localStorage.clear() 不使用',!s.includes('localStorage.clear('),'OK');
 check('4.11.3 Visual Baseline',/4\.11\.3.*Visual Baseline|Visual Baseline.*4\.11\.3/i.test(s+fs.readFileSync(path.join(root,'SPEC.md'),'utf8')),'OK');
-check('APP_VERSION 4.13.12',/APP_VERSION\s*=\s*["']4\.13\.12["']/.test(s),'OK');
+check('APP_VERSION 4.13.13',/APP_VERSION\s*=\s*["']4\.13\.13["']/.test(s),'OK');
 check('DEMO_ENABLED 定義',/DEMO_ENABLED\s*=/.test(s),'OK');
+check('本番サンプル無効化ゲート',/Production\/App Store builds set DEMO_ENABLED=false/.test(s),'本番ではfalseにする明示コメントあり');
 check('正規登録関数',/window\.addBook|window\.bulkAdd/.test(s),'OK');
 check('全選択は checkbox',/id="libAll"[^>]*type="checkbox"/.test(s),'OK');
 check('購入状態の直接代入を禁止',!/getMeta\([^)]*\)\.purchaseStatus\s*=/.test(s),'OK');
@@ -17,9 +18,11 @@ check('ステータス固定幅',s.includes('.library-status-stack{')&&s.include
 check('折りたたみ状態保持',/seriesOpenKey|setSeriesOpenState/.test(s)&&/data-series-open/.test(s),'OK');
 check('タイトル一覧戻るUI',/series-title-collapse\{[^}]*background:transparent!important/.test(s),'元表示');
 check('後ろ4枚5px刻み枠線',/series-stack-4/.test(s)&&/translate\(\.5px,5px\)/.test(s)&&/translate\(1px,10px\)/.test(s)&&/translate\(1\.5px,15px\)/.test(s)&&/translate\(2px,20px\)/.test(s)&&/transform:none/.test(s)&&/background:transparent!important/.test(s)&&!/series-stack-5/.test(s),'後ろ4枚・縦5px刻み・枠線のみ');
-check('5冊以上タイトル行背景',/\.series-group\.is-cyclic \.series-cyclic-head\{[^}]*background:color-mix\(in srgb,var\(--primary\) 8%,var\(--surface\)\)!important/.test(s)&&/\.series-group\.is-cyclic \.series-cyclic-title\{[^}]*color:var\(--app-text\)!important/.test(s),'5冊以上のみ背景色を少し濃く');
-check('背景画像cover/center',/background-size:cover!important/.test(s)&&/background-position:center center!important/.test(s),'cover + center');
+check('5冊以上タイトル行背景',/\.series-group\.is-cyclic \.series-cyclic-head\{background:color-mix\(in srgb,color-mix\(in srgb,var\(--primary\) 8%,var\(--surface\)\) var\(--panel-surface-alpha\),transparent\)!important/.test(s)&&/\.series-group\.is-cyclic \.series-cyclic-title\{color:var\(--app-text\)!important/.test(s),'最終CSSで背景と文字色を維持');
+check('背景画像cover/center',/#appBackground\{[^}]*background-image:[^}]*background-position:center center;background-size:cover/.test(s)&&/body\{[^}]*background-image:none!important/.test(s),'固定背景レイヤー + cover + center');
 check('背景パネル約70%透明',/--panel-surface-alpha:30%/.test(s)&&/color-mix\(in srgb,var\(--surface\) var\(--panel-surface-alpha\),transparent\)!important/.test(s),'パネル不透明30%');
+check('文字色補正の実効背景対応',/function blendHex\(/.test(s)&&/effectivePanelBackground\(/.test(s)&&/autoContrastText\(p\.text,panelBg\)/.test(s),'パネル実効背景を基準に補正');
+check('5冊以上タイトル行の最終背景ルール',/\.series-group\.is-cyclic \.series-cyclic-head\{background:color-mix\(in srgb,color-mix\(in srgb,var\(--primary\) 8%,var\(--surface\)\) var\(--panel-surface-alpha\),transparent\)!important/.test(s),'最終CSSで背景を維持');
 check('シリーズ表示の選択ソート経路',/grouped\.sort\(\(g1,g2\)=>\{[^}]*compareLibraryItems\(a1,a2\)/.test(s),'compareLibraryItemsを使用');
 check('一括変更はupdateBookMeta経由',/ids\.forEach\(i=>updateBookMeta\(books\[i\]\.isbn,patch,false\)\)/.test(s),'updateBookMeta経由');
 check('一括削除は保存後再描画',s.includes('ids.forEach(i=>books.splice(i,1));')&&s.includes('persistBooks()')&&s.includes('render();'),'persistBooks→render');
@@ -113,15 +116,19 @@ function browserUIRegression(){
         click('#bottomNav button[data-s="calendar"]'); await sleep(30);
         for(const b of document.querySelectorAll('.calendar-register-btn')) if(visible(b)) checks.push({kind:'calendar-register',font:fs,rect:rect(b)});
       }
-      // ===== v4.13.12 full SPEC coverage audit =====
+      // ===== v4.13.13 full SPEC coverage audit =====
       const savedAlert=window.alert, savedConfirm=window.confirm;
       const savedBooks3=books.slice(), savedMeta3=JSON.parse(JSON.stringify(bookMeta)), savedExtras3=calendarExtras.slice();
-      const savedSort3=$("librarySort")?.value||"registered-desc", savedFilter3=$("libraryFilter")?.value||"", savedSeriesView3=localStorage.getItem("seriesView_v444");
+      const savedSort3=$("librarySort")?.value||"registered-desc", savedFilter3=$("libraryFilter")?.value||"", savedSeriesView3=localStorage.getItem("seriesView_v444"), savedAutoText3=appSettings.autoTextContrast;
       try{
         const c10=canonicalIsbn("0306406152"), c13=canonicalIsbn("9780306406157");
         specAdd("ISBN-10/13 canonical一致",c10===c13,c10+" / "+c13);
         const dup=dedupeBookResults([{isbn:"0306406152",title:"A"},{isbn:"9780306406157",title:"A"},{isbn:"9780000000000",title:"B"}]);
         specAdd("検索結果ISBN重複排除",dup.filter(x=>canonicalIsbn(x.isbn)===c10).length===1,"結果"+dup.length+"件");
+        const noIsbnDup=dedupeBookResults([{title:"ISBNなしA",author:"著者",publisher:"出版社",date:"2025-01-01"},{title:"ISBNなしA",author:"著者",publisher:"出版社",date:"2025-01-01"},{title:"ISBNなしA",author:"別著者",publisher:"出版社",date:"2025-01-01"}]);
+        specAdd("ISBNなし複合キー重複排除",noIsbnDup.length===2,"結果"+noIsbnDup.length+"件");
+        books=[{isbn:"0306406152",title:"Canonical State",author:"A",publisher:"P",date:"2025-01-01"}];bookMeta={};updateBookMeta("0306406152",{readingStatus:"read",favorite:true},false);const sameMeta=getMeta("9780306406157");
+        specAdd("ISBN-10/13状態共有",sameMeta.readingStatus==="read"&&sameMeta.favorite===true,"ISBN-10/13で同一メタデータ");
 
         window.alert=()=>{}; window.confirm=()=>true;
         books=[]; calendarExtras=[]; bookMeta={};
@@ -183,7 +190,7 @@ function browserUIRegression(){
 
         // Deletion must remove ownership and persist the resulting list.
         books=[{isbn:"delete-1",title:"削除テスト",author:"A",publisher:"P",date:"2025-01-01",price:100}]; bookMeta={}; localStorage.setItem("bookTrackerMeta_v483",JSON.stringify(bookMeta)); persistBooks(); setMainTab("library"); renderLibrary(); await window.removeBookFromCalendar("delete-1",null);
-        const storedAfterDelete=JSON.parse(localStorage.getItem(KEY)||"[]"); specAdd("蔵書削除=所有解除+保存",books.length===0&&storedAfterDelete.length===0,"remaining="+books.length);
+        const storedAfterDelete=JSON.parse(localStorage.getItem(KEY)||"[]"); const deletedMeta=bookMeta[canonicalIsbn("delete-1")]; specAdd("蔵書削除=所有解除+保存",books.length===0&&storedAfterDelete.length===0&&deletedMeta?.purchaseStatus!=="purchased","remaining="+books.length+" meta="+(deletedMeta?.purchaseStatus||"なし"));
 
         // TIME-001: a released calendar event alone is not an owned book.
         books=[]; const releasedEvent={isbn:"release-only",title:"発売済みだが未所有",author:"A",publisher:"P",date:localDateKey(),sourceType:"library",source:"蔵書"};
@@ -208,18 +215,36 @@ function browserUIRegression(){
 
         const tiny="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/3G8oGAAAAABJRU5ErkJggg==";
         appSettings.background.image=tiny; appSettings.background.avgColor="#ffffff"; appSettings.background.avgLum=1; applyVisualSettings();
-        const bs=getComputedStyle(document.body), panel=document.createElement("div"); panel.className="card"; panel.textContent="guard"; document.body.appendChild(panel); const pcs=getComputedStyle(panel).backgroundColor;
-        const alphaSlash=pcs.lastIndexOf("/"); const alpha=alphaSlash>=0?Number(pcs.slice(alphaSlash+1).replace(")","").trim()):NaN;
-        const bgSizes=bs.backgroundSize.split(",").map(x=>x.trim()), bgPositions=bs.backgroundPosition.split(",").map(x=>x.trim());
-        specAdd("背景画像cover/center",bgSizes[0]==="cover"&&bgPositions[0]==="50% 50%"&&bs.backgroundImage.includes("data:image"),bs.backgroundSize+" / "+bs.backgroundPosition);
-        specAdd("パネル約70%透明",Number.isFinite(alpha)&&Math.abs(alpha-0.3)<=0.03,pcs); panel.remove();
+        const bgEl=$("appBackground"),bs=bgEl?getComputedStyle(bgEl):null,panel=document.createElement("div"); panel.className="card"; panel.textContent="guard"; document.body.appendChild(panel); const pcs=getComputedStyle(panel).backgroundColor;
+        const alphaOf=c=>{const v=String(c),slash=v.lastIndexOf("/");if(slash>=0){const n=Number(v.slice(slash+1).replace(")","").trim());if(Number.isFinite(n))return n}if(v.startsWith("rgba(")){const parts=v.slice(5,-1).split(",");const n=Number(parts[3]);if(Number.isFinite(n))return n}return v&&v!=="transparent"?1:0};
+        const bgSizes=bs?bs.backgroundSize.split(",").map(x=>x.trim()):[], bgPositions=bs?bs.backgroundPosition.split(",").map(x=>x.trim()):[];
+        specAdd("背景画像cover/center",!!bgEl&&bgSizes[0]==="cover"&&bgPositions[0]==="50% 50%"&&bs.backgroundImage.includes("data:image"),bs?bs.backgroundSize+" / "+bs.backgroundPosition:"appBackgroundなし");
+        specAdd("パネル約70%透明",Math.abs(alphaOf(pcs)-0.3)<=0.03,pcs); panel.remove();
+
+        // v4.13.13: validate the final rendered 5+ series title-row style, not an earlier CSS rule.
+        books=[];bookMeta={};for(let i=1;i<=5;i++){const b={isbn:"guard-title-"+i,title:"回帰タイトルシリーズ "+i,author:"A",publisher:"P",date:"2025-01-0"+i,price:100};books.push(b);bookMeta[canonicalIsbn(b.isbn)]={purchaseStatus:"purchased",readingStatus:"unread",favorite:false}}
+        localStorage.setItem("seriesView_v444","on");setSeriesCycleState("回帰タイトルシリーズ","deck");renderLibrary();
+        const sh=document.querySelector("#myBooks .series-group.is-cyclic .series-cyclic-head"),st=sh?.querySelector(".series-cyclic-title"),shBg=sh?getComputedStyle(sh).backgroundColor:"",stColor=st?getComputedStyle(st).color:"",probe=document.createElement("span");probe.style.color="var(--app-text)";document.body.appendChild(probe);const probeColor=getComputedStyle(probe).color;probe.remove();
+        specAdd("5冊以上タイトル行の実背景",!!sh&&alphaOf(shBg)>0.05&&stColor===probeColor,"background="+shBg+" / text="+stColor+" / expected="+probeColor);
+
+        // v4.13.13: fixed viewport background must remain identical across every tab.
+        const bgBase=bgEl?(()=>{const c=getComputedStyle(bgEl);return c.backgroundSize+"|"+c.backgroundPosition+"|"+c.backgroundRepeat+"|"+c.backgroundImage})():"";let bgStable=!!bgEl;const bgTabDetails=[];
+        for(const id of ["home","add","library","search","calendar","settings"]){document.querySelector('#bottomNav button[data-s="'+id+'"]')?.click();const c=bgEl?getComputedStyle(bgEl):null,cur=c?c.backgroundSize+"|"+c.backgroundPosition+"|"+c.backgroundRepeat+"|"+c.backgroundImage:"";if(cur!==bgBase)bgStable=false;bgTabDetails.push(id+":"+cur)}
+        specAdd("背景画像のタブ間アジャスト固定",bgStable,bgTabDetails.join(" / "));
+
+        // v4.13.13: automatic text contrast is checked against the effective translucent panel background.
+        const themeProfile=appSettings.theme==="dark"?{text:"#f8fafc",surface:"#1f2937"}:appSettings.theme==="green"?{text:"#183024",surface:"#ffffff"}:{text:"#172033",surface:"#ffffff"};
+        appSettings.autoTextContrast=true;appSettings.background.avgColor="#000000";appSettings.background.avgLum=0;applyVisualSettings();const darkText=getComputedStyle(document.documentElement).getPropertyValue("--app-text").trim(),darkBg=effectivePanelBackground(themeProfile.surface,"#000000",.30),darkRatio=contrastRatio(darkText,darkBg);
+        appSettings.background.avgColor="#ffffff";appSettings.background.avgLum=1;applyVisualSettings();const lightText=getComputedStyle(document.documentElement).getPropertyValue("--app-text").trim(),lightBg=effectivePanelBackground(themeProfile.surface,"#ffffff",.30),lightRatio=contrastRatio(lightText,lightBg);
+        appSettings.autoTextContrast=false;applyVisualSettings();const offText=getComputedStyle(document.documentElement).getPropertyValue("--app-text").trim();
+        specAdd("文字色自動補正",darkRatio>=4.5&&lightRatio>=4.5&&offText.toLowerCase()===themeProfile.text.toLowerCase(),"dark="+darkText+"/"+darkRatio.toFixed(2)+" light="+lightText+"/"+lightRatio.toFixed(2)+" off="+offText);
       }catch(e){specAdd("全量仕様回帰",false,e.message)}
       finally{
         books=savedBooks3; bookMeta=savedMeta3; calendarExtras=savedExtras3;
         $("librarySort").value=savedSort3; $("libraryFilter").value=savedFilter3; window.libraryUnreadOnly=false;
         if(savedSeriesView3===null)localStorage.removeItem("seriesView_v444");else localStorage.setItem("seriesView_v444",savedSeriesView3);
         try{localStorage.removeItem("seriesOpen:guard-series")}catch(e){}
-        appSettings.background.image="";appSettings.background.avgColor=null;appSettings.background.avgLum=null;applyVisualSettings(); render();
+        appSettings.background.image="";appSettings.background.avgColor=null;appSettings.background.avgLum=null;appSettings.autoTextContrast=savedAutoText3;applyVisualSettings(); render();
         window.alert=savedAlert; window.confirm=savedConfirm;
       }
       return {out,checks,specChecks};
@@ -257,8 +282,8 @@ function browserUIRegression(){
     }else fail('蔵書カード寸法のフォント非依存','library-cardが見つかりません');
 
     // Keep the exact long labels as permanent regression cases, including the known historical bugs.
-    const requiredTexts=['開発用：仕様・回帰チェック','蔵書登録済み（タップで削除）'];
-    const all=[...Object.values(result.out.fonts).flatMap(d=>[...(d.settings||[]),...(d.calendar||[])])];
+    const requiredTexts=['開発用：仕様・回帰チェック','蔵書登録済み（タップで削除）','詳細を見る','ナチュラル'];
+    const all=[...Object.values(result.out.fonts).flatMap(d=>[...(d.settings||[]),...(d.calendar||[]),...(d.library?.detail ? [{text:"詳細を見る",rect:d.library.detail}] : [])])];
     for(const t of requiredTexts){
       const found=all.filter(x=>x.text.includes(t));
       if(!found.length)fail(`必須UIケース「${t}」`,'対象要素が表示されませんでした');
