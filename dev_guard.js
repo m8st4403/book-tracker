@@ -7,7 +7,7 @@ const ids=[...s.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);check('重複ID
 const fn=[...s.matchAll(/function\s+([A-Za-z_$][\w$]*)\s*\(/g)].map(m=>m[1]);check('重複した名前付きfunction',new Set(fn).size===fn.length,'OK');
 check('localStorage.clear() 不使用',!s.includes('localStorage.clear('),'OK');
 check('4.11.3 Visual Baseline',/4\.11\.3.*Visual Baseline|Visual Baseline.*4\.11\.3/i.test(s+fs.readFileSync(path.join(root,'SPEC.md'),'utf8')),'OK');
-check('APP_VERSION 4.13.13',/APP_VERSION\s*=\s*["']4\.13\.13["']/.test(s),'OK');
+check('APP_VERSION 4.13.14',/APP_VERSION\s*=\s*["']4\.13\.14["']/.test(s),'OK');
 check('DEMO_ENABLED 定義',/DEMO_ENABLED\s*=/.test(s),'OK');
 check('本番サンプル無効化ゲート',/Production\/App Store builds set DEMO_ENABLED=false/.test(s),'本番ではfalseにする明示コメントあり');
 check('正規登録関数',/window\.addBook|window\.bulkAdd/.test(s),'OK');
@@ -18,17 +18,18 @@ check('ステータス固定幅',s.includes('.library-status-stack{')&&s.include
 check('折りたたみ状態保持',/seriesOpenKey|setSeriesOpenState/.test(s)&&/data-series-open/.test(s),'OK');
 check('タイトル一覧戻るUI',/series-title-collapse\{[^}]*background:transparent!important/.test(s),'元表示');
 check('後ろ4枚5px刻み枠線',/series-stack-4/.test(s)&&/translate\(\.5px,5px\)/.test(s)&&/translate\(1px,10px\)/.test(s)&&/translate\(1\.5px,15px\)/.test(s)&&/translate\(2px,20px\)/.test(s)&&/transform:none/.test(s)&&/background:transparent!important/.test(s)&&!/series-stack-5/.test(s),'後ろ4枚・縦5px刻み・枠線のみ');
-check('5冊以上タイトル行背景',/\.series-group\.is-cyclic \.series-cyclic-head\{background:color-mix\(in srgb,color-mix\(in srgb,var\(--primary\) 8%,var\(--surface\)\) var\(--panel-surface-alpha\),transparent\)!important/.test(s)&&/\.series-group\.is-cyclic \.series-cyclic-title\{color:var\(--app-text\)!important/.test(s),'最終CSSで背景と文字色を維持');
+check('5冊以上タイトル行背景',/\.series-group\.is-cyclic \.series-cyclic-head\{background:color-mix\(in srgb,color-mix\(in srgb,var\(--primary\) 12%,var\(--surface\)\) var\(--panel-surface-alpha\),transparent\)!important/.test(s)&&/\.series-group\.is-cyclic \.series-cyclic-title\{color:var\(--app-text\)!important/.test(s),'最終CSSで背景と文字色を維持');
 check('背景画像cover/center',/#appBackground\{[^}]*background-image:[^}]*background-position:center center;background-size:cover/.test(s)&&/body\{[^}]*background-image:none!important/.test(s),'固定背景レイヤー + cover + center');
 check('背景パネル約70%透明',/--panel-surface-alpha:30%/.test(s)&&/color-mix\(in srgb,var\(--surface\) var\(--panel-surface-alpha\),transparent\)!important/.test(s),'パネル不透明30%');
 check('文字色補正の実効背景対応',/function blendHex\(/.test(s)&&/effectivePanelBackground\(/.test(s)&&/autoContrastText\(p\.text,panelBg\)/.test(s),'パネル実効背景を基準に補正');
-check('5冊以上タイトル行の最終背景ルール',/\.series-group\.is-cyclic \.series-cyclic-head\{background:color-mix\(in srgb,color-mix\(in srgb,var\(--primary\) 8%,var\(--surface\)\) var\(--panel-surface-alpha\),transparent\)!important/.test(s),'最終CSSで背景を維持');
+check('5冊以上タイトル行の最終背景ルール',/\.series-group\.is-cyclic \.series-cyclic-head\{background:color-mix\(in srgb,color-mix\(in srgb,var\(--primary\) 12%,var\(--surface\)\) var\(--panel-surface-alpha\),transparent\)!important/.test(s),'最終CSSで背景を維持');
 check('シリーズ表示の選択ソート経路',/grouped\.sort\(\(g1,g2\)=>\{[^}]*compareLibraryItems\(a1,a2\)/.test(s),'compareLibraryItemsを使用');
 check('一括変更はupdateBookMeta経由',/ids\.forEach\(i=>updateBookMeta\(books\[i\]\.isbn,patch,false\)\)/.test(s),'updateBookMeta経由');
 check('一括削除は保存後再描画',s.includes('ids.forEach(i=>books.splice(i,1));')&&s.includes('persistBooks()')&&s.includes('render();'),'persistBooks→render');
 check('登録後検索結果再描画',/if\(window\.addResultsData\)[\s\S]*renderResults\("addResults"/.test(s),'addBook後に検索結果再描画');
 check('削除後検索結果再描画',/removeBookFromCalendar[\s\S]*refreshAddResults\(\)/.test(s),'削除後refreshAddResults');
 check('状態変更は保存→render',/function updateBookMeta\([\s\S]*saveMeta\(\);[\s\S]*if\(doRender\)render\(\)/.test(s),'updateBookMetaの一連性');
+check('初期表示タブはホーム',/history\.scrollRestoration=\"manual\"/.test(s)&&/setMainTab\(\"home\"\);window\.addEventListener\(\"pageshow\",\(\)=>setMainTab\(\"home\"\)/.test(s),'初回ロード／pageshowともホームを明示');
 
 
 
@@ -231,6 +232,32 @@ function browserUIRegression(){
         const bgBase=bgEl?(()=>{const c=getComputedStyle(bgEl);return c.backgroundSize+"|"+c.backgroundPosition+"|"+c.backgroundRepeat+"|"+c.backgroundImage})():"";let bgStable=!!bgEl;const bgTabDetails=[];
         for(const id of ["home","add","library","search","calendar","settings"]){document.querySelector('#bottomNav button[data-s="'+id+'"]')?.click();const c=bgEl?getComputedStyle(bgEl):null,cur=c?c.backgroundSize+"|"+c.backgroundPosition+"|"+c.backgroundRepeat+"|"+c.backgroundImage:"";if(cur!==bgBase)bgStable=false;bgTabDetails.push(id+":"+cur)}
         specAdd("背景画像のタブ間アジャスト固定",bgStable,bgTabDetails.join(" / "));
+
+        // v4.13.14: 5+ title header must be slightly darker than the <=4-series header,
+        // while remaining a translucent panel over the background image.
+        books=[];bookMeta={};
+        for(let i=1;i<=4;i++){const b={isbn:"guard-four-"+i,title:"比較シリーズ "+i,author:"A",publisher:"P",date:"2025-01-0"+i,price:100};books.push(b);bookMeta[canonicalIsbn(b.isbn)]={purchaseStatus:"purchased",readingStatus:"unread",favorite:false}}
+        localStorage.setItem("seriesView_v444","on");renderLibrary();
+        const fourHead=document.querySelector("#myBooks .series-group");
+        const fourBg=fourHead?getComputedStyle(fourHead.querySelector("summary")).backgroundColor:"";
+        books=[];bookMeta={};
+        for(let i=1;i<=5;i++){const b={isbn:"guard-five-"+i,title:"比較シリーズ "+i,author:"A",publisher:"P",date:"2025-01-0"+i,price:100};books.push(b);bookMeta[canonicalIsbn(b.isbn)]={purchaseStatus:"purchased",readingStatus:"unread",favorite:false}}
+        setSeriesCycleState("比較シリーズ","deck");renderLibrary();
+        const fiveHead=document.querySelector("#myBooks .series-group.is-cyclic .series-cyclic-head");
+        const fiveBg=fiveHead?getComputedStyle(fiveHead).backgroundColor:"";
+        const cssText=[...document.querySelectorAll("style")].map(x=>x.textContent).join(String.fromCharCode(10)); const strongerTint=cssText.includes(".series-group.is-cyclic .series-cyclic-head{background:color-mix(in srgb,color-mix(in srgb,var(--primary) 12%,var(--surface)) var(--panel-surface-alpha),transparent)!important");
+        specAdd("5冊以上タイトル背景は5冊以下より少し濃い",!!fourBg&&!!fiveBg&&fiveBg!=="transparent"&&strongerTint,"4冊="+fourBg+" / 5冊="+fiveBg+" / 5+ tint=12%, 5- tint=6%");
+
+        // v4.13.14: rear stack top borders must not show through the translucent front card.
+        const front=document.querySelector("#myBooks .series-group.is-cyclic .series-deck .card");
+        const layers=[...document.querySelectorAll("#myBooks .series-group.is-cyclic .series-deck .series-stack-layer")];
+        const clipOk=layers.length===4&&layers.every(x=>getComputedStyle(x).clipPath.includes("20px"));
+        specAdd("5冊以上重なりの上端を隠す",!!front&&clipOk,"後ろ4枚の上端をclipし、前面カード越しに線が見えない構造");
+
+        // v4.13.14: startup must always normalize to Home, including bfcache/pageshow restores.
+        setMainTab("settings");window.dispatchEvent(new Event("pageshow"));
+        const homeVisible=!$("home").hidden&&$("home").classList.contains("active")&&$("settings").hidden&&!$("settings").classList.contains("active");
+        specAdd("画面更新後の初期ページ=ホーム",homeVisible,"pageshow後 home="+(!$("home").hidden)+" settings="+$("settings").hidden);
 
         // v4.13.13: automatic text contrast is checked against the effective translucent panel background.
         const themeProfile=appSettings.theme==="dark"?{text:"#f8fafc",surface:"#1f2937"}:appSettings.theme==="green"?{text:"#183024",surface:"#ffffff"}:{text:"#172033",surface:"#ffffff"};
