@@ -7,9 +7,9 @@ const ids=[...s.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);check('重複ID
 const fn=[...s.matchAll(/function\s+([A-Za-z_$][\w$]*)\s*\(/g)].map(m=>m[1]);check('重複した名前付きfunction',new Set(fn).size===fn.length,'OK');
 check('localStorage.clear() 不使用',!s.includes('localStorage.clear('),'OK');
 check('4.11.3 Visual Baseline',/4\.11\.3.*Visual Baseline|Visual Baseline.*4\.11\.3/i.test(s+fs.readFileSync(path.join(root,'SPEC.md'),'utf8')),'OK');
-check('APP_VERSION 4.13.21',/APP_VERSION\s*=\s*["']4\.13\.21["']/.test(s),'OK');
+check('APP_VERSION 4.13.22',/APP_VERSION\s*=\s*["']4\.13\.22["']/.test(s),'OK');
 check('近日発売見出しの統一CSS',/#home \.home-upcoming-head b\{font-size:var\(--unified-card-heading-size\)!important\}/.test(s),'類似作品と同じ統一変数');
-check('詳細画面透過80%不透明の限定CSS',/\.detail-overlay \.detail-sheet\{background:color-mix\(in srgb,var\(--surface\) 80%,transparent\)!important\}/.test(s),'詳細画面だけ80%不透明');
+check('詳細画面透過なしの限定CSS',/\.detail-overlay \.detail-sheet\{background:var\(--surface\)!important\}/.test(s),'詳細画面だけ透過なし');
 check('DEMO_ENABLED 定義',/DEMO_ENABLED\s*=/.test(s),'OK');
 check('本番サンプル無効化ゲート',/Production\/App Store builds set DEMO_ENABLED=false/.test(s),'本番ではfalseにする明示コメントあり');
 check('正規登録関数',/window\.addBook|window\.bulkAdd/.test(s),'OK');
@@ -353,7 +353,7 @@ function browserUIRegression(){
         appSettings.background.image="";appSettings.background.avgColor=null;appSettings.background.avgLum=null;appSettings.autoTextContrast=savedAutoText3;applyVisualSettings(); render();
         window.alert=savedAlert; window.confirm=savedConfirm;
       }
-    // v4.13.21: verify the home upcoming heading against the same rendered heading
+    // v4.13.22: verify the home upcoming heading against the same rendered heading
     // used by 「類似作品を探す」 at every font setting. This is a real computed-style check.
     let upcomingHeadingOk=true; const upcomingHeadingDetails=[];
     for(const fs of ['font-small','font-medium','font-large']){
@@ -367,20 +367,20 @@ function browserUIRegression(){
     }
     specAdd('近日発売の注目書籍の見出しサイズ',upcomingHeadingOk,upcomingHeadingOk?'小・中・大で類似作品とcomputed style一致':upcomingHeadingDetails.join(' / '));
 
-    // v4.13.21: detail sheet background is explicitly scoped to the detail screen and uses 80% opacity.
+    // v4.13.22: detail sheet background is explicitly scoped to the detail screen and is fully opaque.
     try{
       const fixture={isbn:'guard-detail-alpha',title:'詳細画面透過テスト',author:'A',publisher:'P',date:'2025-01-01',price:100};
       openBookDetail(fixture);
       const sheet=document.querySelector('.detail-overlay .detail-sheet');
       const actual=sheet?getComputedStyle(sheet).backgroundColor:'';
       const probe=document.createElement('div');
-      probe.style.cssText='position:absolute;left:-9999px;background:color-mix(in srgb,var(--surface) 80%,transparent)';
+      probe.style.cssText='position:absolute;left:-9999px;background:var(--surface)';
       document.body.appendChild(probe);
       const expected=getComputedStyle(probe).backgroundColor;
       probe.remove();
-      specAdd('詳細画面の透過80%不透明',!!sheet&&actual===expected,'computed background='+actual+' / expected='+expected);
+      specAdd('詳細画面の透過なし',!!sheet&&actual===expected,'computed background='+actual+' / expected='+expected);
       if(document.querySelector('.detail-overlay')) document.querySelector('.detail-overlay').style.display='none';
-    }catch(e){specAdd('詳細画面の透過80%不透明',false,e.message)}
+    }catch(e){specAdd('詳細画面の透過なし',false,e.message)}
       return {out,checks,specChecks};
     })()`;
     const evalResult=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});
