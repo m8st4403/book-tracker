@@ -7,9 +7,10 @@ const ids=[...s.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);check('重複ID
 const fn=[...s.matchAll(/function\s+([A-Za-z_$][\w$]*)\s*\(/g)].map(m=>m[1]);check('重複した名前付きfunction',new Set(fn).size===fn.length,'OK');
 check('localStorage.clear() 不使用',!s.includes('localStorage.clear('),'OK');
 check('4.11.3 Visual Baseline',/4\.11\.3.*Visual Baseline|Visual Baseline.*4\.11\.3/i.test(s+fs.readFileSync(path.join(root,'SPEC.md'),'utf8')),'OK');
-check('APP_VERSION 4.13.22',/APP_VERSION\s*=\s*["']4\.13\.22["']/.test(s),'OK');
+check('APP_VERSION 4.13.23',/APP_VERSION\s*=\s*["']4\.13\.23["']/.test(s),'OK');
 check('近日発売見出しの統一CSS',/#home \.home-upcoming-head b\{font-size:var\(--unified-card-heading-size\)!important\}/.test(s),'類似作品と同じ統一変数');
 check('詳細画面透過なしの限定CSS',/\.detail-overlay \.detail-sheet\{background:var\(--surface\)!important\}/.test(s),'詳細画面だけ透過なし');
+check('タイトル一覧に戻るは非ボタン要素',!/<button[^>]*class=\"series-title-collapse\"/.test(s)&&/class=\"series-title-collapse\" role=\"button\"/.test(s),'span role=button');
 check('DEMO_ENABLED 定義',/DEMO_ENABLED\s*=/.test(s),'OK');
 check('本番サンプル無効化ゲート',/Production\/App Store builds set DEMO_ENABLED=false/.test(s),'本番ではfalseにする明示コメントあり');
 check('正規登録関数',/window\.addBook|window\.bulkAdd/.test(s),'OK');
@@ -18,7 +19,7 @@ check('購入状態の直接代入を禁止',!/getMeta\([^)]*\)\.purchaseStatus\
 check('仕様文書',fs.existsSync(path.join(root,'SPEC.md'))&&fs.existsSync(path.join(root,'DEV_GUARD.md')),'OK');
 check('ステータス固定幅',s.includes('.library-status-stack{')&&s.includes('width:78px;min-width:78px')&&s.includes('.series-title-status-stack{')&&s.includes('box-sizing:border-box;width:78px'),'78px');
 check('折りたたみ状態保持',/seriesOpenKey|setSeriesOpenState/.test(s)&&/data-series-open/.test(s),'OK');
-check('タイトル一覧戻るUI',/series-title-collapse\{[^}]*background:transparent!important/.test(s),'元表示');
+check('タイトル一覧戻るUI',/series-title-collapse\{[^}]*background:none!important/.test(s)&&/series-title-collapse\{[^}]*padding:0!important/.test(s),'ボタン枠・背景・余白なしのテキスト表示');
 check('後ろ4枚5px刻み枠線',/series-stack-4/.test(s)&&/translate\(\.5px,5px\)/.test(s)&&/translate\(1px,10px\)/.test(s)&&/translate\(1\.5px,15px\)/.test(s)&&/translate\(2px,20px\)/.test(s)&&/transform:none/.test(s)&&/background:transparent!important/.test(s)&&!/series-stack-5/.test(s),'後ろ4枚・縦5px刻み・枠線のみ');
 check('5冊以上タイトル行背景',/\.series-group\.is-cyclic \.series-cyclic-head\{background:color-mix\(in srgb,color-mix\(in srgb,var\(--primary\) 12%,var\(--surface\)\) var\(--panel-surface-alpha\),transparent\)!important/.test(s)&&/\.series-group\.is-cyclic \.series-cyclic-title\{color:var\(--app-text\)!important/.test(s),'最終CSSで背景と文字色を維持');
 check('背景画像cover/center',/#appBackground\{[^}]*background-image:[^}]*background-position:center center;background-size:cover/.test(s)&&/body\{[^}]*background-image:none!important/.test(s),'固定背景レイヤー + cover + center');
@@ -211,6 +212,8 @@ function browserUIRegression(){
         localStorage.setItem("seriesView_v444","on"); $("libraryFilter").value=""; setSeriesCycleState("タイトル一覧シリーズ","title"); setSeriesTitleOpen("タイトル一覧シリーズ","title-list-3"); setMainTab("library"); renderLibrary();
         const expandedCount=document.querySelectorAll(".series-group.is-cyclic .series-title-expanded .library-card").length, collapseUi=!!document.querySelector(".series-title-collapse");
         specAdd("タイトル一覧から単巻展開",expandedCount===1&&collapseUi,"expanded="+expandedCount);
+        const collapseEl=document.querySelector('#myBooks .series-title-collapse');
+        specAdd("タイトル一覧に戻るはボタン風表示ではない",!!collapseEl&&collapseEl.tagName!=="BUTTON"&&getComputedStyle(collapseEl).backgroundColor==="rgba(0, 0, 0, 0)"&&getComputedStyle(collapseEl).borderStyle==="none"&&getComputedStyle(collapseEl).paddingLeft==="0px"&&getComputedStyle(collapseEl).paddingTop==="0px",collapseEl?collapseEl.tagName+" / "+getComputedStyle(collapseEl).backgroundColor+" / "+getComputedStyle(collapseEl).borderStyle+" / "+getComputedStyle(collapseEl).padding:"none");
         setSeriesTitleOpen("タイトル一覧シリーズ","");
 
         const bk=createBackupData(); specAdd("バックアップappVersion",bk.appVersion===APP_VERSION,bk.appVersion+"==="+APP_VERSION);
@@ -353,7 +356,7 @@ function browserUIRegression(){
         appSettings.background.image="";appSettings.background.avgColor=null;appSettings.background.avgLum=null;appSettings.autoTextContrast=savedAutoText3;applyVisualSettings(); render();
         window.alert=savedAlert; window.confirm=savedConfirm;
       }
-    // v4.13.22: verify the home upcoming heading against the same rendered heading
+    // v4.13.23: verify the home upcoming heading against the same rendered heading
     // used by 「類似作品を探す」 at every font setting. This is a real computed-style check.
     let upcomingHeadingOk=true; const upcomingHeadingDetails=[];
     for(const fs of ['font-small','font-medium','font-large']){
@@ -367,7 +370,7 @@ function browserUIRegression(){
     }
     specAdd('近日発売の注目書籍の見出しサイズ',upcomingHeadingOk,upcomingHeadingOk?'小・中・大で類似作品とcomputed style一致':upcomingHeadingDetails.join(' / '));
 
-    // v4.13.22: detail sheet background is explicitly scoped to the detail screen and is fully opaque.
+    // v4.13.23: detail sheet background is explicitly scoped to the detail screen and is fully opaque.
     try{
       const fixture={isbn:'guard-detail-alpha',title:'詳細画面透過テスト',author:'A',publisher:'P',date:'2025-01-01',price:100};
       openBookDetail(fixture);
