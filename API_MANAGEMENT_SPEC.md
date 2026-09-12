@@ -504,3 +504,22 @@ Providerごとに以下をテストする。
 
 Google Booksはシリーズの表示番号と実際の順序を分けて提供しており、`orderNumber`を実際の順序判定に使用する。Google Booksの`listPrice`はSuggested retail price、`retailPrice`は実際の販売価格として定義されるため、定価（税込）の判定では両者を混同しない。楽天Booksは`seriesName`、`isbn`、`salesDate`等を提供する。openBDはONIXのCollection/TitleDetailとPrice等を提供する。NDL Searchはシリーズタイトル等を含む書誌検索・APIを提供する。
 
+
+
+## 23. 実装段階
+
+### Phase 1
+API Provider / Capability / 項目別優先順位 / Evidenceベース信頼度判定 / Critical閾値 / Remote Config安全方針の基盤を追加。
+
+### Phase 2（v4.13.25）
+既存のGoogle BooksおよびopenBDのISBN照会・Google Books検索をProvider Adapter経由へ移行した。
+
+- `GoogleBooksAdapter` を検索・ISBN照会の入口として使用する。
+- `OpenBDAdapter` をISBN照会の入口として使用する。
+- 既存UIへ返す書籍データはAdapter側で正規化する。
+- 既存の検索順・表示順・登録フローはPhase 2では変更しない。
+- 楽天Books / NDL Searchの実Adapter追加は後続Phase。
+- 複数Providerの実フェイルオーバーは後続Phase。
+- 定価（税込）の正式な保存統合は後続Phase。
+
+Phase 2の目的は、既存機能を壊さずProvider依存箇所をAdapter層へ隔離すること。

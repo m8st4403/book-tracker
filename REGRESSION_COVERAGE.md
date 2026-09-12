@@ -1,4 +1,4 @@
-# Book Tracker — 仕様／回帰テスト対応表 v4.13.24
+# Book Tracker — 仕様／回帰テスト対応表 v4.13.25
 
 「仕様に明記されているのに回帰テストがない」状態を防ぐための対応表です。
 
@@ -154,13 +154,13 @@ Chromiumを使ったUI回帰では390×844で小・中・大フォントをレ�
 | API-014 | Cache | API停止時に既存キャッシュを利用できるが古いCritical値を新規確定しない | 仕様確定・未実装 |
 | API-015 | Contract Test | Providerごとに到達性・schema・主要field・意味を検証 | 仕様確定・未実装 |
 
-> v4.13.24の現行実装はGoogle Books/openBDを直接利用しており、上記API管理基盤はまだ実装していない。今回の変更は仕様の正式反映であり、既存UIの回帰結果を変更するものではない。
+> v4.13.25ではGoogle Books/openBDの主要呼出しをAdapter経由へ移行した。楽天Books/NDLの実Adapter、複数Providerの実フェイルオーバー、定価（税込）の正式保存統合は後続段階で実装する。
 
-## API Management v1.0 Foundation (Phase 1)
-- API-001 Provider / Capability / field-priority registry exists and includes Google Books, openBD, Rakuten Books, NDL Search.
-- API-002 Evidence-based confidence evaluation exists.
-- API-003 Critical list-price/tax-inclusion values below the required confidence are rejected.
-- API-004 Non-critical fields can be accepted at the configured threshold.
-- API-005 Remote configuration contains data only; no remote code execution path is provided.
+## API Management v1.0 — Phase 2
+- API-001〜005: Phase 1のProvider / Capability / field-priority / Evidence / Critical / Remote Config基盤を維持。
+- API-006: Google Books / openBD Adapterの入口が存在する。
+- API-007: 既存のISBN照会・Google Books検索がAPI管理Adapter経由になり、直接Provider URLを呼び出さない。
+- API-008: index.html側からGoogle Books/openBDのProvider直接呼出しが残っていない。
+- API-009: Adapterが正規化済みの共通書籍データを返す。
 
-> Phase 1 intentionally adds the management foundation without changing the existing search/registration behavior. Provider-by-provider migration and live fallback behavior are subsequent implementation steps.
+> Phase 2では既存Google Books/openBDの呼出し経路をAdapterへ移行した。楽天Books/NDLの実Adapter追加、複数Providerの実フェイルオーバー、定価（税込）の正式保存統合は後続段階で実装する。

@@ -4,7 +4,7 @@ iPhone向けの書籍管理アプリのプロトタイプです。
 
 ## 現在のバージョン
 
-**v4.13.24**
+**v4.13.25**
 
 v4.10.0は新機能追加ではなく、今後の開発を安全に進めるための
 「仕様ガード＋頻発バグ回帰チェック」を中心とした開発基盤版です。
@@ -147,4 +147,4 @@ v4.11.3を蔵書タブのVisual Baselineとして固定し、v4.11.4〜v4.11.7�
 
 
 ## API Management v1.0
-API管理・自動フェイルオーバー仕様を正式化し、Phase 1としてProvider/Capability、項目別優先順位、Evidenceベース信頼度判定、Critical項目の閾値管理を追加しています。実APIの検索・登録動作はこの段階では変更していません。詳細は `API_MANAGEMENT_SPEC.md` を参照してください。
+API管理・自動フェイルオーバー仕様を正式化し、Phase 1の管理基盤に続き、Phase 2では既存Google Books/openBDのISBN照会・検索をAdapter経由へ移行しました。既存の検索・登録UIの挙動は維持し、Provider固有処理をAdapter層へ隔離しています。詳細は `API_MANAGEMENT_SPEC.md` を参照してください。

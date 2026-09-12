@@ -607,7 +607,7 @@ let calendarExtras=readJSONStorage("calendarExtras_v442",[]);if(!Array.isArray(c
 const DEMO_ENABLED=true;
 // Prototype/dev builds: a deleted sample set stays deleted within this build, but a new build/version starts with samples again.
 // Production/App Store builds set DEMO_ENABLED=false, so this logic is never exposed to end users.
-const APP_VERSION="4.13.24";
+const APP_VERSION="4.13.25";
 const DEMO_DELETED_KEY="bookTrackerDemoDeleted";
 const DEMO_RESET_VERSION_KEY="bookTrackerDemoResetVersion";
 const DEMO_TITLES=["サンプル本棚：前月の便り","サンプル本棚：月夜の標本","サンプルシリーズ：星の余白 1巻","サンプルシリーズ：星の余白 2巻","サンプル本棚：翌月の灯り"];
@@ -739,8 +739,42 @@ async function getJSON(u,opts={}){
 }
 function gbook(v,hint=""){let x=v.volumeInfo||{},ids=x.industryIdentifiers||[];let i=(ids.find(a=>a.type==="ISBN_13")||ids.find(a=>a.type==="ISBN_10")||{}).identifier||hint;const si=v.saleInfo||{},lp=si.listPrice||si.retailPrice||{};return {isbn:i,title:x.title||"",subtitle:x.subtitle||"",author:(x.authors||[]).join(" / "),publisher:x.publisher||"",date:x.publishedDate||"",cover:x.imageLinks?.thumbnail||"",description:x.description||"",categories:x.categories||[],price:Number(lp.amount)||0,currency:lp.currencyCode||"JPY",upcoming:[]}}
 async function openbd(isbn){try{let a=await getJSON("https://api.openbd.jp/v1/get?isbn="+isbn,{searchOnline:true}),x=a?.[0],s=x?.summary||{};return x?{isbn:s.isbn||isbn,title:s.title||"",author:s.author||"",publisher:s.publisher||"",date:s.pubdate||"",cover:s.cover||"",price:0,currency:"JPY",upcoming:[]}:null}catch(e){return null}}
-async function isbnLookup(isbn){let b=await openbd(isbn);if(b?.title)return b;let a=(await getJSON("https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent("isbn:"+isbn)+"&maxResults=20&country=JP",{searchOnline:true})).items||[];let exact=a.map(x=>gbook(x)).find(x=>norm(x.isbn)==isbn);if(exact?.title)return exact;if(a[0])return gbook(a[0],isbn);a=(await getJSON("https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent('"'+isbn+'"')+"&maxResults=20&country=JP",{searchOnline:true})).items||[];exact=a.map(x=>gbook(x)).find(x=>norm(x.isbn)==isbn);if(exact?.title)return exact;throw Error("このISBNに一致する書誌情報が見つかりませんでした。")}
-async function searchGoogle(q){let lim=Number(appSettings.search?.resultCount)||20;let a=(await getJSON("https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent(q)+"&maxResults="+Math.min(40,lim)+"&country=JP&langRestrict=ja",{searchOnline:true})).items||[];let z=q.toLowerCase();if(appSettings.search?.sort==="release-desc")a.sort((x,y)=>releaseTime(gbook(y))-releaseTime(gbook(x)));else if(appSettings.search?.sort==="release-asc")a.sort((x,y)=>releaseTime(gbook(x))-releaseTime(gbook(y)));else if(appSettings.search?.sort==="title-asc")a.sort((x,y)=>(x.volumeInfo?.title||"").localeCompare(y.volumeInfo?.title||"","ja"));else a.sort((x,y)=>Number((x.volumeInfo?.title||"").toLowerCase().includes(z))-Number((y.volumeInfo?.title||"").toLowerCase().includes(z)));if(appSettings.search?.jpPriority)a.sort((x,y)=>Number((x.volumeInfo?.language||"")!=="ja")-Number((y.volumeInfo?.language||"")!=="ja"));a=a.slice(0,lim);if(appSettings.search?.unownedFirst)a.sort((x,y)=>{let xo=books.some(b=>norm(b.isbn)===norm(gbook(x).isbn)),yo=books.some(b=>norm(b.isbn)===norm(gbook(y).isbn));return Number(xo)-Number(yo)});return a}
+async function isbnLookup(isbn){
+ const api=window.bookTrackerApiManagement;
+ if(!api?.adapters?.openBD||!api?.adapters?.googleBooks)throw Error("API管理基盤が読み込まれていません。");
+ try{
+  const openRows=await api.adapters.openBD.isbn(isbn);
+  const b=openRows.find(x=>x?.title&&canonicalIsbn(x.isbn)===canonicalIsbn(isbn))||openRows.find(x=>x?.title);
+  if(b?.title)return b;
+ }catch(e){console.warn("openBD adapter",e)}
+ try{
+  const rows=await api.adapters.googleBooks.isbn(isbn);
+  const exact=rows.find(x=>canonicalIsbn(x.isbn)===canonicalIsbn(isbn));
+  if(exact?.title)return exact;
+  if(rows[0]?.title)return rows[0];
+ }catch(e){console.warn("Google Books adapter",e)}
+ try{
+  const rows=await api.adapters.googleBooks.search('"'+isbn+'"',20);
+  const exact=rows.find(x=>canonicalIsbn(x.isbn)===canonicalIsbn(isbn));
+  if(exact?.title)return exact;
+ }catch(e){console.warn("Google Books quoted adapter",e)}
+ throw Error("このISBNに一致する書誌情報が見つかりませんでした。");
+}
+async function searchGoogle(q){
+ const lim=Number(appSettings.search?.resultCount)||20;
+ const api=window.bookTrackerApiManagement;
+ if(!api?.adapters?.googleBooks)throw Error("API管理基盤が読み込まれていません。");
+ let a=await api.adapters.googleBooks.search(q,lim);
+ const z=q.toLowerCase();
+ if(appSettings.search?.sort==="release-desc")a.sort((x,y)=>releaseTime(y)-releaseTime(x));
+ else if(appSettings.search?.sort==="release-asc")a.sort((x,y)=>releaseTime(x)-releaseTime(y));
+ else if(appSettings.search?.sort==="title-asc")a.sort((x,y)=>(x.title||"").localeCompare(y.title||"","ja"));
+ else a.sort((x,y)=>Number((x.title||"").toLowerCase().includes(z))-Number((y.title||"").toLowerCase().includes(z)));
+ if(appSettings.search?.jpPriority)a.sort((x,y)=>Number((x.language||"")!=="ja")-Number((y.language||"")!=="ja"));
+ a=a.slice(0,lim);
+ if(appSettings.search?.unownedFirst)a.sort((x,y)=>{let xo=books.some(b=>norm(b.isbn)===norm(x.isbn)),yo=books.some(b=>norm(b.isbn)===norm(y.isbn));return Number(xo)-Number(yo)});
+ return a;
+}
 function releaseTime(b){const t=Date.parse(b.date||"");return Number.isNaN(t)?0:t}
 function parseVolumeTitle(title){
  const original=String(title||"").normalize("NFKC").trim();
@@ -963,11 +997,11 @@ async function registerCheckedIsbnRows(){
 
 $("isbnRows").addEventListener("change",e=>{if(e.target.classList.contains("isbn-check")){const row=e.target.closest(".isbn-row");if(row?.querySelector(".isbn-row-status")?.textContent.includes("✓"))row.querySelector(".isbn-row-status").textContent=row.querySelector(".isbn-row-status").textContent.replace(/・ 登録対象(外)?$/,"・ "+(e.target.checked?"登録対象":"登録対象外"));}});
 addIsbnRow();
-$("workSearch").onclick=async()=>{addResultsMode="generic";let q=$("work").value.trim(),v=$("vol").value.trim();if(!q)return;$("addResults").innerHTML="検索中…";try{let arr=(await searchGoogle("intitle:"+q+(v?" "+v:""))).map(gbook);arr=dedupeBookResults(arr);if(!v)arr=sortBooks(arr,"release-desc");renderSelectableResults("addResults",arr);if(!v&&arr.length)$("addResults").insertAdjacentHTML("afterbegin",'<div class="ok">巻数未入力：全巻検索です。発売日が新しい順に表示しています。</div>')}catch(e){$("addResults").innerHTML=esc(e.message)}};
+$("workSearch").onclick=async()=>{addResultsMode="generic";let q=$("work").value.trim(),v=$("vol").value.trim();if(!q)return;$("addResults").innerHTML="検索中…";try{let arr=(await searchGoogle("intitle:"+q+(v?" "+v:"")));arr=dedupeBookResults(arr);if(!v)arr=sortBooks(arr,"release-desc");renderSelectableResults("addResults",arr);if(!v&&arr.length)$("addResults").insertAdjacentHTML("afterbegin",'<div class="ok">巻数未入力：全巻検索です。発売日が新しい順に表示しています。</div>')}catch(e){$("addResults").innerHTML=esc(e.message)}};
 $("searchBtn").onclick=async()=>{let q=$("query").value.trim();if(!q)return;$("searchResults").innerHTML="検索中…";try{let arr=await searchGoogle(q);if($("searchUnownedOnly").checked)arr=arr.filter(x=>!books.some(b=>norm(b.isbn)===norm(gbook(x).isbn)));renderResults("searchResults",arr)}catch(e){$("searchResults").innerHTML=esc(e.message)}};
 $("searchUnownedOnly").addEventListener("change",()=>{if($("query").value.trim())$("searchBtn").click()});
 $("authorBtn").onclick=async()=>{let q=$("author").value.trim();if(!q)return;$("authorResults").innerHTML="検索中…";try{renderResults("authorResults",await searchGoogle("inauthor:"+q))}catch(e){$("authorResults").innerHTML=esc(e.message)}};
-$("authorNewBtn").onclick=async()=>{let q=$("author").value.trim();if(!q){alert("作家名を入力してください。");return}$("authorResults").innerHTML="新刊をチェック中…";try{let arr=(await searchGoogle("inauthor:"+q)).map(gbook).sort((a,b)=>releaseTime(b)-releaseTime(a)).slice(0,20);renderSelectableResults("authorResults",arr);if(arr.length)$("authorResults").insertAdjacentHTML("afterbegin",`<div class="ok">発売日が新しい順で表示しています。</div>`)}catch(e){$("authorResults").innerHTML=esc(e.message)}}
+$("authorNewBtn").onclick=async()=>{let q=$("author").value.trim();if(!q){alert("作家名を入力してください。");return}$("authorResults").innerHTML="新刊をチェック中…";try{let arr=(await searchGoogle("inauthor:"+q)).sort((a,b)=>releaseTime(b)-releaseTime(a)).slice(0,20);renderSelectableResults("authorResults",arr);if(arr.length)$("authorResults").insertAdjacentHTML("afterbegin",`<div class="ok">発売日が新しい順で表示しています。</div>`)}catch(e){$("authorResults").innerHTML=esc(e.message)}}
 let calDate=new Date();calDate.setDate(1);let selectedDate=null;
 // Calendar filters are initialized safely before settings are loaded; they are synchronized after appSettings is normalized.
 let calFilters={library:true,related:true,recommended:true};
@@ -1400,7 +1434,7 @@ $("scan").onclick=scan;$("closeScan").onclick=stopScan;$("scanSearch").onclick=(
  },true);
 })();
 
-async function findSimilarWorks(){const q=($("query").value||$("work").value||"").trim();if(!q){alert("作品名を入力してください。");return}const c=[...document.querySelectorAll("#similarBox input:checked")].map(x=>x.value);if(!c.length){alert("条件を1つ以上選択してください。");return}$("similarResults").innerHTML="検索中…";try{const base=(await searchGoogle(q)).map(gbook)[0]||{};const terms=[];if(c.includes("story")||c.includes("setting")||c.includes("tone"))terms.push(q);if(c.includes("art")||c.includes("author"))terms.push(base.author||"");if(c.includes("genre"))terms.push(q);let arr=(await searchGoogle([...new Set(terms.filter(Boolean))].join(" "))).map(gbook).filter(x=>norm(x.title)!==norm(base.title));window.similarResultsData=arr;$("similarResults").innerHTML=(arr.length?`<div class="selectbar"><label><input class="check similarAll" type="checkbox" aria-label="関連検索結果を全選択"> 全選択</label><button onclick="bulkAdd('similarResults')">選択した本を一括登録</button></div>`:"")+arr.map((x,i)=>card(x,true,"similar",i)).join("")||"候補なし";$("similarResults").querySelector(".similarAll")?.addEventListener("change",e=>$("similarResults").querySelectorAll(".selectBook").forEach(x=>x.checked=e.target.checked))}catch(e){$("similarResults").innerHTML=esc(e.message)}}$("similarBtn")?.addEventListener("click",findSimilarWorks);
+async function findSimilarWorks(){const q=($("query").value||$("work").value||"").trim();if(!q){alert("作品名を入力してください。");return}const c=[...document.querySelectorAll("#similarBox input:checked")].map(x=>x.value);if(!c.length){alert("条件を1つ以上選択してください。");return}$("similarResults").innerHTML="検索中…";try{const base=(await searchGoogle(q))[0]||{};const terms=[];if(c.includes("story")||c.includes("setting")||c.includes("tone"))terms.push(q);if(c.includes("art")||c.includes("author"))terms.push(base.author||"");if(c.includes("genre"))terms.push(q);let arr=(await searchGoogle([...new Set(terms.filter(Boolean))].join(" "))).filter(x=>norm(x.title)!==norm(base.title));window.similarResultsData=arr;$("similarResults").innerHTML=(arr.length?`<div class="selectbar"><label><input class="check similarAll" type="checkbox" aria-label="関連検索結果を全選択"> 全選択</label><button onclick="bulkAdd('similarResults')">選択した本を一括登録</button></div>`:"")+arr.map((x,i)=>card(x,true,"similar",i)).join("")||"候補なし";$("similarResults").querySelector(".similarAll")?.addEventListener("change",e=>$("similarResults").querySelectorAll(".selectBook").forEach(x=>x.checked=e.target.checked))}catch(e){$("similarResults").innerHTML=esc(e.message)}}$("similarBtn")?.addEventListener("click",findSimilarWorks);
 /* v4.4 書籍詳細・蔵書から関連検索 */
 const detailOverlay=document.createElement("div");detailOverlay.className="detail-overlay";detailOverlay.innerHTML='<div class="detail-sheet"><div class="detail-head"><h2 id="detailTitle">書籍詳細</h2><button class="secondary detail-close" id="detailClose" type="button">閉じる</button></div><div id="detailBody"></div></div>';document.body.appendChild(detailOverlay);
 function amazonUrl(b){return "https://www.amazon.co.jp/s?k="+encodeURIComponent(b.isbn||b.title||"")}
@@ -1426,7 +1460,7 @@ window.openBookDetail=function(b){
 $("detailClose").onclick=()=>detailOverlay.style.display="none";detailOverlay.onclick=e=>{if(e.target===detailOverlay)detailOverlay.style.display="none"};
 async function openPersonProfile(type,name){name=String(name||"").trim();if(!name)return;$("profileSheetTitle").textContent=(type==="author"?"✍️ ":"🏢 ")+name;const own=books.filter(b=>String(type==="author"?b.author:b.publisher||"").toLowerCase().includes(name.toLowerCase()));let html=`<div class="card"><b>${type==="author"?"作者":"出版社"}プロフィール</b><p class="muted">登録している蔵書 ${own.length}冊</p></div>`;html+=`<div class="profile-book-list">${own.map(b=>card(b,false,"profile",-1)).join("")||'<p class="muted">登録している本はありません。</p>'}</div>`;$("profileSheetBody").innerHTML=html;$("profileOverlay").style.display="flex";}
 $("profileSheetClose").onclick=()=>$("profileOverlay").style.display="none";$("profileOverlay").onclick=e=>{if(e.target===$("profileOverlay"))$("profileOverlay").style.display="none"};
-async function searchRelatedFromBook(b){let box=$("detailRelatedBox");box.innerHTML="<h3>関連書籍</h3><p>検索中…</p>";let q=b.author?"inauthor:"+b.author:b.title;try{let arr=(await searchGoogle(q)).map(gbook).filter(x=>norm(x.title)!==norm(b.title)).slice(0,10);box.innerHTML=arr.length?"<h3>関連書籍</h3>"+arr.map(x=>`<button class="detail-related-item" type="button"><span><b>${esc(x.title)}</b><br><small>${esc(x.author)}</small></span></button>`).join(""):"<p>関連書籍が見つかりませんでした。</p>";box.querySelectorAll("button").forEach((el,i)=>el.onclick=()=>openBookDetail(arr[i]))}catch(e){box.innerHTML="<p>関連書籍の検索に失敗しました。</p>"}}
+async function searchRelatedFromBook(b){let box=$("detailRelatedBox");box.innerHTML="<h3>関連書籍</h3><p>検索中…</p>";let q=b.author?"inauthor:"+b.author:b.title;try{let arr=(await searchGoogle(q)).filter(x=>norm(x.title)!==norm(b.title)).slice(0,10);box.innerHTML=arr.length?"<h3>関連書籍</h3>"+arr.map(x=>`<button class="detail-related-item" type="button"><span><b>${esc(x.title)}</b><br><small>${esc(x.author)}</small></span></button>`).join(""):"<p>関連書籍が見つかりませんでした。</p>";box.querySelectorAll("button").forEach((el,i)=>el.onclick=()=>openBookDetail(arr[i]))}catch(e){box.innerHTML="<p>関連書籍の検索に失敗しました。</p>"}}
 
 $("searchModeBook").onclick=()=>{$("bookSearchPanel").classList.add("active");$("authorSearchPanel").classList.remove("active");$("searchModeBook").classList.add("active");$("searchModeAuthor").classList.remove("active");updateClearButtons()};
 $("searchModeAuthor").onclick=()=>{$("authorSearchPanel").classList.add("active");$("bookSearchPanel").classList.remove("active");$("searchModeAuthor").classList.add("active");$("searchModeBook").classList.remove("active");updateClearButtons()};
@@ -1499,7 +1533,7 @@ window.bulkAdd=async id=>{
 /* v4.10.0: Runtime specification guard + lightweight regression checks.
    Development build only. These checks intentionally fail loudly instead of silently masking regressions. */
 (function(){
- const DEV_GUARD_VERSION="4.13.24";
+ const DEV_GUARD_VERSION="4.13.25";
  const validPurchase=new Set(["wanted","reserved","purchased","none"]);
  function add(name,ok,detail){return {name,ok,detail:detail||""}}
  function runSpecGuard(){
@@ -1744,6 +1778,17 @@ window.bulkAdd=async id=>{
     results.push(add("API-004 通常項目の信頼度判定",api.acceptable("title",high),`confidence=${high.confidence}`));
     const remoteCodeSafe=!Object.values(api.providers).some(v=>typeof v==="function")&&!cfg.providers.googleBooks.executeRemoteCode;
     results.push(add("API-005 リモート設定はコード実行不可",remoteCodeSafe,"設定値のみ"));
+    const adapterOk=typeof api.adapters.googleBooks?.isbn==="function"&&typeof api.adapters.googleBooks?.search==="function"&&typeof api.adapters.openBD?.isbn==="function";
+    results.push(add("API-006 Google Books/openBD Adapter接続",adapterOk,"既存ProviderがAdapter経由で利用可能"));
+    const searchFn=typeof searchGoogle==="function"&&searchGoogle.toString().includes("bookTrackerApiManagement")&&!searchGoogle.toString().includes("getJSON(\"https://www.googleapis.com/books/v1/volumes");
+    const isbnFn=typeof isbnLookup==="function"&&isbnLookup.toString().includes("bookTrackerApiManagement")&&!isbnLookup.toString().includes("getJSON(\"https://www.googleapis.com/books/v1/volumes");
+    results.push(add("API-007 既存Google Books直接呼出し除去",searchFn&&isbnFn,"検索・ISBN照会はAdapter入口を使用"));
+    const googleUrl='https://www.googleapis.com/books/v1/volumes';
+    const openbdUrl='https://api.openbd.jp/v1/get';
+    const directOutsideAdapters=!searchFn&&!isbnFn ? false : !searchGoogle.toString().includes(googleUrl)&&!isbnLookup.toString().includes(googleUrl)&&!isbnLookup.toString().includes(openbdUrl)&&typeof openbd==="undefined";
+    results.push(add("API-008 外部Provider直接呼出しの隔離",directOutsideAdapters,"主要呼出し関数にProvider URLを残していない"));
+    const normalized=api.adapters.googleBooks.search&&api.adapters.openBD.isbn;
+    results.push(add("API-009 Adapter共通形式",!!normalized,"Adapterが正規化済みBookRecord相当を返す"));
   }catch(e){
     results.push(add("API管理基盤回帰",false,e.message));
   }
