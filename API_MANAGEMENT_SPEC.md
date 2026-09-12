@@ -520,7 +520,7 @@ API Provider / Capability / 項目別優先順位 / Evidenceベース信頼度�
 - 既存の検索順・表示順・登録フローはPhase 2では変更しない。
 - 楽天Books / NDL Searchの実Adapter追加は後続Phase。
 - 複数Providerの実フェイルオーバーは後続Phase。
-- 定価（税込）の正式な保存統合は後続Phase。
+- 定価（税込）の正式な保存統合はPhase 4で実装済み。
 
 Phase 2の目的は、既存機能を壊さずProvider依存箇所をAdapter層へ隔離すること。
 
@@ -566,28 +566,55 @@ Phase 2の目的は、既存機能を壊さずProvider依存箇所をAdapter層�
 既存Adapterが実装済みであれば、リモート設定により有効化・優先順位変更が可能。未知APIのコードをリモートから取得・実行することはしない。
 
 
-## 13. Phase 4 — 定価（税込）の正式取得・保存
+## 13. Phase 4/5 — 定価（税込）と購入総額
 
-- `price.listPrice` を蔵書の正式な価格フィールドとする。
-- `price.listPrice` は登録時点で確定した日本向け定価（税込）を保存する。
-- `price.taxIncluded === true` を確認でき、信頼度が HIGH 以上である値だけをAPIから自動確定する。
+- **「蔵書総額」は登録された本の定価（税込）の合計**とする。
+- `price.listPrice` を定価（税込）の正式フィールドとする。
+- `price.status` で `confirmed` / `unconfirmed` / `confirmed_zero` を区別する。
+- 定価未確定の本は登録可能。未確定本は蔵書総額に加算しない。
+- 定価入力が空欄なら `unconfirmed` として登録する。
+- 0円は通常の未確定値と混同せず、ユーザーの明示確認後に `confirmed_zero` とする。
+- 確定0円も蔵書総額には加算しない。
+- `price.taxIncluded === true` を確認でき、信頼度が HIGH 以上の値だけをAPIから自動確定する。
 - Google Books `retailPrice` や現在の販売価格は `listPrice` の代替に使用しない。
-- 定価（税込）をAPIから確定できない場合、単冊の手動登録ではユーザーに定価（税込）の入力を求める。
-- 一括登録では未確定の本を自動登録せずスキップする。
+- APIから定価を確定できない場合、単冊・一括登録とも登録自体は継続し、価格は `unconfirmed` とする。
 - 登録後はAPIから価格を再取得して蔵書総額を変更しない。
-- 詳細画面からの価格変更は「定価（税込）の訂正」として保存し、購入価格とは別物とする。
-- 旧形式の `price: number` は初回起動時に `price.listPrice` へ移行し、既存蔵書の金額を保持する。
+- 詳細画面からの価格変更は「定価（税込）の訂正」として保存する。
+- 旧形式の `price: number` は初回起動時に移行し、既存蔵書の金額を保持する。
 
-### 13.1 価格データモデル
+### 13.1 定価データモデル
 ```js
 price: {
-  listPrice: 484,
+  listPrice: 484, // 未確定は null、確定0円は 0
+  status: "confirmed|unconfirmed|confirmed_zero",
   currency: "JPY",
   taxIncluded: true,
-  source: "rakuten|openBD|googleBooks|ndl|manual|legacy-migration",
+  source: "rakuten|openBD|googleBooks|ndl|manual|manual-correction|legacy-migration|unavailable",
   fetchedAt: "...",
-  confidence: "HIGH|VERIFIED"
+  confidence: "HIGH|VERIFIED|MEDIUM|UNKNOWN"
 }
 ```
 
 `price` は現在販売価格や購入価格を表さない。
+
+### 13.2 購入総額
+定価と実際の購入金額は別モデルとして管理する。特にシリーズ一括購入など、個々の単価がすぐ分からない場合に購入総額だけを記録できるようにする。
+
+```js
+purchaseGroups: {
+  id: "pg_...",
+  totalAmount: 3000,
+  currency: "JPY",
+  bookKeys: ["isbn1", "isbn2", "isbn3"],
+  note: "全3巻セット",
+  createdAt: "..."
+}
+```
+
+- セット購入では1冊あたりに購入総額を割り振らない。
+- `totalAmount` は購入実額であり、蔵書総額には加算しない。
+- 定価未確定の本でも購入総額を記録できる。
+- 後から各巻の定価が判明した場合、各 `price` を確定して蔵書総額へ反映する。
+- 選択した複数冊に購入総額を登録すると1つの購入グループとして保存する。
+- 同じ本を別の購入グループへ登録した場合は、その本の旧グループから外す。
+- 蔵書から本を削除した場合、購入グループからもその本を除き、空になったグループは削除する。

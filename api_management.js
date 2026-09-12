@@ -1,11 +1,11 @@
-/* API Management v1.1 — Phase 3.
+/* API Management v1.3 — Phase 4/5.
  * Bundled adapters normalize provider responses, then a field-wise resolver
  * validates evidence and merges compatible sources. Remote configuration may
  * change data values only; it must never supply executable code.
  */
 (function(){
   "use strict";
-  const VERSION="1.2";
+  const VERSION="1.3";
   const CONF={UNKNOWN:0,LOW:1,MEDIUM:2,HIGH:3,VERIFIED:4};
   const CRITICAL=new Set(["isbn13","seriesId","seriesName","volumeNumber","listPrice","taxIncluded"]);
   const providers={

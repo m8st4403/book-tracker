@@ -1,4 +1,4 @@
-# Book Tracker — 仕様／回帰テスト対応表 v4.13.27
+# Book Tracker — 仕様／回帰テスト対応表 v4.13.28
 
 「仕様に明記されているのに回帰テストがない」状態を防ぐための対応表です。
 
@@ -150,11 +150,11 @@ Chromiumを使ったUI回帰では390×844で小・中・大フォントをレ�
 | API-010 | 自動Failover | timeout/HTTP/schema/field/confidence失敗で次候補へ移行 | 仕様確定・未実装 |
 | API-011 | 新API | 未知APIのコード自動取得・実行を行わない | 仕様確定・未実装 |
 | API-012 | Remote Config | Adapter実装済みProviderを後から有効化/無効化/順位変更 | 仕様確定・未実装 |
-| API-013 | 価格固定 | 登録時の定価（税込）を保存し、後日のAPI価格変更で蔵書総額を変更しない | 仕様確定・未実装 |
+| API-013 | 価格固定 | 登録時の定価（税込）を保存し、後日のAPI価格変更で蔵書総額を変更しない | 実装済み v4.13.27+ |
 | API-014 | Cache | API停止時に既存キャッシュを利用できるが古いCritical値を新規確定しない | 仕様確定・未実装 |
 | API-015 | Contract Test | Providerごとに到達性・schema・主要field・意味を検証 | 仕様確定・未実装 |
 
-> v4.13.27ではGoogle Books/openBDの主要呼出しをAdapter経由へ移行した。楽天Books/NDLの実Adapter、複数Providerの実フェイルオーバー、定価（税込）の正式保存統合は後続段階で実装する。
+> v4.13.27時点ではGoogle Books/openBDの主要呼出しをAdapter経由へ移行した。楽天Books/NDLの実Adapterと複数Providerの実フェイルオーバーは後続段階。定価（税込）の正式保存はv4.13.27で実装済み、購入総額・未確定価格の拡張はv4.13.28で実装済み。
 
 ## API Management v1.0 — Phase 2
 - API-001〜005: Phase 1のProvider / Capability / field-priority / Evidence / Critical / Remote Config基盤を維持。
@@ -166,12 +166,19 @@ Chromiumを使ったUI回帰では390×844で小・中・大フォントをレ�
 > Phase 2では既存Google Books/openBDの呼出し経路をAdapterへ移行した。楽天Books/NDLの実Adapter追加、複数Providerの実フェイルオーバー、定価（税込）の正式保存統合は後続段階で実装する。
 
 
-## API Management v1.2 — Phase 4 (implemented)
-- API-016: `price.listPrice` が正式な蔵書価格フィールドである。
-- API-017: 税込確認済みかつHIGH以上の定価だけをAPIから自動確定する。
-- API-018: Google Books `retailPrice` を定価の代替にしない。
-- API-019: 定価未確定時の単冊登録は手動入力へフォールバックする。
-- API-020: 一括登録では定価未確定本を自動登録しない。
-- API-021: 登録後のAPI価格変更で蔵書総額を変更しない。
-- API-022: 旧 `price:number` データを `price.listPrice` へ移行する。
-- API-023: 詳細画面の価格編集を「定価（税込）の訂正」として保存する。
+## API Management v1.3 — Phase 4/5 (implemented)
+- API-016: 旧 `price:number` を定価確定形式へ移行する。
+- API-017: 未確定価格は `listPrice:null` / `status:"unconfirmed"` とし、蔵書総額から除外する。
+- API-018: 税込確認済みかつHIGH以上の定価だけをAPIから自動確定する。
+- API-019: Google Books `retailPrice` を定価の代替にしない。
+- API-020: 単冊の手動入力1円以上は定価確定として保存する。
+- API-021: 空欄入力でも未確定のまま登録可能とする。
+- API-022: 0円は明示確認後に `confirmed_zero` として保存する。
+- API-023: 0円確認を取消した場合は登録を中止する。
+- API-024: 一括登録でも定価未確定本の登録を妨げない。
+- API-025: 蔵書総額は保存済みの確定定価だけを集計する。
+- API-026: 確定0円は蔵書総額に加算しない。
+- API-027: 詳細画面の価格編集を「定価（税込）の訂正」として保存する。
+- API-028: 未確定・0円・確定価格の集計区分を回帰テストする。
+- API-029: 複数冊のセット購入総額を購入グループとして保存する。
+- API-030: 購入総額と定価／蔵書総額を相互に混同しない。
