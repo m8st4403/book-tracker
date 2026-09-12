@@ -1,4 +1,4 @@
-# Book Tracker — 仕様／回帰テスト対応表 v4.13.26
+# Book Tracker — 仕様／回帰テスト対応表 v4.13.27
 
 「仕様に明記されているのに回帰テストがない」状態を防ぐための対応表です。
 
@@ -154,7 +154,7 @@ Chromiumを使ったUI回帰では390×844で小・中・大フォントをレ�
 | API-014 | Cache | API停止時に既存キャッシュを利用できるが古いCritical値を新規確定しない | 仕様確定・未実装 |
 | API-015 | Contract Test | Providerごとに到達性・schema・主要field・意味を検証 | 仕様確定・未実装 |
 
-> v4.13.26ではGoogle Books/openBDの主要呼出しをAdapter経由へ移行した。楽天Books/NDLの実Adapter、複数Providerの実フェイルオーバー、定価（税込）の正式保存統合は後続段階で実装する。
+> v4.13.27ではGoogle Books/openBDの主要呼出しをAdapter経由へ移行した。楽天Books/NDLの実Adapter、複数Providerの実フェイルオーバー、定価（税込）の正式保存統合は後続段階で実装する。
 
 ## API Management v1.0 — Phase 2
 - API-001〜005: Phase 1のProvider / Capability / field-priority / Evidence / Critical / Remote Config基盤を維持。
@@ -164,3 +164,14 @@ Chromiumを使ったUI回帰では390×844で小・中・大フォントをレ�
 - API-009: Adapterが正規化済みの共通書籍データを返す。
 
 > Phase 2では既存Google Books/openBDの呼出し経路をAdapterへ移行した。楽天Books/NDLの実Adapter追加、複数Providerの実フェイルオーバー、定価（税込）の正式保存統合は後続段階で実装する。
+
+
+## API Management v1.2 — Phase 4 (implemented)
+- API-016: `price.listPrice` が正式な蔵書価格フィールドである。
+- API-017: 税込確認済みかつHIGH以上の定価だけをAPIから自動確定する。
+- API-018: Google Books `retailPrice` を定価の代替にしない。
+- API-019: 定価未確定時の単冊登録は手動入力へフォールバックする。
+- API-020: 一括登録では定価未確定本を自動登録しない。
+- API-021: 登録後のAPI価格変更で蔵書総額を変更しない。
+- API-022: 旧 `price:number` データを `price.listPrice` へ移行する。
+- API-023: 詳細画面の価格編集を「定価（税込）の訂正」として保存する。

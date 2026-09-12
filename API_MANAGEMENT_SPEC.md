@@ -564,3 +564,30 @@ Phase 2の目的は、既存機能を壊さずProvider依存箇所をAdapter層�
 
 ### 3.6 新API
 既存Adapterが実装済みであれば、リモート設定により有効化・優先順位変更が可能。未知APIのコードをリモートから取得・実行することはしない。
+
+
+## 13. Phase 4 — 定価（税込）の正式取得・保存
+
+- `price.listPrice` を蔵書の正式な価格フィールドとする。
+- `price.listPrice` は登録時点で確定した日本向け定価（税込）を保存する。
+- `price.taxIncluded === true` を確認でき、信頼度が HIGH 以上である値だけをAPIから自動確定する。
+- Google Books `retailPrice` や現在の販売価格は `listPrice` の代替に使用しない。
+- 定価（税込）をAPIから確定できない場合、単冊の手動登録ではユーザーに定価（税込）の入力を求める。
+- 一括登録では未確定の本を自動登録せずスキップする。
+- 登録後はAPIから価格を再取得して蔵書総額を変更しない。
+- 詳細画面からの価格変更は「定価（税込）の訂正」として保存し、購入価格とは別物とする。
+- 旧形式の `price: number` は初回起動時に `price.listPrice` へ移行し、既存蔵書の金額を保持する。
+
+### 13.1 価格データモデル
+```js
+price: {
+  listPrice: 484,
+  currency: "JPY",
+  taxIncluded: true,
+  source: "rakuten|openBD|googleBooks|ndl|manual|legacy-migration",
+  fetchedAt: "...",
+  confidence: "HIGH|VERIFIED"
+}
+```
+
+`price` は現在販売価格や購入価格を表さない。

@@ -5,7 +5,7 @@
  */
 (function(){
   "use strict";
-  const VERSION="1.1";
+  const VERSION="1.2";
   const CONF={UNKNOWN:0,LOW:1,MEDIUM:2,HIGH:3,VERIFIED:4};
   const CRITICAL=new Set(["isbn13","seriesId","seriesName","volumeNumber","listPrice","taxIncluded"]);
   const providers={
@@ -146,6 +146,15 @@
   }
   function fieldsFor(row){return Object.keys(row?.fieldEvidence||{}).filter(k=>!k.startsWith("_"))}
   function sourcePriority(field,provider){const arr=priority[field]||[];const i=arr.indexOf(provider);return i<0?999:i}
+  function listPriceAccepted(result){
+    return !!result&&result.value!=null&&Number(result.value)>0&&result.evidence?.taxIncludedConfirmed===true&&rank(result.confidence)>=rank("HIGH");
+  }
+  function priceResult(row,ctx){
+    const value=row?.priceMeta?.listPrice;
+    if(value==null)return null;
+    const ev=row?.fieldEvidence?.listPrice||evidenceFor("listPrice",value,{identifierMatched:canonicalIsbn(row?.isbn)===canonicalIsbn(ctx?.isbn),countryMatched:true,taxIncludedConfirmed:row?.priceMeta?.taxIncluded===true});
+    return {value:Number(value),confidence:ev.confidence,evidence:ev.evidence,provider:row.source,row};
+  }
   function candidate(field,row,ctx){
     let value;
     if(field==="seriesId")value=row?.series?.id||row?.identifiers?.googleSeriesId||"";
@@ -208,7 +217,7 @@
       else if(field==="cover")out.cover=win.value;
       else if(field==="description")out.description=win.value;
       else if(field==="categories")out.categories=Array.isArray(win.value)?win.value:[];
-      else if(field==="listPrice"){out.priceMeta={...(out.priceMeta||{}),listPrice:Number(win.value),currency:win.row?.priceMeta?.currency||"JPY",taxIncluded:out.fieldEvidence.taxIncluded?.value??win.row?.priceMeta?.taxIncluded??null};out.price=Number(win.value);out.currency=out.priceMeta.currency}
+      else if(field==="listPrice"){out.priceMeta={...(out.priceMeta||{}),listPrice:Number(win.value),currency:win.row?.priceMeta?.currency||"JPY",taxIncluded:out.fieldEvidence.taxIncluded?.value??win.row?.priceMeta?.taxIncluded??null};if(listPriceAccepted(win)){out.price=Number(win.value);out.currency=out.priceMeta.currency}}
       else if(field==="taxIncluded"){out.priceMeta={...(out.priceMeta||{}),taxIncluded:win.value}}
     }
     if(out.series&&!out.series.id&&!out.series.name)out.series=null;
@@ -224,5 +233,5 @@
     return {value:null,confidence:"UNKNOWN",provider:null,evidence:null,attempts};
   }
   function config(){return {version:VERSION,providers:JSON.parse(JSON.stringify(providers)),priority:JSON.parse(JSON.stringify(priority)),thresholds:JSON.parse(JSON.stringify(thresholds))}}
-  window.bookTrackerApiManagement={VERSION,CONFIDENCE:CONF,CRITICAL_FIELDS:[...CRITICAL],providers,priority,thresholds,adapters,evidenceFor,acceptable,runField,resolveIsbn,seriesAcceptable,mergeCandidates,config};
+  window.bookTrackerApiManagement={VERSION,CONFIDENCE:CONF,CRITICAL_FIELDS:[...CRITICAL],providers,priority,thresholds,adapters,evidenceFor,acceptable,listPriceAccepted,runField,resolveIsbn,seriesAcceptable,mergeCandidates,config};
 })();
