@@ -1,4 +1,4 @@
-# Book Tracker — 仕様／回帰テスト対応表 v4.13.25
+# Book Tracker — 仕様／回帰テスト対応表 v4.13.26
 
 「仕様に明記されているのに回帰テストがない」状態を防ぐための対応表です。
 
@@ -154,7 +154,7 @@ Chromiumを使ったUI回帰では390×844で小・中・大フォントをレ�
 | API-014 | Cache | API停止時に既存キャッシュを利用できるが古いCritical値を新規確定しない | 仕様確定・未実装 |
 | API-015 | Contract Test | Providerごとに到達性・schema・主要field・意味を検証 | 仕様確定・未実装 |
 
-> v4.13.25ではGoogle Books/openBDの主要呼出しをAdapter経由へ移行した。楽天Books/NDLの実Adapter、複数Providerの実フェイルオーバー、定価（税込）の正式保存統合は後続段階で実装する。
+> v4.13.26ではGoogle Books/openBDの主要呼出しをAdapter経由へ移行した。楽天Books/NDLの実Adapter、複数Providerの実フェイルオーバー、定価（税込）の正式保存統合は後続段階で実装する。
 
 ## API Management v1.0 — Phase 2
 - API-001〜005: Phase 1のProvider / Capability / field-priority / Evidence / Critical / Remote Config基盤を維持。

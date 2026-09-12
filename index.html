@@ -607,7 +607,7 @@ let calendarExtras=readJSONStorage("calendarExtras_v442",[]);if(!Array.isArray(c
 const DEMO_ENABLED=true;
 // Prototype/dev builds: a deleted sample set stays deleted within this build, but a new build/version starts with samples again.
 // Production/App Store builds set DEMO_ENABLED=false, so this logic is never exposed to end users.
-const APP_VERSION="4.13.25";
+const APP_VERSION="4.13.26";
 const DEMO_DELETED_KEY="bookTrackerDemoDeleted";
 const DEMO_RESET_VERSION_KEY="bookTrackerDemoResetVersion";
 const DEMO_TITLES=["サンプル本棚：前月の便り","サンプル本棚：月夜の標本","サンプルシリーズ：星の余白 1巻","サンプルシリーズ：星の余白 2巻","サンプル本棚：翌月の灯り"];
@@ -737,28 +737,11 @@ async function getJSON(u,opts={}){
  }
  throw err||Error("通信エラー");
 }
-function gbook(v,hint=""){let x=v.volumeInfo||{},ids=x.industryIdentifiers||[];let i=(ids.find(a=>a.type==="ISBN_13")||ids.find(a=>a.type==="ISBN_10")||{}).identifier||hint;const si=v.saleInfo||{},lp=si.listPrice||si.retailPrice||{};return {isbn:i,title:x.title||"",subtitle:x.subtitle||"",author:(x.authors||[]).join(" / "),publisher:x.publisher||"",date:x.publishedDate||"",cover:x.imageLinks?.thumbnail||"",description:x.description||"",categories:x.categories||[],price:Number(lp.amount)||0,currency:lp.currencyCode||"JPY",upcoming:[]}}
-async function openbd(isbn){try{let a=await getJSON("https://api.openbd.jp/v1/get?isbn="+isbn,{searchOnline:true}),x=a?.[0],s=x?.summary||{};return x?{isbn:s.isbn||isbn,title:s.title||"",author:s.author||"",publisher:s.publisher||"",date:s.pubdate||"",cover:s.cover||"",price:0,currency:"JPY",upcoming:[]}:null}catch(e){return null}}
+function gbook(v,hint=""){let x=v.volumeInfo||{},ids=x.industryIdentifiers||[];let i=(ids.find(a=>a.type==="ISBN_13")||ids.find(a=>a.type==="ISBN_10")||{}).identifier||hint;const si=v.saleInfo||{},lp=si.listPrice||si.retailPrice||{};return {isbn:i,title:x.title||"",subtitle:x.subtitle||"",author:(x.authors||[]).join(" / "),publisher:x.publisher||"",date:x.publishedDate||"",cover:x.imageLinks?.thumbnail||"",description:x.description||"",categories:x.categories||[],price:Number(lp.amount)||0,currency:lp.currencyCode||"JPY",language:x.language||"",upcoming:[]}}
 async function isbnLookup(isbn){
  const api=window.bookTrackerApiManagement;
- if(!api?.adapters?.openBD||!api?.adapters?.googleBooks)throw Error("API管理基盤が読み込まれていません。");
- try{
-  const openRows=await api.adapters.openBD.isbn(isbn);
-  const b=openRows.find(x=>x?.title&&canonicalIsbn(x.isbn)===canonicalIsbn(isbn))||openRows.find(x=>x?.title);
-  if(b?.title)return b;
- }catch(e){console.warn("openBD adapter",e)}
- try{
-  const rows=await api.adapters.googleBooks.isbn(isbn);
-  const exact=rows.find(x=>canonicalIsbn(x.isbn)===canonicalIsbn(isbn));
-  if(exact?.title)return exact;
-  if(rows[0]?.title)return rows[0];
- }catch(e){console.warn("Google Books adapter",e)}
- try{
-  const rows=await api.adapters.googleBooks.search('"'+isbn+'"',20);
-  const exact=rows.find(x=>canonicalIsbn(x.isbn)===canonicalIsbn(isbn));
-  if(exact?.title)return exact;
- }catch(e){console.warn("Google Books quoted adapter",e)}
- throw Error("このISBNに一致する書誌情報が見つかりませんでした。");
+ if(!api?.resolveIsbn)throw Error("API管理基盤が読み込まれていません。");
+ return await api.resolveIsbn(isbn);
 }
 async function searchGoogle(q){
  const lim=Number(appSettings.search?.resultCount)||20;
@@ -1162,6 +1145,10 @@ function showDay(k){
  renderMonthReleased();
 }
 function seriesKey(b){
+ const sid=String(b?.series?.id||b?.identifiers?.googleSeriesId||"").trim();
+ if(sid)return "series-id:"+sid;
+ const sn=String(b?.series?.name||"").trim();
+ if(sn)return "series-name:"+sn.replace(/\s+/g,"");
  const parsed=parseVolumeTitle(b?.title);
  const t=parsed.volume==null?String(b?.title||"").trim():parsed.title;
  return t.replace(/\s+/g,"").trim()||String(b?.title||"");
@@ -1533,7 +1520,7 @@ window.bulkAdd=async id=>{
 /* v4.10.0: Runtime specification guard + lightweight regression checks.
    Development build only. These checks intentionally fail loudly instead of silently masking regressions. */
 (function(){
- const DEV_GUARD_VERSION="4.13.25";
+ const DEV_GUARD_VERSION="4.13.26";
  const validPurchase=new Set(["wanted","reserved","purchased","none"]);
  function add(name,ok,detail){return {name,ok,detail:detail||""}}
  function runSpecGuard(){
@@ -1789,6 +1776,21 @@ window.bulkAdd=async id=>{
     results.push(add("API-008 外部Provider直接呼出しの隔離",directOutsideAdapters,"主要呼出し関数にProvider URLを残していない"));
     const normalized=api.adapters.googleBooks.search&&api.adapters.openBD.isbn;
     results.push(add("API-009 Adapter共通形式",!!normalized,"Adapterが正規化済みBookRecord相当を返す"));
+    const resolverOk=typeof api.resolveIsbn==="function"&&typeof api.seriesAcceptable==="function";
+    results.push(add("API-010 複数API統合Resolver",resolverOk,"ISBN単位で複数Providerを収集し項目別統合"));
+    const criticalThresholdOk=api.thresholds.seriesId==="HIGH"&&api.thresholds.seriesName==="HIGH"&&api.thresholds.volumeNumber==="HIGH"&&api.thresholds.listPrice==="HIGH";
+    results.push(add("API-011 Critical項目の信頼度閾値",criticalThresholdOk,"シリーズ/巻数/定価はHIGH以上のみ採用"));
+    const seriesFallbackOk=seriesKey({series:{id:"G-SERIES-1",name:"レベルE"},title:"レベルE（3） Full moon…！"})==="series-id:G-SERIES-1";
+    results.push(add("API-012 正式シリーズID優先",seriesFallbackOk,"タイトル解析より正式series.idを優先"));
+    const titleFallbackOk=seriesKey({title:"レベルE（3） Full moon…！"}).includes("Fullmoon");
+    results.push(add("API-013 タイトル解析フォールバック維持",titleFallbackOk,"正式シリーズ情報がない場合のみ従来解析を使用"));
+    const c1={field:"seriesName",value:"レベルE",confidence:"HIGH",evidence:{identifierMatched:true,schemaValidated:true,semanticValidated:true,countryMatched:true},provider:"googleBooks",priority:0};
+    const c2={field:"seriesName",value:"レベルE",confidence:"HIGH",evidence:{identifierMatched:true,schemaValidated:true,semanticValidated:true,countryMatched:true},provider:"openBD",priority:2};
+    const merged=api.mergeCandidates("seriesName",[c1,c2],{isbn:"9784088720715"});
+    results.push(add("API-014 複数ソース一致による信頼度補強",!!merged&&merged.evidence.crossSourceAgreement===true&&merged.confidence==="VERIFIED","一致根拠をEvidenceに保持"));
+    const fake=api.mergeCandidates("volumeNumber",[{field:"volumeNumber",value:1,confidence:"HIGH",evidence:{identifierMatched:true,schemaValidated:true,semanticValidated:true},provider:"googleBooks",priority:0}],{});
+    const resolutionShape=resolverOk&&!!fake&&fake.value===1&&typeof fake.provider==="string"&&!!fake.evidence;
+    results.push(add("API-015 統合候補の監査情報保持",resolutionShape,"provider/confidence/evidenceを保持"));
   }catch(e){
     results.push(add("API管理基盤回帰",false,e.message));
   }

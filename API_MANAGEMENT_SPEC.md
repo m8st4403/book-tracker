@@ -523,3 +523,44 @@ API Provider / Capability / 項目別優先順位 / Evidenceベース信頼度�
 - 定価（税込）の正式な保存統合は後続Phase。
 
 Phase 2の目的は、既存機能を壊さずProvider依存箇所をAdapter層へ隔離すること。
+
+
+## Phase 3 — シリーズ情報・巻数の信頼度判定＋複数APIデータ統合（v1.1）
+
+### 3.1 統合単位
+- ISBNを統合キーとし、利用可能なProvider Adapterから同一書籍の候補を収集する。
+- 取得した各項目は、Provider単位ではなく**項目単位**で採用候補を決定する。
+- 統合結果には `sources`、`fieldEvidence`、`resolution` を保持し、どのAPI・どの根拠で採用したか追跡可能にする。
+
+### 3.2 シリーズ・巻数の正式判定
+優先順位は次の通り。
+1. 正式な `seriesId`
+2. 正式な `seriesName`
+3. 正式な `volumeNumber`（実巻順）
+4. 複数Provider間の一致
+5. 最終手段として既存のタイトル解析
+
+`seriesId`、`seriesName`、`volumeNumber` はCritical項目として `HIGH` 未満を自動確定しない。
+
+### 3.3 複数Provider一致
+同一ISBNに対して複数Providerが同じシリーズ名・巻数を返した場合、`crossSourceAgreement=true` をEvidenceに記録し、識別子・スキーマ・意味検証を満たす候補の信頼度を補強する。
+
+ただし、複数Providerが同じ値を返しただけで定価（税込）の税込性を推測してはならない。
+
+### 3.4 シリーズグルーピング
+蔵書表示のシリーズキーは、次の順で決定する。
+- `series.id` / `googleSeriesId`
+- `series.name`
+- 既存のタイトル解析
+
+したがって、タイトル表記が異なる巻でも正式なシリーズIDが同じなら同一シリーズとして扱える。
+
+### 3.5 統合結果の品質
+- API通信成功だけでは採用成功としない。
+- 必須項目の存在、ISBN一致、スキーマ、意味、国/市場、税込性などをEvidenceとして評価する。
+- `LOW` / `UNKNOWN` は自動確定に使用しない。
+- Critical項目は `HIGH` 以上を要求する。
+- 情報が競合し、十分な根拠で優劣を決められない場合は自動統合せず、候補を保持する。
+
+### 3.6 新API
+既存Adapterが実装済みであれば、リモート設定により有効化・優先順位変更が可能。未知APIのコードをリモートから取得・実行することはしない。
