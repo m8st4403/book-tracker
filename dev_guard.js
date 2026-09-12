@@ -7,7 +7,7 @@ const ids=[...s.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);check('重複ID
 const fn=[...s.matchAll(/function\s+([A-Za-z_$][\w$]*)\s*\(/g)].map(m=>m[1]);check('重複した名前付きfunction',new Set(fn).size===fn.length,'OK');
 check('localStorage.clear() 不使用',!s.includes('localStorage.clear('),'OK');
 check('4.11.3 Visual Baseline',/4\.11\.3.*Visual Baseline|Visual Baseline.*4\.11\.3/i.test(s+fs.readFileSync(path.join(root,'SPEC.md'),'utf8')),'OK');
-check('APP_VERSION 4.13.17',/APP_VERSION\s*=\s*["']4\.13\.17["']/.test(s),'OK');
+check('APP_VERSION 4.13.18',/APP_VERSION\s*=\s*["']4\.13\.17["']/.test(s),'OK');
 check('DEMO_ENABLED 定義',/DEMO_ENABLED\s*=/.test(s),'OK');
 check('本番サンプル無効化ゲート',/Production\/App Store builds set DEMO_ENABLED=false/.test(s),'本番ではfalseにする明示コメントあり');
 check('正規登録関数',/window\.addBook|window\.bulkAdd/.test(s),'OK');
@@ -294,6 +294,9 @@ function browserUIRegression(){
         const libSize=libHead?getComputedStyle(libHead).fontSize:"";
         const searchSize=searchHead?getComputedStyle(searchHead).fontSize:"";
         const bookSize=bookTitle?getComputedStyle(bookTitle).fontSize:"";
+        setMainTab("home");await sleep(20);
+        const homeUpcomingHead=document.querySelector(".home-upcoming-head > div > b");
+        const homeUpcomingSize=homeUpcomingHead?getComputedStyle(homeUpcomingHead).fontSize:"";
         setMainTab("calendar");
         const calSample=mixedVolumeBooks[0];
         $("selectedDateTitle").textContent="2025-01-01 の発売予定";
@@ -303,8 +306,8 @@ function browserUIRegression(){
         const monthTitleSize=getComputedStyle($("calendarMonthReleasedTitle")).fontSize;
         specAdd("カード見出しのフォントサイズ統一",
           !!similarH3&&!!addHead&&!!libHead&&!!searchHead&&!!bookTitle&&
-          similarSize===addSize&&addSize===libSize&&libSize===searchSize&&searchSize===dateTitleSize&&dateTitleSize===monthTitleSize,
-          "類似="+similarSize+" / 追加="+addSize+" / 蔵書="+libSize+" / 検索="+searchSize+" / 日付="+dateTitleSize+" / 月="+monthTitleSize);
+          similarSize===addSize&&addSize===libSize&&libSize===searchSize&&searchSize===dateTitleSize&&dateTitleSize===monthTitleSize&&monthTitleSize===homeUpcomingSize,
+          "類似="+similarSize+" / 追加="+addSize+" / 蔵書="+libSize+" / 検索="+searchSize+" / 日付="+dateTitleSize+" / 月="+monthTitleSize+" / 近日="+homeUpcomingSize);
         specAdd("書籍タイトルのフォントサイズを維持",
           !!bookTitle&&bookSize!==similarSize&&bookSize==="16px",
           "書籍="+bookSize+" / 類似="+similarSize);
