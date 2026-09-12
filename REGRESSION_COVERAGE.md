@@ -132,3 +132,26 @@ Chromiumを使ったUI回帰では390×844で小・中・大フォントをレ�
 | 4冊 | 全巻表示 ↔ タイトルだけ表示 | 実コード |
 | 5冊以上 | 従来の3状態循環を維持 | 実DOM＋状態遷移 |
 | 2〜4冊のカード寸法 | 従来の単巻カード寸法を維持 | 実DOM |
+
+
+## API管理仕様 v1.0（実装前の回帰項目）
+
+| ID | 項目 | 確認内容 | 状態 |
+|---|---|---|---|
+| API-001 | Adapter分離 | Provider固有レスポンスを共通BookRecordへ変換 | 仕様確定・未実装 |
+| API-002 | 項目別優先順位 | API全体ではなくfield単位で候補を選択 | 仕様確定・未実装 |
+| API-003 | Capability | 必要Capabilityを持たないProviderを候補から除外 | 仕様確定・未実装 |
+| API-004 | Schema検証 | HTTP 200でもschema不一致なら失敗扱い | 仕様確定・未実装 |
+| API-005 | 必須Field検証 | 必須値欠損なら次候補へフェイルオーバー | 仕様確定・未実装 |
+| API-006 | 値・意味検証 | ISBN、日付、価格、税区分等を検証 | 仕様確定・未実装 |
+| API-007 | 信頼度 | EvidenceからVERIFIED/HIGH/MEDIUM/LOW/UNKNOWNを判定 | 仕様確定・未実装 |
+| API-008 | Critical閾値 | series.id/name/volume/listPrice/taxIncludedは低信頼値を自動確定しない | 仕様確定・未実装 |
+| API-009 | 複数Provider矛盾 | Critical項目の不一致を単純多数決で確定しない | 仕様確定・未実装 |
+| API-010 | 自動Failover | timeout/HTTP/schema/field/confidence失敗で次候補へ移行 | 仕様確定・未実装 |
+| API-011 | 新API | 未知APIのコード自動取得・実行を行わない | 仕様確定・未実装 |
+| API-012 | Remote Config | Adapter実装済みProviderを後から有効化/無効化/順位変更 | 仕様確定・未実装 |
+| API-013 | 価格固定 | 登録時の定価（税込）を保存し、後日のAPI価格変更で蔵書総額を変更しない | 仕様確定・未実装 |
+| API-014 | Cache | API停止時に既存キャッシュを利用できるが古いCritical値を新規確定しない | 仕様確定・未実装 |
+| API-015 | Contract Test | Providerごとに到達性・schema・主要field・意味を検証 | 仕様確定・未実装 |
+
+> v4.13.24の現行実装はGoogle Books/openBDを直接利用しており、上記API管理基盤はまだ実装していない。今回の変更は仕様の正式反映であり、既存UIの回帰結果を変更するものではない。
