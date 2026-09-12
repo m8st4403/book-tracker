@@ -1494,6 +1494,7 @@ window.bulkAdd=async id=>{
 
 </script>
 
+<script src="./api_management.js"></script>
 <script id="v410-spec-guard">
 /* v4.10.0: Runtime specification guard + lightweight regression checks.
    Development build only. These checks intentionally fail loudly instead of silently masking regressions. */
@@ -1723,6 +1724,28 @@ window.bulkAdd=async id=>{
     const detailOverlay=document.querySelector('.detail-overlay');
     if(detailOverlay) detailOverlay.remove();
     render();
+  }
+
+  // API-001..005: API Management v1.0 foundation is present and obeys the fixed contract.
+  try{
+    const api=window.bookTrackerApiManagement;
+    const cfg=api?.config?.();
+    const providersOk=!!cfg&&["googleBooks","openBD","rakuten","ndl"].every(k=>cfg.providers[k]&&cfg.providers[k].capabilities);
+    const priorityOk=!!cfg&&Array.isArray(cfg.priority.search)&&cfg.priority.search[0]==="googleBooks"&&cfg.priority.seriesId[0]==="googleBooks";
+    const criticalOk=!!api&&["isbn13","seriesId","seriesName","volumeNumber","listPrice","taxIncluded"].every(k=>api.CRITICAL_FIELDS.includes(k));
+    results.push(add("API-001 管理基盤・Provider/Capability",providersOk&&priorityOk&&criticalOk,"Provider/Capability/項目別優先順位/critical定義"));
+    const ev=api.evidenceFor("isbn13","9784088720715",{identifierMatched:true,countryMatched:true});
+    const evOk=ev.confidence==="VERIFIED"&&ev.evidence.schemaValidated&&ev.evidence.semanticValidated;
+    results.push(add("API-002 情報信頼度Evidence",evOk,`confidence=${ev.confidence}`));
+    const low=api.evidenceFor("listPrice",484,{identifierMatched:true,countryMatched:true,taxIncludedConfirmed:false});
+    const lowBlocked=!api.acceptable("listPrice",low);
+    results.push(add("API-003 定価税込の低信頼値拒否",lowBlocked,`confidence=${low.confidence}`));
+    const high=api.evidenceFor("title","レベルE",{identifierMatched:true,countryMatched:true});
+    results.push(add("API-004 通常項目の信頼度判定",api.acceptable("title",high),`confidence=${high.confidence}`));
+    const remoteCodeSafe=!Object.values(api.providers).some(v=>typeof v==="function")&&!cfg.providers.googleBooks.executeRemoteCode;
+    results.push(add("API-005 リモート設定はコード実行不可",remoteCodeSafe,"設定値のみ"));
+  }catch(e){
+    results.push(add("API管理基盤回帰",false,e.message));
   }
 
   const ok=results.every(x=>x.ok);

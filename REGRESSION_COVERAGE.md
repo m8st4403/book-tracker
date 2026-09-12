@@ -155,3 +155,12 @@ Chromiumを使ったUI回帰では390×844で小・中・大フォントをレ�
 | API-015 | Contract Test | Providerごとに到達性・schema・主要field・意味を検証 | 仕様確定・未実装 |
 
 > v4.13.24の現行実装はGoogle Books/openBDを直接利用しており、上記API管理基盤はまだ実装していない。今回の変更は仕様の正式反映であり、既存UIの回帰結果を変更するものではない。
+
+## API Management v1.0 Foundation (Phase 1)
+- API-001 Provider / Capability / field-priority registry exists and includes Google Books, openBD, Rakuten Books, NDL Search.
+- API-002 Evidence-based confidence evaluation exists.
+- API-003 Critical list-price/tax-inclusion values below the required confidence are rejected.
+- API-004 Non-critical fields can be accepted at the configured threshold.
+- API-005 Remote configuration contains data only; no remote code execution path is provided.
+
+> Phase 1 intentionally adds the management foundation without changing the existing search/registration behavior. Provider-by-provider migration and live fallback behavior are subsequent implementation steps.
