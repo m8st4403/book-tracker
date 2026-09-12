@@ -7,7 +7,7 @@ const ids=[...s.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);check('重複ID
 const fn=[...s.matchAll(/function\s+([A-Za-z_$][\w$]*)\s*\(/g)].map(m=>m[1]);check('重複した名前付きfunction',new Set(fn).size===fn.length,'OK');
 check('localStorage.clear() 不使用',!s.includes('localStorage.clear('),'OK');
 check('4.11.3 Visual Baseline',/4\.11\.3.*Visual Baseline|Visual Baseline.*4\.11\.3/i.test(s+fs.readFileSync(path.join(root,'SPEC.md'),'utf8')),'OK');
-check('APP_VERSION 4.13.23',/APP_VERSION\s*=\s*["']4\.13\.23["']/.test(s),'OK');
+check('APP_VERSION 4.13.24',/APP_VERSION\s*=\s*["']4\.13\.24["']/.test(s),'OK');
 check('近日発売見出しの統一CSS',/#home \.home-upcoming-head b\{font-size:var\(--unified-card-heading-size\)!important\}/.test(s),'類似作品と同じ統一変数');
 check('詳細画面透過なしの限定CSS',/\.detail-overlay \.detail-sheet\{background:var\(--surface\)!important\}/.test(s),'詳細画面だけ透過なし');
 check('タイトル一覧に戻るは非ボタン要素',!/<button[^>]*class=\"series-title-collapse\"/.test(s)&&/class=\"series-title-collapse\" role=\"button\"/.test(s),'span role=button');
@@ -20,6 +20,8 @@ check('仕様文書',fs.existsSync(path.join(root,'SPEC.md'))&&fs.existsSync(pat
 check('ステータス固定幅',s.includes('.library-status-stack{')&&s.includes('width:78px;min-width:78px')&&s.includes('.series-title-status-stack{')&&s.includes('box-sizing:border-box;width:78px'),'78px');
 check('折りたたみ状態保持',/seriesOpenKey|setSeriesOpenState/.test(s)&&/data-series-open/.test(s),'OK');
 check('タイトル一覧戻るUI',/series-title-collapse\{[^}]*background:none!important/.test(s)&&/series-title-collapse\{[^}]*padding:0!important/.test(s),'ボタン枠・背景・余白なしのテキスト表示');
+check('2〜4冊シリーズ切替設定',/function getSeriesShortState\(name\)/.test(s)&&/shortToggle=items\.length>=2&&items\.length<=4/.test(s)&&/data-series-short="1"/.test(s)&&/class="series-group is-short-toggle"/.test(s)&&/nextSeriesShortState/.test(s),'2〜4冊だけ全巻表示↔タイトルだけ表示');
+check('1冊・5冊以上の表示設定維持',/if\(!cyclic\)/.test(s)&&/items\.length>4/.test(s)&&/shortToggle=items\.length>=2&&items\.length<=4/.test(s),'1冊は従来、5冊以上は従来の3状態循環');
 check('後ろ4枚5px刻み枠線',/series-stack-4/.test(s)&&/translate\(\.5px,5px\)/.test(s)&&/translate\(1px,10px\)/.test(s)&&/translate\(1\.5px,15px\)/.test(s)&&/translate\(2px,20px\)/.test(s)&&/transform:none/.test(s)&&/background:transparent!important/.test(s)&&!/series-stack-5/.test(s),'後ろ4枚・縦5px刻み・枠線のみ');
 check('5冊以上タイトル行背景',/\.series-group\.is-cyclic \.series-cyclic-head\{background:color-mix\(in srgb,color-mix\(in srgb,var\(--primary\) 12%,var\(--surface\)\) var\(--panel-surface-alpha\),transparent\)!important/.test(s)&&/\.series-group\.is-cyclic \.series-cyclic-title\{color:var\(--app-text\)!important/.test(s),'最終CSSで背景と文字色を維持');
 check('背景画像cover/center',/#appBackground\{[^}]*background-image:[^}]*background-position:center center;background-size:cover/.test(s)&&/body\{[^}]*background-image:none!important/.test(s),'固定背景レイヤー + cover + center');
@@ -172,11 +174,23 @@ function browserUIRegression(){
         books=[]; for(let i=1;i<=4;i++)books.push({isbn:"g4-"+i,title:"比較シリーズ4 "+i,author:"A",publisher:"P",date:"2025-01-01",price:100});
         for(let i=1;i<=5;i++)books.push({isbn:"g5-"+i,title:"比較シリーズ5 "+i,author:"A",publisher:"P",date:"2025-01-01",price:100});
         setSeriesCycleState("比較シリーズ5","deck"); setSeriesOpenState("比較シリーズ4",true); $("librarySort").value="registered-desc"; setMainTab("library"); renderLibrary();
-        const c4=document.querySelector(".series-group:not(.is-cyclic) .library-card"), c5=document.querySelector(".series-group.is-cyclic .series-deck .library-card");
+        const c4=document.querySelector(".series-group.is-short-toggle .series-books .library-card"), c5=document.querySelector(".series-group.is-cyclic .series-deck .library-card");
         const r4=c4?.getBoundingClientRect(),r5=c5?.getBoundingClientRect();
         specAdd("5冊以上一枚表示カード寸法",!!r4&&!!r5&&Math.abs(r4.width-r5.width)<=0.5&&Math.abs(r4.height-r5.height)<=0.5,"4冊="+(r4?r4.width+"x"+r4.height:"none")+" / 5冊="+(r5?r5.width+"x"+r5.height:"none"));
         setSeriesCycleState("比較シリーズ5","list"); renderLibrary(); const c5list=document.querySelector(".series-group.is-cyclic .series-books .library-card"); const r5list=c5list?.getBoundingClientRect();
         specAdd("5冊以上全巻表示カード寸法",!!r4&&!!r5list&&Math.abs(r4.width-r5list.width)<=0.5&&Math.abs(r4.height-r5list.height)<=0.5,"4冊="+(r4?r4.width+"x"+r4.height:"none")+" / 5冊全巻="+(r5list?r5list.width+"x"+r5list.height:"none"));
+        // 2〜4冊シリーズ: two-state toggle all volumes ↔ title-only. One-book and 5+ paths remain unchanged.
+        books=[]; for(let i=1;i<=2;i++)books.push({isbn:"short-series-"+i,title:"2冊シリーズ "+i,author:"A",publisher:"P",date:"2025-01-01",price:100});
+        localStorage.setItem("seriesView_v444","on"); setSeriesShortState("2冊シリーズ","all"); renderLibrary();
+        const shortGroup=document.querySelector('#myBooks .series-group[data-series-short=\"1\"]'), shortAll=shortGroup?.querySelectorAll(".series-books .library-card").length===2, shortHintAll=shortGroup?.querySelector(".series-cyclic-hint")?.textContent==="タップ：タイトルだけ表示";
+        shortGroup?.querySelector(".series-cyclic-head")?.click();
+        const shortGroup2=document.querySelector('#myBooks .series-group[data-series-short=\"1\"]'), shortTitles=shortGroup2?.querySelectorAll(".series-title-item").length===2, shortHintTitle=shortGroup2?.querySelector(".series-cyclic-hint")?.textContent==="タップ：全巻を表示";
+        specAdd("2〜4冊は全巻表示↔タイトルだけ表示",shortAll&&shortHintAll&&shortTitles&&shortHintTitle,"2冊: all→title の2状態");
+        books=[{isbn:"one-series",title:"1冊シリーズ 1",author:"A",publisher:"P",date:"2025-01-01",price:100}]; setSeriesShortState("1冊シリーズ","title"); renderLibrary();
+        specAdd("1冊は従来表示を維持",!document.querySelector('#myBooks .series-group[data-series-short=\"1\"]')&&!!document.querySelector("#myBooks details.series-group"),"1冊はdetails表示");
+        books=[]; for(let i=1;i<=5;i++)books.push({isbn:"five-series-"+i,title:"5冊シリーズ "+i,author:"A",publisher:"P",date:"2025-01-01",price:100}); setSeriesCycleState("5冊シリーズ","deck"); renderLibrary();
+        const fiveHint=document.querySelector('#myBooks .series-group[data-series-cycle=\"5冊シリーズ\"] .series-cyclic-hint')?.textContent;
+        specAdd("5冊以上は従来の3状態循環を維持",fiveHint==="タップ：全巻を表示"&&nextSeriesCycleState("deck")==="list"&&nextSeriesCycleState("list")==="title"&&nextSeriesCycleState("title")==="deck","5冊: deck→list→title→deck");
 
         books=[{isbn:"bulk-a",title:"Bulk A",author:"A",publisher:"P",date:"2025-01-01",price:100},{isbn:"bulk-b",title:"Bulk B",author:"B",publisher:"P",date:"2025-01-01",price:100}]; bookMeta={}; localStorage.setItem("bookTrackerMeta_v483",JSON.stringify(bookMeta)); localStorage.setItem("seriesView_v444","off"); $("librarySort").value="registered-desc"; renderLibrary();
         $("libraryFilter").value="Bulk A"; renderLibrary(); const only=document.querySelector("#myBooks .selectBook"); if(only)only.checked=true; $("markReadSelected")?.click();
@@ -320,8 +334,8 @@ function browserUIRegression(){
         books=[];bookMeta={};
         for(let i=1;i<=4;i++){const b={isbn:"guard-four-"+i,title:"比較シリーズ "+i,author:"A",publisher:"P",date:"2025-01-0"+i,price:100};books.push(b);bookMeta[canonicalIsbn(b.isbn)]={purchaseStatus:"purchased",readingStatus:"unread",favorite:false}}
         localStorage.setItem("seriesView_v444","on");renderLibrary();
-        const fourHead=document.querySelector("#myBooks .series-group");
-        const fourBg=fourHead?getComputedStyle(fourHead.querySelector("summary")).backgroundColor:"";
+        const fourHead=document.querySelector("#myBooks .series-group.is-short-toggle .series-cyclic-head");
+        const fourBg=fourHead?getComputedStyle(fourHead).backgroundColor:"";
         books=[];bookMeta={};
         for(let i=1;i<=5;i++){const b={isbn:"guard-five-"+i,title:"比較シリーズ "+i,author:"A",publisher:"P",date:"2025-01-0"+i,price:100};books.push(b);bookMeta[canonicalIsbn(b.isbn)]={purchaseStatus:"purchased",readingStatus:"unread",favorite:false}}
         setSeriesCycleState("比較シリーズ","deck");renderLibrary();
@@ -356,7 +370,7 @@ function browserUIRegression(){
         appSettings.background.image="";appSettings.background.avgColor=null;appSettings.background.avgLum=null;appSettings.autoTextContrast=savedAutoText3;applyVisualSettings(); render();
         window.alert=savedAlert; window.confirm=savedConfirm;
       }
-    // v4.13.23: verify the home upcoming heading against the same rendered heading
+    // v4.13.24: verify the home upcoming heading against the same rendered heading
     // used by 「類似作品を探す」 at every font setting. This is a real computed-style check.
     let upcomingHeadingOk=true; const upcomingHeadingDetails=[];
     for(const fs of ['font-small','font-medium','font-large']){
@@ -370,7 +384,7 @@ function browserUIRegression(){
     }
     specAdd('近日発売の注目書籍の見出しサイズ',upcomingHeadingOk,upcomingHeadingOk?'小・中・大で類似作品とcomputed style一致':upcomingHeadingDetails.join(' / '));
 
-    // v4.13.23: detail sheet background is explicitly scoped to the detail screen and is fully opaque.
+    // v4.13.24: detail sheet background is explicitly scoped to the detail screen and is fully opaque.
     try{
       const fixture={isbn:'guard-detail-alpha',title:'詳細画面透過テスト',author:'A',publisher:'P',date:'2025-01-01',price:100};
       openBookDetail(fixture);
