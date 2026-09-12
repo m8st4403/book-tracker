@@ -7,7 +7,7 @@ const ids=[...s.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);check('重複ID
 const fn=[...s.matchAll(/function\s+([A-Za-z_$][\w$]*)\s*\(/g)].map(m=>m[1]);check('重複した名前付きfunction',new Set(fn).size===fn.length,'OK');
 check('localStorage.clear() 不使用',!s.includes('localStorage.clear('),'OK');
 check('4.11.3 Visual Baseline',/4\.11\.3.*Visual Baseline|Visual Baseline.*4\.11\.3/i.test(s+fs.readFileSync(path.join(root,'SPEC.md'),'utf8')),'OK');
-check('APP_VERSION 4.13.15',/APP_VERSION\s*=\s*["']4\.13\.15["']/.test(s),'OK');
+check('APP_VERSION 4.13.16',/APP_VERSION\s*=\s*["']4\.13\.16["']/.test(s),'OK');
 check('DEMO_ENABLED 定義',/DEMO_ENABLED\s*=/.test(s),'OK');
 check('本番サンプル無効化ゲート',/Production\/App Store builds set DEMO_ENABLED=false/.test(s),'本番ではfalseにする明示コメントあり');
 check('正規登録関数',/window\.addBook|window\.bulkAdd/.test(s),'OK');
@@ -233,7 +233,72 @@ function browserUIRegression(){
         for(const id of ["home","add","library","search","calendar","settings"]){document.querySelector('#bottomNav button[data-s="'+id+'"]')?.click();const c=bgEl?getComputedStyle(bgEl):null,cur=c?c.backgroundSize+"|"+c.backgroundPosition+"|"+c.backgroundRepeat+"|"+c.backgroundImage:"";if(cur!==bgBase)bgStable=false;bgTabDetails.push(id+":"+cur)}
         specAdd("背景画像のタブ間アジャスト固定",bgStable,bgTabDetails.join(" / "));
 
-        // v4.13.14: 5+ title header must be slightly darker than the <=4-series header,
+        // v4.13.16: volume notation is normalized for display/grouping, but title meaning is never inferred.
+        const mixedVolumeBooks=[
+          {isbn:"vol-1",title:"統一シリーズ 1巻",author:"A",publisher:"P",date:"2025-01-01"},
+          {isbn:"vol-2",title:"統一シリーズ 第2巻",author:"A",publisher:"P",date:"2025-01-02"},
+          {isbn:"vol-3",title:"統一シリーズ (3)",author:"A",publisher:"P",date:"2025-01-03"},
+          {isbn:"vol-4",title:"統一シリーズ （4）",author:"A",publisher:"P",date:"2025-01-04"},
+          {isbn:"vol-5",title:"統一シリーズ 5",author:"A",publisher:"P",date:"2025-01-05"},
+          {isbn:"spin-1",title:"統一シリーズ 外伝 1巻",author:"A",publisher:"P",date:"2025-01-06"}
+        ];
+        const parsedVolumes=mixedVolumeBooks.slice(0,5).map(b=>parseVolumeTitle(b.title));
+        specAdd("巻数表記の表示正規化",
+          parsedVolumes.every((p,i)=>p.title==="統一シリーズ"&&p.volume===i+1)&&
+          displayBookTitle(mixedVolumeBooks[0])==="統一シリーズ 1"&&
+          displayBookTitle(mixedVolumeBooks[1])==="統一シリーズ 2"&&
+          displayBookTitle(mixedVolumeBooks[2])==="統一シリーズ 3"&&
+          displayBookTitle(mixedVolumeBooks[3])==="統一シリーズ 4"&&
+          displayBookTitle(mixedVolumeBooks[4])==="統一シリーズ 5",
+          parsedVolumes.map(p=>p.title+" "+p.volume).join(" / "));
+        books=mixedVolumeBooks;bookMeta={};localStorage.setItem("seriesView_v444","off");$("libraryFilter").value="";renderLibrary();
+        const libTitles=[...document.querySelectorAll("#myBooks .library-card .title")].map(x=>x.textContent.trim());
+        const sortBooksForGuard=[
+          {isbn:"sort-10",title:"並べ替えシリーズ 10巻",author:"A",publisher:"P",date:"2025-01-01"},
+          {isbn:"sort-2",title:"並べ替えシリーズ 2巻",author:"A",publisher:"P",date:"2025-01-02"},
+          {isbn:"sort-1",title:"並べ替えシリーズ 1巻",author:"A",publisher:"P",date:"2025-01-03"}
+        ];
+        const titleSorted=sortBooksForGuard.map((b,i)=>({b,i})).sort((a,b)=>{ $("librarySort").value="title-asc"; return compareLibraryItems(a,b)}).map(x=>x.b.title);
+        const volumeSorted=sortBooksForGuard.map((b,i)=>({b,i})).sort((a,b)=>{ $("librarySort").value="volume-asc"; return compareLibraryItems(a,b)}).map(x=>x.b.title);
+        const expectedTitleSorted=[...sortBooksForGuard].sort((a,b)=>String(a.title||"").toLowerCase().localeCompare(String(b.title||"").toLowerCase(),"ja")).map(b=>b.title);
+        specAdd("巻数正規化は既存並べ替えに干渉しない",
+          titleSorted.join("|")===expectedTitleSorted.join("|") &&
+          volumeSorted.join("|")==="並べ替えシリーズ 1巻|並べ替えシリーズ 2巻|並べ替えシリーズ 10巻",
+          "title="+titleSorted.join(" / ")+" volume="+volumeSorted.join(" / ")+" expectedTitle="+expectedTitleSorted.join(" / "));
+        $("librarySort").value="registered-desc";
+        specAdd("蔵書カードの巻数表示統一",
+          libTitles.includes("統一シリーズ 1")&&libTitles.includes("統一シリーズ 2")&&libTitles.includes("統一シリーズ 3")&&libTitles.includes("統一シリーズ 4")&&libTitles.includes("統一シリーズ 5")&&libTitles.includes("統一シリーズ 外伝 1"),
+          libTitles.join(" / "));
+        localStorage.setItem("seriesView_v444","on");renderLibrary();
+        const seriesGroups=[...document.querySelectorAll("#myBooks .series-group")];
+        specAdd("作品タイトルを勝手に統合しない",
+          seriesGroups.length===2,
+          "本編系="+seriesGroups.filter(g=>g.querySelector(".series-cyclic-title,.series-title")).length+" / groups="+seriesGroups.length);
+        const savedSeriesViewTitle=localStorage.getItem("seriesView_v444");
+        localStorage.setItem("seriesView_v444","off");
+        window.addResultsData=mixedVolumeBooks.slice(0,5);addResultsMode="normal";renderResults("addResults",window.addResultsData);
+        const addTitles=[...document.querySelectorAll("#addResults .title")].map(x=>x.textContent.trim());
+        renderResults("searchResults",window.addResultsData);
+        const searchTitles=[...document.querySelectorAll("#searchResults .title")].map(x=>x.textContent.trim());
+        specAdd("本を追加・書籍検索カードの巻数表示統一",
+          addTitles.every((t,i)=>t==="統一シリーズ "+(i+1))&&searchTitles.every((t,i)=>t==="統一シリーズ "+(i+1)),
+          "add="+addTitles.join(" / ")+" search="+searchTitles.join(" / "));
+        setMainTab("search");renderResults("searchResults",window.addResultsData);await sleep(20);
+        const similarH3=document.querySelector("#similarBox h3"), titleEl=document.querySelector("#searchResults .title");
+        const similarSize=similarH3?getComputedStyle(similarH3).fontSize:"";
+        const bookSize=titleEl?getComputedStyle(titleEl).fontSize:"";
+        setMainTab("calendar");
+        const calSample=mixedVolumeBooks[0];
+        $("selectedDateTitle").textContent="2025-01-01 の発売予定";
+        $("selectedEvents").innerHTML=calendarEventHtml(calSample,calSample.date);
+        $("calendarMonthReleasedTitle").textContent="1月に発売された書籍";
+        const dateTitleSize=getComputedStyle($("selectedDateTitle")).fontSize;
+        const monthTitleSize=getComputedStyle($("calendarMonthReleasedTitle")).fontSize;
+        specAdd("カードタイトルのフォントサイズ統一",
+          !!similarH3&&!!titleEl&&similarSize===bookSize&&bookSize===dateTitleSize&&dateTitleSize===monthTitleSize,
+          "類似="+similarSize+" / 書籍="+bookSize+" / 日付="+dateTitleSize+" / 月="+monthTitleSize);
+        localStorage.setItem("seriesView_v444",savedSeriesViewTitle||"off");
+                // v4.13.14: 5+ title header must be slightly darker than the <=4-series header,
         // while remaining a translucent panel over the background image.
         books=[];bookMeta={};
         for(let i=1;i<=4;i++){const b={isbn:"guard-four-"+i,title:"比較シリーズ "+i,author:"A",publisher:"P",date:"2025-01-0"+i,price:100};books.push(b);bookMeta[canonicalIsbn(b.isbn)]={purchaseStatus:"purchased",readingStatus:"unread",favorite:false}}
