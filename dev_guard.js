@@ -7,7 +7,9 @@ const ids=[...s.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);check('重複ID
 const fn=[...s.matchAll(/function\s+([A-Za-z_$][\w$]*)\s*\(/g)].map(m=>m[1]);check('重複した名前付きfunction',new Set(fn).size===fn.length,'OK');
 check('localStorage.clear() 不使用',!s.includes('localStorage.clear('),'OK');
 check('4.11.3 Visual Baseline',/4\.11\.3.*Visual Baseline|Visual Baseline.*4\.11\.3/i.test(s+fs.readFileSync(path.join(root,'SPEC.md'),'utf8')),'OK');
-check('APP_VERSION 4.13.19',/APP_VERSION\s*=\s*["']4\.13\.19["']/.test(s),'OK');
+check('APP_VERSION 4.13.20',/APP_VERSION\s*=\s*["']4\.13\.20["']/.test(s),'OK');
+check('近日発売見出しの統一CSS',/#home \.home-upcoming-head b\{font-size:var\(--unified-card-heading-size\)!important\}/.test(s),'類似作品と同じ統一変数');
+check('詳細画面透過30%の限定CSS',/\.detail-overlay \.detail-sheet\{background:color-mix\(in srgb,var\(--surface\) 30%,transparent\)!important\}/.test(s),'詳細画面だけ30%');
 check('DEMO_ENABLED 定義',/DEMO_ENABLED\s*=/.test(s),'OK');
 check('本番サンプル無効化ゲート',/Production\/App Store builds set DEMO_ENABLED=false/.test(s),'本番ではfalseにする明示コメントあり');
 check('正規登録関数',/window\.addBook|window\.bulkAdd/.test(s),'OK');
@@ -351,6 +353,34 @@ function browserUIRegression(){
         appSettings.background.image="";appSettings.background.avgColor=null;appSettings.background.avgLum=null;appSettings.autoTextContrast=savedAutoText3;applyVisualSettings(); render();
         window.alert=savedAlert; window.confirm=savedConfirm;
       }
+    // v4.13.20: verify the home upcoming heading against the same rendered heading
+    // used by 「類似作品を探す」 at every font setting. This is a real computed-style check.
+    let upcomingHeadingOk=true; const upcomingHeadingDetails=[];
+    for(const fs of ['font-small','font-medium','font-large']){
+      setFont(fs);
+      const similar=document.querySelector('#similarBox > h3');
+      const upcoming=document.querySelector('#home .home-upcoming-head b');
+      const similarSize=similar?getComputedStyle(similar).fontSize:'';
+      const upcomingSize=upcoming?getComputedStyle(upcoming).fontSize:'';
+      if(!similar||!upcoming){upcomingHeadingOk=false;upcomingHeadingDetails.push(fs+' 対象要素なし');}
+      else if(similarSize!==upcomingSize){upcomingHeadingOk=false;upcomingHeadingDetails.push(fs+' 類似作品='+similarSize+' / 近日発売='+upcomingSize);}
+    }
+    specAdd('近日発売の注目書籍の見出しサイズ',upcomingHeadingOk,upcomingHeadingOk?'小・中・大で類似作品とcomputed style一致':upcomingHeadingDetails.join(' / '));
+
+    // v4.13.20: detail sheet background is explicitly scoped to the detail screen and uses 30% alpha.
+    try{
+      const fixture={isbn:'guard-detail-alpha',title:'詳細画面透過テスト',author:'A',publisher:'P',date:'2025-01-01',price:100};
+      openBookDetail(fixture);
+      const sheet=document.querySelector('.detail-overlay .detail-sheet');
+      const actual=sheet?getComputedStyle(sheet).backgroundColor:'';
+      const probe=document.createElement('div');
+      probe.style.cssText='position:absolute;left:-9999px;background:color-mix(in srgb,var(--surface) 30%,transparent)';
+      document.body.appendChild(probe);
+      const expected=getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      specAdd('詳細画面の透過30%',!!sheet&&actual===expected,'computed background='+actual+' / expected='+expected);
+      if(document.querySelector('.detail-overlay')) document.querySelector('.detail-overlay').style.display='none';
+    }catch(e){specAdd('詳細画面の透過30%',false,e.message)}
       return {out,checks,specChecks};
     })()`;
     const evalResult=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});
@@ -394,6 +424,7 @@ function browserUIRegression(){
       else if(found.some(x=>x.rect.sw>x.rect.w+1||x.rect.sh>x.rect.h+1))fail(`必須UIケース「${t}」`,'文字がコンテナを超えています');
       else check(`必須UIケース「${t}」`,true,'小・中・大 PASS');
     }
+
     ws.close();
   };
   return run().then(()=>{try{child.kill()}catch(e){};return ok}).catch(e=>{fail('UIブラウザ回帰テスト',e.message);try{child.kill()}catch(x){};return false});
