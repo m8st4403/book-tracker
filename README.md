@@ -155,3 +155,6 @@ v4.11.3を蔵書タブのVisual Baselineとして固定し、v4.11.4〜v4.11.7�
 
 ## API Management v1.0
 API管理・自動フェイルオーバー仕様を正式化し、Phase 1の管理基盤に続き、Phase 2では既存Google Books/openBDのISBN照会・検索をAdapter経由へ移行しました。既存の検索・登録UIの挙動は維持し、Provider固有処理をAdapter層へ隔離しています。詳細は `API_MANAGEMENT_SPEC.md` を参照してください。
+
+## v4.13.32
+既存蔵書のシリーズ再整理を追加。APIで確実にシリーズ情報を再確認し、既存蔵書の `series` だけを更新する。外伝・スピンオフ・短編集などは保守的に自動統合しない。

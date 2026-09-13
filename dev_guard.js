@@ -22,7 +22,7 @@ function check(name, ok, detail='') { (ok ? pass : fail)(name, detail); }
 const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
 const dupIds = [...new Set(ids.filter((id,i)=>ids.indexOf(id)!==i))];
 check('STATIC-001 unique DOM ids', dupIds.length===0, dupIds.join(', '));
-check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.31["']/.test(html) || /APP_VERSION\s*=\s*["']4\.13\.31["']/.test(html), 'version marker present');
+check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.32["']/.test(html) || /APP_VERSION\s*=\s*["']4\.13\.32["']/.test(html), 'version marker present');
 check('STATIC-003 required six tabs', ['home','add','library','search','calendar','settings'].every(id=>new RegExp(`id=["']${id}["']`).test(html)), 'home/add/library/search/calendar/settings');
 check('STATIC-004 price filter exists', /id=["']filterPrice["']/.test(html), 'library price filter');
 check('STATIC-005 canonical registration routes exist', /window\.addBook\s*=/.test(html) && /window\.bulkAdd\s*=/.test(html), 'addBook/bulkAdd');
@@ -99,7 +99,7 @@ async function main(){
     const tabContracts={
       home:['homeBookCount','homeBookTotal','homePurchaseCount','homeUnreadCount','homeFavoriteCount','homeUpcomingBooks'],
       add:['scan','isbnRows','isbnSearch','work','vol','workSearch'],
-      library:['libraryStats','libraryFilter','libraryFilterToggle','seriesViewToggle','librarySort','filterAuthor','filterPublisher','filterYear','filterRelease','filterReading','filterFavorite','filterPrice','filterReset','myBooks','seriesCheckBtn','unreadOnlyBtn'],
+      library:['libraryStats','libraryFilter','libraryFilterToggle','seriesViewToggle','librarySort','filterAuthor','filterPublisher','filterYear','filterRelease','filterReading','filterFavorite','filterPrice','filterReset','myBooks','seriesCheckBtn','seriesRepairBtn','unreadOnlyBtn'],
       search:['searchModeBook','searchModeAuthor','query','searchBtn','searchUnownedOnly','searchResults','similarBox','similarBtn','author','authorBtn','authorNewBtn','authorResults'],
       calendar:['calendarMonthCard','prevMonth','todayMonth','monthTitle','nextMonth','calHead','calendarGrid','calendarDayCard','calendarMonthReleasedCard','ics'],
       settings:['profileName','profileGenre','profileAuthor','profileMemo','profileSave','themeCurrent','fontCurrent','theme-choice','font-choice','skinSave','skinApply','bgImageInput','bgImageRemove','autoTextContrast','backupDataBtn','restoreDataBtn','setSearchCount','setSearchSort','setWeekStart','setICS']
@@ -138,9 +138,30 @@ async function main(){
       out.registrationSeriesPreserved=(()=>{const base={isbn:"logic-series",title:"レベルE 2",price:550,series:null};const resolved={title:"レベルE",author:"冨樫義博",publisher:"集英社",series:{id:"LEVEL-E",name:"レベルE",volumeNumber:2},resolution:{accepted:{series:true}}};const x=mergeRegistrationBook(base,resolved);return x.series?.id==="LEVEL-E"&&x.series?.name==="レベルE"&&x.series?.volumeNumber===2})();
       out.searchSingleFlight=typeof runSingleFlight==='function'&&activeActions instanceof Set;
       const regA=registrationKey({isbn:"9780000000000",title:"A"}),regB=registrationKey({isbn:"9780000000000",title:"A"});registrationLocks.add(regA);out.registrationLockShared=regA===regB&&registrationLocks.has(regB);registrationLocks.delete(regA);
+      out.existingSeriesRepairContract=typeof repairExistingSeries==='function'&&typeof safeSeriesRepairCandidate==='function'&&(()=>{const s={id:'LEVEL-E',name:'レベルE',volumeNumber:2,confidence:{seriesName:'HIGH',volumeNumber:'HIGH',seriesId:'HIGH'}};const r={series:s,resolution:{accepted:{series:true}}};const ok=safeSeriesRepairCandidate({title:'レベルE 2'},r);const no=safeSeriesRepairCandidate({title:'レベルE 外伝 1'},r);const sub=safeSeriesRepairCandidate({title:'レベルE 2 Full moon'},r);return ok?.id==='LEVEL-E'&&ok?.volumeNumber===2&&!no&&!sub})();
       return out;
     })()`);
     for(const [name,ok] of Object.entries(logic)) check(`LOGIC-${name}`,ok,ok?'OK':'spec contract failed');
+    const repairSmoke=await evalJS(`(async()=>{
+      const api=window.bookTrackerApiManagement, oldResolve=api.resolveIsbn, oldConfirm=window.confirm, oldAlert=window.alert, oldBooks=books.slice();
+      const sample=[
+        {isbn:'9784088720715',title:'レベルE 1',author:'冨樫義博',publisher:'集英社',date:'1996-01-01',price:makeConfirmedListPrice(550,'manual','HIGH'),series:{id:'WRONG-1',name:'レベルE 1',volumeNumber:1},marker:'keep1'},
+        {isbn:'9784088720722',title:'レベルE 第2巻',author:'冨樫義博',publisher:'集英社',date:'1996-02-01',price:makeConfirmedListPrice(550,'manual','HIGH'),series:{id:'WRONG-2',name:'レベルE 2',volumeNumber:2},marker:'keep2'},
+        {isbn:'9784088720739',title:'レベルE （3）',author:'冨樫義博',publisher:'集英社',date:'1996-03-01',price:makeConfirmedListPrice(550,'manual','HIGH'),series:{id:'WRONG-3',name:'レベルE 3',volumeNumber:3},marker:'keep3'},
+        {isbn:'9784088720746',title:'レベルE 外伝 1',author:'冨樫義博',publisher:'集英社',series:{id:'SPIN',name:'レベルE 外伝',volumeNumber:1},marker:'keep-side'}
+      ];
+      const byIsbn={
+        '9784088720715':1,'9784088720722':2,'9784088720739':3,'9784088720746':1
+      };
+      api.resolveIsbn=async isbn=>{const n=byIsbn[canonicalIsbn(isbn)];return {series:{id:'LEVEL-E',name:'レベルE',volumeNumber:n,confidence:{seriesId:'HIGH',seriesName:'HIGH',volumeNumber:'HIGH'}},resolution:{accepted:{series:true}}};};
+      let calls=0; const orig=api.resolveIsbn; api.resolveIsbn=async isbn=>{calls++;return orig(isbn)};
+      window.confirm=()=>true; window.alert=()=>{}; books=sample; await repairExistingSeries();
+      const ok=books[0].series?.id==='LEVEL-E'&&books[1].series?.id==='LEVEL-E'&&books[2].series?.id==='LEVEL-E'&&books[0].series?.volumeNumber===1&&books[1].series?.volumeNumber===2&&books[2].series?.volumeNumber===3&&books[3].series?.id==='SPIN'&&books[0].marker==='keep1'&&books[1].marker==='keep2'&&books[2].marker==='keep3'&&books[3].marker==='keep-side';
+      api.resolveIsbn=oldResolve; window.confirm=oldConfirm; window.alert=oldAlert; books=oldBooks; renderLibrary();
+      return {ok,calls};
+    })()`)
+    check('E2E-REPAIR-001 existing series repair preserves metadata and separates variants',repairSmoke?.ok===true,JSON.stringify(repairSmoke));
+    check('E2E-REPAIR-002 resolver cache is ISBN-scoped',repairSmoke?.calls===4,'one resolver call per distinct ISBN');
 
     const overflowExpression = `(()=>{
       const visible=e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);return r.width>0&&r.height>0&&s.display!=='none'&&s.visibility!=='hidden'};
