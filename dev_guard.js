@@ -217,6 +217,20 @@ async function main(){
     })()`);
     check('E2E-UI-001 home/library statistics panels are unified',sharedStatsUi?.sameStyles===true&&sharedStatsUi?.sameGeometry===true&&sharedStatsUi?.sameGrid===true&&sharedStatsUi?.sameStructure===true&&sharedStatsUi?.sameLabels===true&&sharedStatsUi?.sharedRenderer===true,JSON.stringify(sharedStatsUi));
 
+    const compactStatsUi=await evalJS(`(()=>{
+      const nav=id=>document.querySelector('#bottomNav button[data-s="'+id+'"]')?.click();
+      nav('library');
+      const lib=document.getElementById('libraryStats');
+      if(!lib)return {ok:false,reason:'libraryStats missing'};
+      lib.classList.add('is-compact');
+      const labels=[...lib.querySelectorAll('.library-stat-label')];
+      const visible=labels.length===5&&labels.every(el=>{const s=getComputedStyle(el);const r=el.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0;});
+      const text=labels.map(x=>x.textContent.trim());
+      lib.classList.remove('is-compact');
+      return {ok:visible,visible,text,display:labels.map(x=>getComputedStyle(x).display)};
+    })()`);
+    check('E2E-UI-002 compact library statistics keep labels visible',compactStatsUi?.ok===true,JSON.stringify(compactStatsUi));
+
     const overflowExpression = `(()=>{
       const visible=e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);return r.width>0&&r.height>0&&s.display!=='none'&&s.visibility!=='hidden'};
       const ignore=e=>{const s=getComputedStyle(e); return e.matches('html,body,script,style,textarea,[contenteditable="true"]') || s.overflowX==='auto'||s.overflowX==='scroll'||s.overflowY==='auto'||s.overflowY==='scroll';};

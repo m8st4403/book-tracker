@@ -517,8 +517,8 @@ body.font-large{--unified-card-heading-size:20px}
 .home-stats.unified-stats .statbox:nth-child(3),.library-stats .statbox:nth-child(3){background:var(--soft-amber)!important;border-color:var(--soft-amber-border)!important}
 .home-stats.unified-stats .statbox:nth-child(4),.library-stats .statbox:nth-child(4){background:var(--soft-lavender)!important;border-color:var(--soft-lavender-border)!important}
 .home-stats.unified-stats .statbox:nth-child(5),.library-stats .statbox:nth-child(5){background:var(--soft-yellow)!important;border-color:var(--soft-yellow-border)!important}
-.library-stats.is-compact .statbox>.muted{display:none!important}
-.library-stats.is-compact .library-stat-label{display:block;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px;line-height:1.15;color:var(--theme-muted)!important}
+.library-stats.is-compact .statbox>.muted:not(.library-stat-label){display:none!important}
+.library-stats.is-compact .library-stat-label{display:block!important;visibility:visible!important;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px;line-height:1.15;color:var(--theme-muted)!important}
 @media(max-width:390px){.home-stats.unified-stats{gap:8px!important;margin-top:12px!important}.home-stats.unified-stats .statbox{padding:12px!important}.home-stats.unified-stats .statbox b{font-size:18px!important}}
 /* v4.13.34: registration is a global operation; search targets use generation tokens. */
 [data-register-action="1"][disabled]{opacity:.65!important;cursor:wait!important;transform:none!important}

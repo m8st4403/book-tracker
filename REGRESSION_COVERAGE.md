@@ -254,3 +254,9 @@ Chromiumを使ったUI回帰では390×844で小・中・大フォントをレ�
 
 ### v4.13.38 実DOM検証
 - Home/Library statistics: 5 panels, shared renderer, shared markup, shared geometry and major computed styles.
+
+
+### v4.13.39 compact statistics label visibility
+- 蔵書統計の縮小横一列表示では、5つの名称（蔵書冊数／蔵書総額／購入予定／積読／お気に入り）を必ず表示する。
+- `.statbox > .muted` のような高いCSS優先度の包括セレクタで名称を隠さない。
+- 実ブラウザの `getComputedStyle` と実寸（width/height）で5名称の表示状態を検証する。
