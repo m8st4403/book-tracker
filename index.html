@@ -440,8 +440,9 @@ input[type="checkbox"]{
 .library-stats.is-compact{display:flex;gap:5px;margin:0 -4px 12px;padding:5px 4px;background:rgba(255,255,255,.96);position:sticky;top:68px;z-index:4;border-bottom:1px solid rgba(15,23,42,.10);box-shadow:0 3px 8px rgba(15,23,42,.06);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .library-stats.is-compact .statbox{flex:1 1 0;min-width:0;padding:6px 3px;border-radius:9px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:2px;box-shadow:none}
 .library-stats.is-compact .library-stat-label{display:block;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px;line-height:1.15;color:var(--theme-muted)}
-.library-stats.is-compact .statbox b{display:block;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px;line-height:1.15;margin:0}
+.library-stats.is-compact .statbox b{display:block;min-width:0;white-space:nowrap;overflow:visible;text-overflow:clip;font-size:14px;line-height:1.15;margin:0}
 @media(max-width:380px){.library-stats.is-compact{gap:3px;margin-left:-2px;margin-right:-2px}.library-stats.is-compact .statbox{padding-left:2px;padding-right:2px}.library-stats.is-compact .library-stat-label{font-size:9px}.library-stats.is-compact .statbox b{font-size:13px}}
+@media(max-width:340px){.library-stats.is-compact .statbox b{font-size:12px;letter-spacing:-.02em}}
 /* v4.12.4: 5+ series header background only. Title text keeps the v4.11.3 text color. */
 .series-group.is-cyclic .series-cyclic-head{background:color-mix(in srgb,var(--primary) 8%,var(--surface))!important;border-radius:14px!important}
 .series-group.is-cyclic .series-cyclic-title{color:var(--app-text)!important;font-weight:800!important}
@@ -492,6 +493,14 @@ body.font-large{--unified-card-heading-size:20px}
 .series-group.is-short-toggle .series-books{padding-left:0!important;padding-right:0!important}
 /* v4.13.24: 「タイトル一覧に戻る」はボタン枠を持たないテキスト操作表示。 */
 .series-title-collapse{display:inline!important;background:none!important;border:0!important;box-shadow:none!important;padding:0!important;min-height:0!important;height:auto!important;-webkit-appearance:none!important;appearance:none!important}
+
+/* ===== v4.13.29 price-summary / compact overflow fixes ===== */
+/* v4.13.30: generic UI guard requires readable metadata lines to wrap instead of clipping. */
+#homeBookTotalSub{display:block;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;line-height:1.35!important;overflow-wrap:anywhere}
+.library-stats .stat-price-summary{display:block;white-space:normal;overflow-wrap:anywhere;line-height:1.35}
+.library-stats.is-compact .stat-price-summary,.library-stats.is-compact .statbox>.muted{display:none!important}
+.library-stats.is-compact .statbox{overflow:hidden}
+.library-stats.is-compact .library-stat-label{max-width:100%;overflow:hidden;text-overflow:ellipsis}.library-stats.is-compact .statbox b{max-width:100%;overflow:visible;text-overflow:clip}
 </style></head><body>
 <div id="appBackground" aria-hidden="true"></div><header><b id="appHeaderTitle">📚 本棚スケジュール</b><div class="muted" id="appHeaderSub">複数ISBN・詳細/関連検索・発売日カレンダー対応</div></header>
 <main id="content">
@@ -507,7 +516,7 @@ body.font-large{--unified-card-heading-size:20px}
 <button id="isbnSearch" type="button" style="width:100%;margin-top:8px">ISBNをまとめて検索</button>
 <div id="addResults"></div>
 <hr/><div class="row work-volume-row"><div class="clearwrap"><input id="work" placeholder="作品タイトル"/><button class="clearbtn" data-clear="work">×</button></div><div class="clearwrap"><input id="vol" inputmode="numeric" placeholder="巻数（未入力＝全巻検索）"/><button class="clearbtn" data-clear="vol">×</button></div></div><p class="isbn-help">巻数を入力しない場合は、その作品の全巻を検索します。</p><button id="workSearch" style="width:100%;margin-top:8px">作品＋巻数から検索</button></div></section>
-<section hidden="" id="library"><div class="card"><b>📚 蔵書</b><p class="muted">作品名・作家名・ISBNで部分一致検索。</p><div class="library-stats" id="libraryStats"></div><div class="library-idea-row"><button class="secondary" id="seriesCheckBtn">📚 シリーズ・巻抜けチェック</button><button class="secondary" id="unreadOnlyBtn">📖 積読だけ表示</button></div><div class="muted" id="seriesCheckResults"></div><div class="clearwrap"><input id="libraryFilter" placeholder="作品名 / 作家名 / ISBN"/><button class="clearbtn" data-clear="libraryFilter">×</button></div><div class="library-filterbar"><button class="secondary" id="libraryFilterToggle">⚙️ 絞り込み</button><button class="secondary" id="seriesViewToggle">📚 シリーズ表示</button><div class="library-sort"><span class="muted">並び順</span><select id="librarySort"><option value="registered-desc">登録が新しい順</option><option value="registered-asc">登録が古い順</option><option value="title-asc">タイトル順</option><option value="author-asc">作者順</option><option value="publisher-asc">出版社順</option><option value="volume-asc">巻数の小さい順</option><option value="volume-desc">巻数の大きい順</option><option value="release-asc">発売日が早い順</option><option value="release-desc">発売日が新しい順</option></select></div></div><div class="library-filter-panel" id="libraryFilterPanel"><div class="filter-grid"><select id="filterAuthor"><option value="">作者：すべて</option></select><select id="filterPublisher"><option value="">出版社：すべて</option></select><select id="filterYear"><option value="">発売年：すべて</option></select><select id="filterRelease"><option value="">発売日：すべて</option><option value="known">発売日あり</option><option value="unknown">発売日不明</option></select><select id="filterReading"><option value="">読書状態：すべて</option><option value="unread">未読</option><option value="read">読了</option></select><select id="filterFavorite"><option value="">お気に入り：すべて</option><option value="yes">お気に入りのみ</option><option value="no">お気に入り以外</option></select></div><div class="filter-summary" id="filterSummary">絞り込みなし</div><button class="secondary" id="filterReset" style="margin-top:8px;width:100%">フィルターをリセット</button></div><div id="myBooks"></div></div></section>
+<section hidden="" id="library"><div class="card"><b>📚 蔵書</b><p class="muted">作品名・作家名・ISBNで部分一致検索。</p><div class="library-stats" id="libraryStats"></div><div class="library-idea-row"><button class="secondary" id="seriesCheckBtn">📚 シリーズ・巻抜けチェック</button><button class="secondary" id="unreadOnlyBtn">📖 積読だけ表示</button></div><div class="muted" id="seriesCheckResults"></div><div class="clearwrap"><input id="libraryFilter" placeholder="作品名 / 作家名 / ISBN"/><button class="clearbtn" data-clear="libraryFilter">×</button></div><div class="library-filterbar"><button class="secondary" id="libraryFilterToggle">⚙️ 絞り込み</button><button class="secondary" id="seriesViewToggle">📚 シリーズ表示</button><div class="library-sort"><span class="muted">並び順</span><select id="librarySort"><option value="registered-desc">登録が新しい順</option><option value="registered-asc">登録が古い順</option><option value="title-asc">タイトル順</option><option value="author-asc">作者順</option><option value="publisher-asc">出版社順</option><option value="volume-asc">巻数の小さい順</option><option value="volume-desc">巻数の大きい順</option><option value="release-asc">発売日が早い順</option><option value="release-desc">発売日が新しい順</option></select></div></div><div class="library-filter-panel" id="libraryFilterPanel"><div class="filter-grid"><select id="filterAuthor"><option value="">作者：すべて</option></select><select id="filterPublisher"><option value="">出版社：すべて</option></select><select id="filterYear"><option value="">発売年：すべて</option></select><select id="filterRelease"><option value="">発売日：すべて</option><option value="known">発売日あり</option><option value="unknown">発売日不明</option></select><select id="filterReading"><option value="">読書状態：すべて</option><option value="unread">未読</option><option value="read">読了</option></select><select id="filterFavorite"><option value="">お気に入り：すべて</option><option value="yes">お気に入りのみ</option><option value="no">お気に入り以外</option></select><select id="filterPrice"><option value="">定価：すべて</option><option value="unconfirmed">定価未登録のみ</option><option value="confirmed">定価登録済み</option></select></div><div class="filter-summary" id="filterSummary">絞り込みなし</div><button class="secondary" id="filterReset" style="margin-top:8px;width:100%">フィルターをリセット</button></div><div id="myBooks"></div></div></section>
 <section hidden="" id="search">
 <div class="search-mode"><button class="active" id="searchModeBook">🔎 本を探す</button><button id="searchModeAuthor">✍️ 作家を探す</button></div>
 <div class="search-panel active" id="bookSearchPanel">
@@ -537,7 +546,7 @@ body.font-large{--unified-card-heading-size:20px}
 /* v4.13.11: UI regression fixes. Geometry of the v4.13.8 Library cards remains fixed. */
 .backup-row button:nth-child(n+3){grid-column:1 / -1}
 .theme-choice{font-size:calc(12px * var(--font-scale))!important;letter-spacing:-.055em!important;white-space:nowrap!important;line-height:1.1!important;padding-left:4px!important;padding-right:4px!important}
-.library-info-line{line-height:18px!important}
+.library-info-line{line-height:18px!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere;word-break:break-word}
 .library-detail-btn{font-size:calc(11px * var(--font-scale))!important;letter-spacing:-.055em!important;white-space:nowrap!important;line-height:1.1!important;padding-left:2px!important;padding-right:2px!important}
 .library-card{height:223px!important;min-height:223px!important;overflow:hidden!important}
 .calendar-register-btn{font-size:calc(12px * var(--font-scale))!important;letter-spacing:-.045em!important;white-space:nowrap!important;line-height:1.1!important;padding-left:8px!important;padding-right:8px!important}
@@ -607,7 +616,7 @@ let calendarExtras=readJSONStorage("calendarExtras_v442",[]);if(!Array.isArray(c
 const DEMO_ENABLED=true;
 // Prototype/dev builds: a deleted sample set stays deleted within this build, but a new build/version starts with samples again.
 // Production/App Store builds set DEMO_ENABLED=false, so this logic is never exposed to end users.
-const APP_VERSION="4.13.28";
+const APP_VERSION="4.13.30";
 const DEMO_DELETED_KEY="bookTrackerDemoDeleted";
 const DEMO_RESET_VERSION_KEY="bookTrackerDemoResetVersion";
 const DEMO_TITLES=["サンプル本棚：前月の便り","サンプル本棚：月夜の標本","サンプルシリーズ：星の余白 1巻","サンプルシリーズ：星の余白 2巻","サンプル本棚：翌月の灯り"];
@@ -1090,7 +1099,7 @@ function renderLibrary(){
  const unreadOnly=window.libraryUnreadOnly===true;
  let q=($("libraryFilter").value||"").toLowerCase();
  const seriesView=readSeriesView();
- const fa=$("filterAuthor")?.value||"",fp=$("filterPublisher")?.value||"",fy=$("filterYear")?.value||"",fr=$("filterRelease")?.value||"",fre=$("filterReading")?.value||"",ff=$("filterFavorite")?.value||"";
+ const fa=$("filterAuthor")?.value||"",fp=$("filterPublisher")?.value||"",fy=$("filterYear")?.value||"",fr=$("filterRelease")?.value||"",fre=$("filterReading")?.value||"",ff=$("filterFavorite")?.value||"",fprice=$("filterPrice")?.value||"";
  let a=books.map((b,i)=>({b,i})).filter(x=>{
   const b=x.b, known=/^\d{4}-\d{2}-\d{2}$/.test(b.date||""), meta=getMeta(b.isbn);
   return (!q||[b.title,b.author,b.isbn,b.publisher].join(" ").toLowerCase().includes(q))
@@ -1098,7 +1107,8 @@ function renderLibrary(){
    &&(!fa||String(b.author||"")===fa)&&(!fp||String(b.publisher||"")===fp)
    &&(!fy||String(b.date||"").slice(0,4)===fy)&&(!fr||(fr==="known"?known:!known))
    &&(!fre||meta.readingStatus===fre)
-   &&(!ff||(ff==="yes"?meta.favorite===true:meta.favorite!==true));
+   &&(!ff||(ff==="yes"?meta.favorite===true:meta.favorite!==true))
+   &&matchesListPriceFilter(b,fprice);
  });
  const mode=$("librarySort")?.value||"registered-desc";
  a.sort(compareLibraryItems);
@@ -1121,7 +1131,7 @@ function renderLibrary(){
  </div>`+body:"<p class='muted'>該当する蔵書はありません。</p>";
  document.querySelectorAll("#myBooks .series-cyclic-head").forEach(el=>{const activate=()=>{const group=el.closest(".series-group"),name=group?.dataset.seriesCycle||"";if(group?.dataset.seriesShort==="1"){setSeriesShortState(name,nextSeriesShortState(getSeriesShortState(name)))}else{setSeriesCycleState(name,nextSeriesCycleState(getSeriesCycleState(name)))}renderLibrary()};el.addEventListener("click",activate);el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();activate()}})});
  document.querySelectorAll("#myBooks details.series-group[data-series-open]").forEach(el=>{el.addEventListener("toggle",()=>setSeriesOpenState(el.dataset.seriesOpen||"",el.open))});
- $("filterSummary").textContent=(q||fa||fp||fy||fr||fre||ff||unreadOnly)?`${a.length}冊を表示中`:`全${books.length}冊を表示中`;
+ $("filterSummary").textContent=(q||fa||fp||fy||fr||fre||ff||fprice||unreadOnly)?`${a.length}冊を表示中`:`全${books.length}冊を表示中`;
  const stats=deriveLibraryStats();
  $("libraryStats").innerHTML=renderStatBoxes(stats);
  updateLibraryStatsCompact();
@@ -1284,9 +1294,18 @@ function deriveLibraryStats(){
  const priceConfirmedCount=books.filter(b=>hasConfirmedListPrice(b)||hasConfirmedZeroListPrice(b)).length;
  return {count:books.length,pricedCount:priced.length,priceConfirmedCount,total,unread,favorite,purchaseCount:purchaseEvents.length,purchaseEvents};
 }
+function priceSummaryText(stats){
+ const confirmed=Math.max(0,Number(stats?.priceConfirmedCount)||0);
+ const count=Math.max(0,Number(stats?.count)||0);
+ return `定価確定：${confirmed}/${count}冊${confirmed<count?`・未確定：${count-confirmed}冊`:""}`;
+}
+function matchesListPriceFilter(b,filter){
+ if(!filter)return true;
+ return filter==="unconfirmed"?listPriceStatus(b)==="unconfirmed":hasAcceptedListPrice(b);
+}
 function renderStatBoxes(stats){
  return `<div class="statbox"><span class="library-stat-label">蔵書冊数</span><b>${stats.count.toLocaleString()}冊</b></div>
- <div class="statbox"><span class="library-stat-label">蔵書総額</span><b>${stats.priceConfirmedCount?"¥"+Math.round(stats.total).toLocaleString():"未登録"}</b><span class="muted">${stats.priceConfirmedCount}/${stats.count}冊の定価確定</span></div>
+ <div class="statbox"><span class="library-stat-label">蔵書総額</span><b>${stats.priceConfirmedCount?"¥"+Math.round(stats.total).toLocaleString():"未登録"}</b><span class="muted stat-price-summary">${priceSummaryText(stats)}</span></div>
  <div class="statbox"><span class="library-stat-label">購入予定</span><b>${stats.purchaseCount.toLocaleString()}冊</b></div>
  <div class="statbox"><span class="library-stat-label">積読</span><b>${stats.unread.toLocaleString()}冊</b></div>
  <div class="statbox"><span class="library-stat-label">お気に入り</span><b>${stats.favorite.toLocaleString()}冊</b></div>`;
@@ -1314,7 +1333,7 @@ function updateSharedStats(){
  const set=(id,v)=>{const el=$(id);if(el)el.textContent=v};
  set("homeBookCount",stats.count.toLocaleString()+"冊");
  set("homeBookTotal",stats.priceConfirmedCount?"¥"+Math.round(stats.total).toLocaleString():"未登録");
- set("homeBookTotalSub",`${stats.pricedCount}/${stats.count}冊の定価を集計${stats.priceConfirmedCount<stats.count?`（${stats.count-stats.priceConfirmedCount}冊は未確定）`:""}`);
+ set("homeBookTotalSub",priceSummaryText(stats));
  set("homePurchaseCount",stats.purchaseCount.toLocaleString()+"冊");
  set("homePurchaseSub",stats.purchaseCount?"今月の未登録予定":"購入予定はありません");
  set("homeUnreadCount",stats.unread+"冊");
@@ -1441,12 +1460,12 @@ function updateClearButtons(){document.querySelectorAll(".clearbtn").forEach(b=>
 document.querySelectorAll(".clearbtn").forEach(b=>b.onclick=()=>{$(b.dataset.clear).value="";$(b.dataset.clear).dispatchEvent(new Event("input",{bubbles:true}));updateClearButtons()});
 document.querySelectorAll(".clearwrap input,.clearwrap textarea").forEach(i=>i.addEventListener("input",updateClearButtons));
 $("libraryFilter").oninput=renderLibrary;$("librarySort").onchange=renderLibrary;
-["filterAuthor","filterPublisher","filterYear","filterRelease","filterReading","filterFavorite"].forEach(id=>$(id)?.addEventListener("change",renderLibrary));
+["filterAuthor","filterPublisher","filterYear","filterRelease","filterReading","filterFavorite","filterPrice"].forEach(id=>$(id)?.addEventListener("change",renderLibrary));
 $("libraryFilterToggle").onclick=()=>{$("libraryFilterPanel").classList.toggle("open")};
 $("seriesViewToggle").onclick=()=>{const on=readSeriesView();try{localStorage.setItem("seriesView_v444",on?"off":"on")}catch(e){}$("seriesViewToggle").textContent=on?"📖 個別表示":"📚 シリーズ表示";renderLibrary()};
 $("seriesViewToggle").textContent=!readSeriesView()?"📖 個別表示":"📚 シリーズ表示";
 function resetLibraryFilters({render=true}={}){
- ["filterAuthor","filterPublisher","filterYear","filterRelease","filterReading","filterFavorite"].forEach(id=>{const el=$(id);if(el)el.value=""});
+ ["filterAuthor","filterPublisher","filterYear","filterRelease","filterReading","filterFavorite","filterPrice"].forEach(id=>{const el=$(id);if(el)el.value=""});
  const input=$("libraryFilter");if(input)input.value="";
  window.libraryUnreadOnly=false;
  const btn=$("unreadOnlyBtn");if(btn)btn.textContent="📖 積読だけ表示";
@@ -1601,7 +1620,7 @@ window.bulkAdd=async id=>{
 /* v4.10.0: Runtime specification guard + lightweight regression checks.
    Development build only. These checks intentionally fail loudly instead of silently masking regressions. */
 (function(){
- const DEV_GUARD_VERSION="4.13.28";
+ const DEV_GUARD_VERSION="4.13.30";
  const validPurchase=new Set(["wanted","reserved","purchased","none"]);
  function add(name,ok,detail){return {name,ok,detail:detail||""}}
  async function runSpecGuard(){
@@ -1637,7 +1656,7 @@ window.bulkAdd=async id=>{
   // ARCH-001: expected single authoritative registration layer.
   results.push(add("正規登録関数",typeof window.addBook==="function"&&typeof window.bulkAdd==="function","OK"));
   // REG-001: filter reset must clear every library filter and search text.
-  const filterIds=["filterAuthor","filterPublisher","filterYear","filterRelease","filterReading","filterFavorite"];
+  const filterIds=["filterAuthor","filterPublisher","filterYear","filterRelease","filterReading","filterFavorite","filterPrice"];
   const savedFilterValues=Object.fromEntries(filterIds.map(id=>[id,$(id)?.value||""]));
   const savedLibraryFilter=$("libraryFilter")?.value||"";
   const savedUnreadOnly=window.libraryUnreadOnly===true;
@@ -1705,7 +1724,7 @@ window.bulkAdd=async id=>{
     const parsedOk=volumeCases.every(x=>{const p=parseVolumeTitle(x.title);return p.title===x.base&&p.volume===x.volume&&displayBookTitle({title:x.title})===x.base+" "+x.volume&&volumeNo({title:x.title})===x.volume});
     const keyOk=new Set(volumeCases.map(x=>seriesKey({title:x.title}))).size===1;
     const cardOut=card({isbn:"guard-vol",title:"統一シリーズ 第2巻",author:"A",publisher:"P",date:"2025-01-01",price:100},false,"library",0);
-    const displayOk=cardOut.includes("統一シリーズ 2")&&!cardOut.includes("統一シリーズ 第2巻");
+    const displayOk=cardOut.includes("統一シリーズ 2")&&!cardOut.includes("統一シリーズ 第2巻")&&cardOut.includes("library-book-layout");
     const sortA={isbn:"guard-sort-a",title:"統一シリーズ 2巻",author:"A",publisher:"P",date:"2025-01-01",price:100};
     const sortB={isbn:"guard-sort-b",title:"統一シリーズ 10",author:"A",publisher:"P",date:"2025-02-01",price:100};
     const oldTitleCompare=String(sortA.title).localeCompare(String(sortB.title),"ja");
@@ -1750,6 +1769,48 @@ window.bulkAdd=async id=>{
     const fixed=/library-status-stack\{[^}]*width:78px[^}]*\}/.test(css)&&/library-status-stack \.meta-badge,\.library-status-stack \.owned-badge,\.library-status-stack \.unowned-badge\{[^}]*width:78px/.test(css);
     results.push(add("ステータス固定幅",fixed,fixed?"78px固定":"固定幅指定を確認"));
   }catch(e){results.push(add("ステータス固定幅",false,e.message))}
+
+  // REG-008: price summary wording is shared by home/library and includes unconfirmed count.
+  try{
+    const sampleStats={count:9,total:760,pricedCount:1,priceConfirmedCount:1,purchaseCount:2,unread:4,favorite:2};
+    const summary=priceSummaryText(sampleStats);
+    const statHtml=renderStatBoxes(sampleStats);
+    results.push(add("価格サマリー文言統一",summary==="定価確定：1/9冊・未確定：8冊"&&statHtml.includes(summary),"ホーム／蔵書で同一の文言規則"));
+  }catch(e){results.push(add("価格サマリー文言統一",false,e.message))}
+
+  // REG-011: compact stats must hide all subtext, and home price summary must not be clipped.
+  try{
+    const css=[...document.querySelectorAll("style")].map(x=>x.textContent).join("\n");
+    const compactRule=/\.library-stats\.is-compact \.stat-price-summary,\.library-stats\.is-compact \.statbox>\.muted\{display:none!important\}/.test(css);
+    const homeSub=$("homeBookTotalSub");
+    const cs=homeSub?getComputedStyle(homeSub):null;
+    const homeNoClip=!!cs&&cs.whiteSpace!=="nowrap"&&cs.textOverflow!=="ellipsis"&&cs.overflow!=="hidden";
+    const oldClass=$("libraryStats")?.classList.contains("is-compact");
+    const librarySec=$("library"); const oldLibraryHidden=librarySec?.hidden;
+    if(librarySec)librarySec.hidden=false;
+    $("libraryStats")?.classList.add("is-compact");
+    const compactBoxes=[...document.querySelectorAll("#libraryStats.is-compact .statbox")];
+    const hiddenSub=[...document.querySelectorAll("#libraryStats .statbox>.muted")].every(el=>getComputedStyle(el).display==="none");
+    const compactGeometry=compactBoxes.length===5&&compactBoxes.every(box=>{const r=box.getBoundingClientRect(),p=box.parentElement.getBoundingClientRect();return r.left>=p.left-0.5&&r.right<=p.right+0.5&&r.width>0});
+    const numericNoEllipsis=compactBoxes.every(box=>{const b=box.querySelector("b"),c=b?getComputedStyle(b):null;return !!c&&c.textOverflow!=="ellipsis"&&c.overflow!=="hidden"});
+    if(!oldClass)$("libraryStats")?.classList.remove("is-compact");
+    if(librarySec)librarySec.hidden=oldLibraryHidden;
+    results.push(add("蔵書サマリー表示崩れ防止",homeNoClip&&hiddenSub&&compactGeometry&&numericNoEllipsis,"縮小版サブテキスト非表示／5枚の収まり／ホーム価格コメント折返し"));
+  }catch(e){results.push(add("蔵書サマリー表示崩れ防止",false,e.message))}
+
+  // REG-012: price filter must distinguish unconfirmed from confirmed, including confirmed zero.
+  try{
+    const u={isbn:"guard-filter-u",price:makeUnconfirmedPrice()};
+    const z={isbn:"guard-filter-z",price:makeConfirmedZeroPrice()};
+    const k={isbn:"guard-filter-k",price:makeConfirmedListPrice(550,"manual","HIGH")};
+    const filterEl=$("filterPrice");
+    const filterOptions=filterEl?[...filterEl.options].map(o=>o.value):[];
+    const filterOk=matchesListPriceFilter(u,"unconfirmed")&&!matchesListPriceFilter(z,"unconfirmed")&&!matchesListPriceFilter(k,"unconfirmed")
+      &&matchesListPriceFilter(z,"confirmed")&&matchesListPriceFilter(k,"confirmed")&&!matchesListPriceFilter(u,"confirmed")
+      &&matchesListPriceFilter(u,"")&&matchesListPriceFilter(z,"")
+      &&filterOptions.includes("unconfirmed")&&filterOptions.includes("confirmed");
+    results.push(add("定価フィルター",filterOk,"未登録と確定（0円を含む）を正しく分離"));
+  }catch(e){results.push(add("定価フィルター",false,e.message))}
 
   // REG-009: v4.12.4 visual corrections for series header/deck/title list.
   try{
@@ -1829,8 +1890,8 @@ window.bulkAdd=async id=>{
   }
 
   // API-001..005: API Management v1.0 foundation is present and obeys the fixed contract.
+  const api=window.bookTrackerApiManagement;
   try{
-    const api=window.bookTrackerApiManagement;
     const cfg=api?.config?.();
     const providersOk=!!cfg&&["googleBooks","openBD","rakuten","ndl"].every(k=>cfg.providers[k]&&cfg.providers[k].capabilities);
     const priorityOk=!!cfg&&Array.isArray(cfg.priority.search)&&cfg.priority.search[0]==="googleBooks"&&cfg.priority.seriesId[0]==="googleBooks";

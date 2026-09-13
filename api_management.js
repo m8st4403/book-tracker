@@ -41,7 +41,7 @@
     if(field==="taxIncluded")e.semanticValidated=value===true;
     let confidence="UNKNOWN";
     if(e.identifierMatched&&e.schemaValidated&&e.semanticValidated&&((field!=="listPrice"&&field!=="taxIncluded")||e.taxIncludedConfirmed))confidence="VERIFIED";
-    else if(e.identifierMatched&&e.schemaValidated&&e.semanticValidated&&(!CRITICAL.has(field)||e.countryMatched))confidence="HIGH";
+    else if(e.identifierMatched&&e.schemaValidated&&e.semanticValidated&&(!CRITICAL.has(field)||e.countryMatched) && (field!=="listPrice" || e.taxIncludedConfirmed))confidence="HIGH";
     else if(e.schemaValidated&&e.semanticValidated)confidence="MEDIUM";
     else if(e.schemaValidated)confidence="LOW";
     return {value,confidence,evidence:e};
