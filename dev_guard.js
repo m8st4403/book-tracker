@@ -22,7 +22,7 @@ function check(name, ok, detail='') { (ok ? pass : fail)(name, detail); }
 const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
 const dupIds = [...new Set(ids.filter((id,i)=>ids.indexOf(id)!==i))];
 check('STATIC-001 unique DOM ids', dupIds.length===0, dupIds.join(', '));
-check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.35["']/.test(html) || /APP_VERSION\s*=\s*["']4\.13\.35["']/.test(html), 'version marker present');
+check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.41["']/.test(html) || /APP_VERSION\s*=\s*["']4\.13\.41["']/.test(html), 'version marker present');
 check('STATIC-003 required six tabs', ['home','add','library','search','calendar','settings'].every(id=>new RegExp(`id=["']${id}["']`).test(html)), 'home/add/library/search/calendar/settings');
 check('STATIC-004 price filter exists', /id=["']filterPrice["']/.test(html), 'library price filter');
 check('STATIC-005 canonical registration routes exist', /window\.addBook\s*=/.test(html) && /window\.bulkAdd\s*=/.test(html), 'addBook/bulkAdd');
@@ -31,6 +31,12 @@ check('STATIC-010 search generation contract', /searchGenerations/.test(html) &&
 check('STATIC-011 data operation lock contract', /dataOperationBusy/.test(html) && /setDataOperationUiBusy/.test(html) && /data-data-operation/.test(html), 'registration and series repair share a data-operation lock');
 check('STATIC-012 series repair excludes demo records', /isDemoRecord\(b\)/.test(html) && /通常の蔵書/.test(html), 'demo/sample records are excluded from repair');
 check('STATIC-013 resolver session cache contract', /resolverCache/.test(fs.readFileSync(path.join(path.dirname(target),'api_management.js'),'utf8')), 'ISBN resolver results are cached per session');
+check('STATIC-014 rule/test ledger exists', fs.existsSync(path.join(path.dirname(target),'RULE_LEDGER_v4_13_40.md')) && fs.existsSync(path.join(path.dirname(target),'RULE_TEST_MATRIX_v4_13_40.md')), 'rule ledger and verification matrix');
+check('STATIC-015 UI display contract exists', /scrollWidth<=el\.clientWidth/.test(fs.readFileSync(path.join(path.dirname(target),'dev_guard.js'),'utf8')) && /E2E-UI-002 compact library statistics keep labels visible/.test(fs.readFileSync(path.join(path.dirname(target),'dev_guard.js'),'utf8')), 'visible/readable/clipping contract');
+check('STATIC-016 sort tie-break contract exists', /REG-002B/.test(fs.readFileSync(target,'utf8')), 'all sort modes use deterministic tie-breaks');
+check('STATIC-017 operation catalog exists', fs.existsSync(path.join(path.dirname(target),'OPERATION_CATALOG_v4_13_40.md')), 'data mutation operation catalog');
+
+
 check('STATIC-006 roadmap guard docs exist', fs.existsSync(path.join(path.dirname(target),'ROADMAP_TEST_MATRIX.md')), 'roadmap test matrix');
 check('STATIC-007 release gate docs exist', fs.existsSync(path.join(path.dirname(target),'RELEASE_TEST_GATE.md')), 'release gate');
 check('STATIC-008 package test script exists', fs.existsSync(path.join(path.dirname(target),'package.json')), 'package.json');
@@ -113,6 +119,17 @@ async function main(){
       const missing=await evalJS(`(()=>${JSON.stringify(selectors)}.filter(x=>x==='theme-choice'||x==='font-choice'? !document.querySelector('.'+x):!document.getElementById(x)))()`);
       check(`CONTRACT-${tab}-001 required controls`,missing.length===0,missing.join(', '));
     }
+    const apiAdapterContracts=await evalJS(`(()=>{try{
+      const api=window.bookTrackerApiManagement;
+      const rak=api?.normalizeRakuten?.({itemCode:'9784088720715',title:'レベルE 1巻',subTitle:'',seriesName:'レベルE',author:'冨樫義博',publisherName:'集英社',salesDate:'1996年01月',itemPrice:550,listPrice:0,largeImageUrl:'https://example.invalid/a.jpg'});
+      const xml="<?xml version='1.0'?><searchRetrieveResponse xmlns='http://www.loc.gov/zing/srw/' xmlns:dcterms='http://purl.org/dc/terms/' xmlns:dcndl='http://ndl.go.jp/dcndl/terms/' xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'><records><record><recordData><dcterms:title>レベルE</dcterms:title><dcndl:seriesTitle><rdf:Description><rdf:value>レベルE</rdf:value></rdf:Description></dcndl:seriesTitle><dcndl:volume>3</dcndl:volume><dcterms:creator>冨樫義博</dcterms:creator><dcterms:publisher>集英社</dcterms:publisher><dcterms:issued>1996</dcterms:issued><dcterms:identifier rdf:resource='http://iss.ndl.go.jp/isbn/9784088720739'/></recordData></record></records></searchRetrieveResponse>";
+      const ndl=api?.normalizeNDLFixture?.(xml,'9784088720739')?.[0];
+      return {adapterMethods:typeof api?.adapters?.rakuten?.isbn==='function'&&typeof api?.adapters?.rakuten?.search==='function'&&typeof api?.adapters?.ndl?.isbn==='function'&&typeof api?.adapters?.ndl?.search==='function',defaultOff:api?.providers?.rakuten?.enabled===false&&api?.providers?.ndl?.enabled===false,rakuten:rak?.source==='rakuten'&&rak?.series?.name==='レベルE'&&rak?.series?.volumeNumber===1&&rak?.priceMeta?.listPrice===null&&rak?.priceMeta?.salePrice===550,ndl:ndl?.source==='ndl'&&ndl?.series?.name==='レベルE'&&ndl?.series?.volumeNumber===3&&canonicalIsbn(ndl?.isbn)==='9784088720739'};
+    }catch(e){return {error:String(e?.message||e)}}})()`);
+    check('E2E-API-006B Rakuten/NDL adapters are installed safely',apiAdapterContracts?.adapterMethods===true&&apiAdapterContracts?.defaultOff===true,JSON.stringify(apiAdapterContracts));
+    check('E2E-API-006C Rakuten normalization separates sale price from list price',apiAdapterContracts?.rakuten===true,JSON.stringify(apiAdapterContracts));
+    check('E2E-API-006D NDL normalization maps series/volume/ISBN',apiAdapterContracts?.ndl===true,JSON.stringify(apiAdapterContracts));
+
     const fnContracts={
       home:['renderHome'], add:['ensureTrailingIsbnRow','isbnLookup'], library:['renderLibrary','resetLibraryFilters','updateBookMeta','setPurchaseStatus'],
       search:['searchGoogle','findSimilarWorks'], calendar:['renderCalendar','showDay','allEvents','addCalendarExtra','checkReleaseNotifications'], settings:['loadSettingsUI','saveSettings','createBackupData']
@@ -224,7 +241,7 @@ async function main(){
       if(!lib)return {ok:false,reason:'libraryStats missing'};
       lib.classList.add('is-compact');
       const labels=[...lib.querySelectorAll('.library-stat-label')];
-      const visible=labels.length===5&&labels.every(el=>{const s=getComputedStyle(el);const r=el.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0;});
+      const visible=labels.length===5&&labels.every(el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();const noClip=el.scrollWidth<=el.clientWidth+1&&el.scrollHeight<=el.clientHeight+1;const range=document.createRange();range.selectNodeContents(el);const rr=range.getBoundingClientRect();const fullyInside=rr.left>=r.left-1&&rr.right<=r.right+1&&rr.top>=r.top-1&&rr.bottom<=r.bottom+1;return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0&&noClip&&fullyInside;});
       const text=labels.map(x=>x.textContent.trim());
       lib.classList.remove('is-compact');
       return {ok:visible,visible,text,display:labels.map(x=>getComputedStyle(x).display)};
@@ -253,6 +270,15 @@ async function main(){
       const clipped=await evalJS(`(()=>{const out=[];for(const e of document.querySelectorAll('body *')){const r=e.getBoundingClientRect(),s=getComputedStyle(e);if(r.width<=0||r.height<=0||s.display==='none'||s.visibility==='hidden')continue;if(e.matches('script,style,input,textarea,select,option,html,body'))continue;const t=(e.textContent||'').trim();if(!t)continue;if((s.textOverflow==='ellipsis'||s.whiteSpace==='nowrap')&&e.scrollWidth>e.clientWidth+1)out.push({id:e.id,cls:e.className,text:t.slice(0,100),scrollWidth:e.scrollWidth,clientWidth:e.clientWidth});}return out;})()`);
       check(`E2E-TAB-${id}-004 no unintended text clipping`,clipped.length===0,JSON.stringify(clipped.slice(0,8)));
     }
+
+    // E2E-UI-MATRIX: representative iPhone widths.
+    for(const width of [375,390,414]){
+      await cdp.send('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:true});
+      await wait(80);
+      const matrix=await evalJS(`(()=>{const els=[...document.querySelectorAll('body *')].filter(e=>{const s=getComputedStyle(e),r=e.getBoundingClientRect();return r.width>0&&r.height>0&&s.display!=='none'&&s.visibility!=='hidden'&&!e.matches('script,style,input,textarea,select,option,html,body')});const overflow=els.filter(e=>e.scrollWidth>e.clientWidth+1).map(e=>({id:e.id,cls:String(e.className),text:(e.textContent||'').trim().slice(0,60),sw:e.scrollWidth,cw:e.clientWidth}));return {width:innerWidth,overflow};})()`);
+      check(`E2E-UI-MATRIX-${width} no unexpected content overflow`,matrix?.overflow?.length===0,JSON.stringify(matrix?.overflow?.slice(0,8)));
+    }
+    await cdp.send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
 
     // Cross-feature smoke tests: exercise representative state transitions on every tab.
     const smoke=await evalJS(`(()=>{

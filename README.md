@@ -195,3 +195,11 @@ Registration/search hardening and performance refinement: fixed result thumbnail
 
 ### v4.13.38 検証
 - ホーム／蔵書の統計5枚を共通レンダラー・共通CSSで生成し、実DOMで構造・寸法・主要computed styleを比較します。
+
+
+## v4.13.40 検証体系
+ルール台帳とルール→検証マトリクスを正本化。UIは存在だけでなく実寸・clip・overflow・viewportまで検証し、並び順は指定順→作品名→数値巻数→登録順を全sort modeで直接検証する。
+
+
+## v4.13.40 データ操作カタログ
+`OPERATION_CATALOG_v4_13_40.md` をデータ変更操作の正本とし、UI入口と関数入口の二重ロックで排他制御する。

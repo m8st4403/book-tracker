@@ -11,7 +11,7 @@
   const providers={
     googleBooks:{enabled:true,capabilities:{isbnSearch:true,titleSearch:true,bibliographicRecord:true,seriesId:true,seriesName:true,volumeNumber:true,listPrice:true,taxIncluded:false,releaseDate:true,cover:true,author:true,publisher:true,pages:true}},
     openBD:{enabled:true,capabilities:{isbnSearch:true,titleSearch:false,bibliographicRecord:true,seriesId:false,seriesName:true,volumeNumber:true,listPrice:true,taxIncluded:false,releaseDate:true,cover:true,author:true,publisher:true,pages:true}},
-    rakuten:{enabled:false,capabilities:{isbnSearch:true,titleSearch:true,bibliographicRecord:true,seriesId:false,seriesName:true,volumeNumber:true,listPrice:true,taxIncluded:true,releaseDate:true,cover:true,author:true,publisher:true,pages:true}},
+    rakuten:{enabled:false,capabilities:{isbnSearch:true,titleSearch:true,bibliographicRecord:true,seriesId:false,seriesName:true,volumeNumber:true,listPrice:false,taxIncluded:true,releaseDate:true,cover:true,author:true,publisher:true,pages:true}},
     ndl:{enabled:false,capabilities:{isbnSearch:true,titleSearch:true,bibliographicRecord:true,seriesId:false,seriesName:true,volumeNumber:true,listPrice:true,taxIncluded:true,releaseDate:true,cover:false,author:true,publisher:true,pages:true}}
   };
   const priority={
@@ -74,8 +74,114 @@
         const x=d?.[0];if(!x)return [];
         return [normalizeOpenBD(x,isbn)].filter(x=>x?.title);
       }
+    },
+    rakuten:{
+      async isbn(isbn){
+        const cfg=getRakutenConfig();
+        if(!cfg) return [];
+        const u=rakutenUrl({isbn,applicationId:cfg.applicationId,accessKey:cfg.accessKey,hits:10});
+        const d=await getJSON(u,{searchOnline:true,headers:{}});
+        return (d.items||[]).map(x=>normalizeRakuten(x)).filter(x=>x?.title);
+      },
+      async search(q,limit=20){
+        const cfg=getRakutenConfig();
+        if(!cfg) return [];
+        const p={applicationId:cfg.applicationId,accessKey:cfg.accessKey,hits:Math.min(30,limit)};
+        const qq=String(q||'').trim();
+        if(/^inauthor:/i.test(qq))p.author=qq.replace(/^inauthor:/i,'').trim();
+        else if(/^intitle:/i.test(qq))p.title=qq.replace(/^intitle:/i,'').trim();
+        else p.title=qq;
+        const d=await getJSON(rakutenUrl(p),{searchOnline:true});
+        return (d.items||[]).map(x=>normalizeRakuten(x)).filter(x=>x?.title);
+      }
+    },
+    ndl:{
+      async isbn(isbn){
+        return searchNDL({isbn,limit:10});
+      },
+      async search(q,limit=20){
+        const qq=String(q||'').trim();
+        if(/^inauthor:/i.test(qq))return searchNDL({creator:qq.replace(/^inauthor:/i,'').trim(),limit});
+        if(/^intitle:/i.test(qq))return searchNDL({title:qq.replace(/^intitle:/i,'').trim(),limit});
+        return searchNDL({anywhere:qq,limit});
+      }
     }
   };
+  function getRakutenConfig(){
+    const c=globalThis.bookTrackerProviderConfig?.rakuten;
+    if(!c?.applicationId||!c?.accessKey)return null;
+    return {applicationId:String(c.applicationId),accessKey:String(c.accessKey)};
+  }
+  function rakutenUrl(p){
+    const q=new URLSearchParams({applicationId:p.applicationId,accessKey:p.accessKey,format:"json",formatVersion:"2",hits:String(p.hits||20)});
+    if(p.isbn)q.set("isbn",String(p.isbn));
+    if(p.title)q.set("title",String(p.title));
+    if(p.author)q.set("author",String(p.author));
+    return "https://openapi.rakuten.co.jp/services/api/BooksBook/Search/20170404?"+q.toString();
+  }
+  async function getText(url){
+    let err;
+    for(let n=0;n<3;n++){
+      try{
+        const r=await fetch(url,{cache:"no-store"});
+        if(r.ok)return await r.text();
+        if(r.status===429||r.status===503){err=Error("HTTP "+r.status);await sleep(700*Math.pow(2,n));continue;}
+        throw Error("HTTP "+r.status);
+      }catch(e){err=e;if(n<2)await sleep(700*Math.pow(2,n));}
+    }
+    throw err||Error("通信エラー");
+  }
+  async function searchNDL({isbn,title,creator,anywhere,limit=20}){
+    const q=[];
+    if(isbn)q.push('isbn="'+String(isbn).replace(/[-\s]/g,'')+'"');
+    if(title)q.push('title="'+String(title).replace(/"/g,'')+'"');
+    if(creator)q.push('creator="'+String(creator).replace(/"/g,'')+'"');
+    if(anywhere)q.push('anywhere="'+String(anywhere).replace(/"/g,'')+'"');
+    const url="https://ndlsearch.ndl.go.jp/api/sru?operation=searchRetrieve&version=1.2&maximumRecords="+Math.min(20,Math.max(1,limit))+"&query="+encodeURIComponent(q.join(" AND "));
+    const xml=await getText(url);
+    return normalizeNDLSru(xml,isbn||"");
+  }
+  function xmlText(node){return String(node?.textContent||"").trim();}
+  function firstLocal(root,name){return [...(root?.getElementsByTagNameNS?.("*",name)||[])].find(Boolean)||null;}
+  function firstLocalText(root,name){return xmlText(firstLocal(root,name));}
+  function allLocal(root,name){return [...(root?.getElementsByTagNameNS?.("*",name)||[])].map(xmlText).filter(Boolean);}
+  function normalizeRakuten(raw){
+    const x=raw?.item||raw||{},isbn=canonicalIsbn(x.isbn||"");
+    const parsed=parseVolumeTitle(x.title||"");
+    const seriesName=textOf(x.seriesName);
+    const out={isbn: x.isbn||"",title:textOf(x.title),subtitle:textOf(x.subTitle),author:textOf(x.author),publisher:textOf(x.publisherName),date:textOf(x.salesDate),cover:textOf(x.largeImageUrl||x.mediumImageUrl||x.smallImageUrl),description:textOf(x.itemCaption),categories:x.booksGenreId?[String(x.booksGenreId)]:[],source:"rakuten",series:seriesName?{id:"",name:seriesName,volumeNumber:null,displayVolume:"",bookType:""}:null,priceMeta:{listPrice:null,salePrice:Number.isFinite(Number(x.itemPrice))?Number(x.itemPrice):null,currency:"JPY",taxIncluded:Number.isFinite(Number(x.itemPrice))?true:null},identifiers:{rakutenItemId:textOf(x.itemCode||x.itemUrl)},fieldEvidence:{}};
+    if(out.series&&parsed.volume!=null){out.series.volumeNumber=parsed.volume;out.series.displayVolume=String(parsed.volume);}
+    const match=canonicalIsbn(out.isbn)===isbn;
+    for(const [field,value] of [["isbn13",/^97[89]\d{10}$/.test(out.isbn)?out.isbn:null],["title",out.title],["author",out.author],["publisher",out.publisher],["releaseDate",out.date],["seriesName",seriesName]])if(value)out.fieldEvidence[field]=evidenceFor(field,value,{identifierMatched:match,countryMatched:true});
+    out.fieldEvidence._source={provider:"rakuten",identifierMatched:match};
+    return out;
+  }
+  function normalizeNDLSru(xml,hint=""){
+    const doc=new DOMParser().parseFromString(xml,"application/xml");
+    if(doc.querySelector("parsererror"))throw Error("NDL Search XMLを解析できませんでした。");
+    const records=[...doc.getElementsByTagNameNS("*","record")];
+    return records.map(rec=>normalizeNDLRecord(rec,hint)).filter(x=>x?.title);
+  }
+  function normalizeNDLRecord(rec,hint=""){
+    const title=firstLocalText(rec,"title"),creator=allLocal(rec,"creator")[0]||"",publisher=allLocal(rec,"publisher")[0]||"",issued=firstLocalText(rec,"issued")||firstLocalText(rec,"date")||"";
+    const seriesName=firstLocalText(rec,"seriesTitle");
+    const volumeRaw=firstLocalText(rec,"volume");
+    const ids=[...rec.getElementsByTagName("*")].map(e=>e.getAttribute("rdf:resource")||e.getAttribute("resource")||"").filter(Boolean);
+    const isbnFromId=ids.map(x=>(x.match(/isbn\/(97[89]\d{10}|\d{9}[\dXx])/i)||[])[1]).find(Boolean)||firstLocalText(rec,"isbn")||hint;
+    const isbn=canonicalIsbn(isbnFromId);
+    const parsed=parseVolumeTitle(title);
+    const volume=Number(String(volumeRaw).match(/\d+/)?.[0]||parsed.volume||"")||null;
+    const priceRaw=firstLocalText(rec,"price");
+    const price=Number(String(priceRaw).replace(/[^0-9.]/g,""));
+    const out={isbn:isbnFromId||hint,title,subtitle:"",author:creator,publisher,date:issued,cover:"",description:firstLocalText(rec,"description")||firstLocalText(rec,"abstract"),categories:[],source:"ndl",series:seriesName?{id:"",name:seriesName,volumeNumber:volume,displayVolume:volume!=null?String(volume):"",bookType:""}:null,priceMeta:Number.isFinite(price)&&price>=0?{listPrice:price,currency:"JPY",taxIncluded:null}:null,identifiers:{ndlRecordId:rec.getAttribute("identifier")||""},fieldEvidence:{}};
+    const match=canonicalIsbn(out.isbn)===canonicalIsbn(hint)||!hint;
+    for(const [field,value] of [["isbn13",/^97[89]\d{10}$/.test(String(out.isbn))?out.isbn:null],["title",out.title],["author",out.author],["publisher",out.publisher],["releaseDate",out.date],["seriesName",seriesName],["volumeNumber",volume]])if(value!==null&&value!==undefined&&value!=="")out.fieldEvidence[field]=evidenceFor(field,value,{identifierMatched:match,countryMatched:true});
+    if(out.priceMeta?.listPrice!=null)out.fieldEvidence.listPrice=evidenceFor("listPrice",out.priceMeta.listPrice,{identifierMatched:match,countryMatched:true,taxIncludedConfirmed:false});
+    out.fieldEvidence.taxIncluded=evidenceFor("taxIncluded",out.priceMeta?.taxIncluded,{identifierMatched:match,countryMatched:true,taxIncludedConfirmed:false});
+    out.fieldEvidence._source={provider:"ndl",identifierMatched:match};
+    return out;
+  }
+  function normalizeNDLFixture(xml,hint=""){return normalizeNDLSru(xml,hint)}
   function normalizeGoogle(raw,hint=""){
     const b=gbook(raw,hint),x=raw?.volumeInfo||{},vs=x.seriesInfo?.volumeSeries||[],sv=vs.find(v=>v?.seriesId)||vs[0]||null;
     const isbn=b.isbn||hint,match=canonicalIsbn(isbn)===canonicalIsbn(hint)||!hint;
@@ -245,5 +351,5 @@
     return {value:null,confidence:"UNKNOWN",provider:null,evidence:null,attempts};
   }
   function config(){return {version:VERSION,providers:JSON.parse(JSON.stringify(providers)),priority:JSON.parse(JSON.stringify(priority)),thresholds:JSON.parse(JSON.stringify(thresholds))}}
-  window.bookTrackerApiManagement={VERSION,CONFIDENCE:CONF,CRITICAL_FIELDS:[...CRITICAL],providers,priority,thresholds,adapters,evidenceFor,acceptable,listPriceAccepted,runField,resolveIsbn,seriesAcceptable,mergeCandidates,config};
+  window.bookTrackerApiManagement={VERSION,CONFIDENCE:CONF,CRITICAL_FIELDS:[...CRITICAL],providers,priority,thresholds,adapters,evidenceFor,acceptable,listPriceAccepted,runField,resolveIsbn,seriesAcceptable,mergeCandidates,config,normalizeRakuten,normalizeNDLFixture};
 })();

@@ -276,7 +276,7 @@ Google Booksでは表示用 `bookDisplayNumber` と実際の順序を表す `ord
 
 ### 12.5 定価（税込）
 
-1. 楽天Books / openBDの日本向け定価情報を、税区分まで検証できたもの
+1. openBD等の日本向け定価情報を、税区分まで検証できたもの
 2. Google Books `listPrice`（日本向け・紙/電子・税区分等の条件を検証できた場合のみ）
 3. NDL（価格情報があり、定価（税込）として意味を確定できる場合のみ）
 
@@ -498,8 +498,11 @@ Providerごとに以下をテストする。
 - Google Books Volumes API: https://developers.google.com/books/docs/v1/reference/volumes
 - Google Books VolumeSeriesInfo: https://developers.google.com/resources/api-libraries/documentation/books/v1/cpp/latest/classgoogle__books__api_1_1Volumeseriesinfo.html
 - 楽天Books Book Search API: https://webservice.rakuten.co.jp/documentation/books-book-search
+  - 楽天Booksの `listPrice` は仕様上2013年以降常に0のため定価には使用しない。`itemPrice` は販売価格として別管理する。
+  - applicationId / accessKey が必要。認証情報はソースへ埋め込まず、実行環境から注入する。
 - openBD 書誌API仕様: https://openbd.jp/spec/
 - NDL Search API仕様: https://ndlsearch.ndl.go.jp/help/api/specifications
+  - NDL SearchはSRU/OpenSearch/OpenURLを提供。営利利用・継続利用では利用申請等の条件確認が必要な場合があるため、既定ではAdapterを無効化する。
 - NDL Search API利用条件: https://ndlsearch.ndl.go.jp/help/api
 
 Google Booksはシリーズの表示番号と実際の順序を分けて提供しており、`orderNumber`を実際の順序判定に使用する。Google Booksの`listPrice`はSuggested retail price、`retailPrice`は実際の販売価格として定義されるため、定価（税込）の判定では両者を混同しない。楽天Booksは`seriesName`、`isbn`、`salesDate`等を提供する。openBDはONIXのCollection/TitleDetailとPrice等を提供する。NDL Searchはシリーズタイトル等を含む書誌検索・APIを提供する。
@@ -618,3 +621,7 @@ purchaseGroups: {
 - 選択した複数冊に購入総額を登録すると1つの購入グループとして保存する。
 - 同じ本を別の購入グループへ登録した場合は、その本の旧グループから外す。
 - 蔵書から本を削除した場合、購入グループからもその本を除き、空になったグループは削除する。
+
+
+## v4.13.41 Phase 5 Adapter追加
+楽天Books / NDL SearchのAdapterを実装した。楽天Booksは認証情報がない限り無効、NDL Searchも利用条件確認が済むまで無効。両者とも共通BookRecordへ正規化し、critical項目は既存Evidence/Confidence判定を通す。
