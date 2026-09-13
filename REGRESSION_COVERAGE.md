@@ -212,7 +212,7 @@ Chromiumを使ったUI回帰では390×844で小・中・大フォントをレ�
 - REG-035: 検索結果／Resolverで得られた正式series.id・series.name・volumeNumberを登録データへ保持する。
 - REG-036: 定価が既に確定していてもシリーズ情報が不足していればResolverで補完し、十分なシリーズ情報があれば不要な再問い合わせを行わない。
 
-## v4.13.34 既存蔵書シリーズ再整理
+## v4.13.35 既存蔵書シリーズ再整理
 
 - REG-037: 蔵書タブに既存蔵書シリーズ再整理UIが存在する。
 - REG-038: 正式series.id/name/volumeNumberを使って既存蔵書のシリーズ情報を修正できる。
@@ -229,3 +229,12 @@ Chromiumを使ったUI回帰では390×844で小・中・大フォントをレ�
 - Fast ISBN resolution and concurrent batch lookup.
 - Registration reuse of complete series metadata to avoid unnecessary resolver calls.
 - Safer repair of provider titles such as `レベルE vol.1 (...)`.
+
+
+## v4.13.35 既存蔵書・データ操作高速化
+- REG-043: サンプル蔵書は既存シリーズ再整理の対象外。
+- REG-044: 正式series.idがある場合、タイトルの字幕・v.3等に依存せずシリーズ情報を採用。
+- REG-045: シリーズ再整理中は他のデータ操作・検索を開始できない。
+- REG-046: 再整理ボタンは処理中表示を維持し、完了後に元の文言へ戻る。
+- REG-047: Resolverは同一ISBNをセッション内で再利用する。
+- REG-048: 一括登録の書誌準備は最大3件並行し、逐次処理に戻らない。

@@ -53,6 +53,8 @@
   function providerEnabled(name){return !!providers[name]?.enabled}
   function hasCapability(name,cap){return !!providers[name]?.enabled&&providers[name]?.capabilities?.[cap]===true}
 
+  const resolverCache=new Map();
+  function cloneCached(v){try{return JSON.parse(JSON.stringify(v))}catch(_){return v}}
   const adapters={
     googleBooks:{
       async isbn(isbn){
@@ -182,6 +184,8 @@
   }
   async function resolveIsbn(isbn,opts={}){
     const ctx={isbn:canonicalIsbn(isbn)||isbn};
+    const cacheKey=ctx.isbn+"|"+(opts.fast?"fast":"full");
+    if(resolverCache.has(cacheKey))return cloneCached(resolverCache.get(cacheKey));
     let names=["googleBooks","openBD","rakuten","ndl"].filter(n=>providerEnabled(n)&&hasCapability(n,"isbnSearch")&&adapters[n]?.isbn);
     if(opts.fast)names=names.filter(n=>n==="googleBooks"||n==="openBD");
     const rows=[];
@@ -191,7 +195,13 @@
         const got=await adapters[name].isbn(isbn);
         const exact=got.filter(r=>canonicalIsbn(r?.isbn)===ctx.isbn);
         const usable=exact.length?exact:got;
-        if(usable.length){rows.push(...usable.map(r=>({...r,source:r.source||name})));attempts.push({provider:name,ok:true,count:usable.length});if(opts.fast)break}
+        if(usable.length){
+          rows.push(...usable.map(r=>({...r,source:r.source||name})));attempts.push({provider:name,ok:true,count:usable.length});
+          if(opts.fast){
+            const hasSeries=usable.some(r=>r?.series?.name&&((r?.series?.volumeNumber!=null)||r?.series?.id));
+            if(hasSeries)break;
+          }
+        }
         else attempts.push({provider:name,ok:false,reason:"no matching record"});
       }catch(e){attempts.push({provider:name,ok:false,error:String(e?.message||e)})}
     }
@@ -224,7 +234,8 @@
     if(out.series&&!out.series.id&&!out.series.name)out.series=null;
     out.series?.confidence&&(out.series.confidence.overall=seriesConfidence(out.series));
     out.resolution.accepted={series:!!out.series&&seriesAcceptable(out.series),listPrice:acceptable("listPrice",out.fieldEvidence.listPrice)};
-    return out;
+    resolverCache.set(cacheKey,out);
+    return cloneCached(out);
   }
   function seriesConfidence(s){const a=[s.confidence.seriesId,s.confidence.seriesName,s.confidence.volumeNumber].filter(Boolean).map(rank);if(!a.length)return"UNKNOWN";return Object.keys(s.confidence).filter(k=>k!=="overall").length&&a.every(x=>x>=rank("VERIFIED"))?"VERIFIED":a.every(x=>x>=rank("HIGH"))?"HIGH":a.some(x=>x>=rank("MEDIUM"))?"MEDIUM":"LOW"}
   function seriesAcceptable(s){return !!s&&!!s.name&&rank(s.confidence.seriesName)>=rank("HIGH")&&(s.volumeNumber==null||rank(s.confidence.volumeNumber)>=rank("HIGH"))}
