@@ -856,8 +856,8 @@ async function isbnLookup(isbn){
 async function searchGoogle(q){
  const lim=Number(appSettings.search?.resultCount)||20;
  const api=window.bookTrackerApiManagement;
- if(!api?.adapters?.googleBooks)throw Error("API管理基盤が読み込まれていません。");
- let a=await api.adapters.googleBooks.search(q,lim);
+ if(!api?.search)throw Error("API管理基盤が読み込まれていません。");
+ let a=(await api.search(q,lim)).results;
  const z=q.toLowerCase();
  if(appSettings.search?.sort==="release-desc")a.sort((x,y)=>releaseTime(y)-releaseTime(x));
  else if(appSettings.search?.sort==="release-asc")a.sort((x,y)=>releaseTime(x)-releaseTime(y));

@@ -129,6 +129,35 @@ async function main(){
     check('E2E-API-006B Rakuten/NDL adapters are installed safely',apiAdapterContracts?.adapterMethods===true&&apiAdapterContracts?.defaultOff===true,JSON.stringify(apiAdapterContracts));
     check('E2E-API-006C Rakuten normalization separates sale price from list price',apiAdapterContracts?.rakuten===true,JSON.stringify(apiAdapterContracts));
     check('E2E-API-006D NDL normalization maps series/volume/ISBN',apiAdapterContracts?.ndl===true,JSON.stringify(apiAdapterContracts));
+    // Phase 5/6: real resolver/search routing is tested with deterministic adapter doubles.
+    const failoverSmoke=await evalJS(`(async()=>{try{
+      const api=window.bookTrackerApiManagement, old={google:api.adapters.googleBooks.isbn,rak:api.adapters.rakuten.isbn,searchG:api.adapters.googleBooks.search,searchR:api.adapters.rakuten.search};
+      const saved={g:api.providers.googleBooks.enabled,r:api.providers.rakuten.enabled,threshold:api.runtimePolicy.failureThreshold,cooldown:api.runtimePolicy.cooldownMs,timeout:api.runtimePolicy.requestTimeoutMs};
+      api.providers.googleBooks.enabled=true;api.providers.rakuten.enabled=true;api.runtimePolicy.failureThreshold=1;api.runtimePolicy.cooldownMs=60000;api.runtimePolicy.requestTimeoutMs=50;
+      let gCalls=0,rCalls=0,sgCalls=0,srCalls=0;
+      api.adapters.googleBooks.isbn=async()=>{gCalls++;throw Error('synthetic Google outage')};
+      api.adapters.rakuten.isbn=async isbn=>{rCalls++;return [{isbn,title:'楽天フォールバック本',author:'A',publisher:'P',date:'2026-01-01',source:'rakuten',series:null,priceMeta:{listPrice:null,salePrice:500,taxIncluded:true},fieldEvidence:{title:api.evidenceFor('title','楽天フォールバック本',{identifierMatched:true,countryMatched:true})}}]};
+      const one=await api.resolveIsbn('9784088720715',{full:true});
+      const firstFallback=one?.resolution?.attempts?.some(x=>x.provider==='googleBooks'&&x.ok===false)&&one?.resolution?.attempts?.some(x=>x.provider==='rakuten'&&x.ok===true);
+      const gh=api.providerHealth.get('googleBooks');gh.failures=0;gh.temporarilyDisabledUntil=0;
+      api.adapters.googleBooks.search=async()=>{sgCalls++;throw Error('synthetic Google search outage')};
+      api.adapters.rakuten.search=async()=>{srCalls++;return [{isbn:'9784088720715',title:'検索フォールバック',author:'A',source:'rakuten'}]};
+      const sr=await api.search('検索フォールバック',5);
+      const searchFallback=sr?.results?.[0]?.title==='検索フォールバック'&&sr?.attempts?.some(x=>x.provider==='googleBooks'&&x.ok===false)&&sr?.attempts?.some(x=>x.provider==='rakuten'&&x.ok===true);
+      gh.failures=0;gh.temporarilyDisabledUntil=0;
+      api.adapters.googleBooks.search=async()=>{sgCalls++;await new Promise(r=>setTimeout(r,100));return [{isbn:'9784088720999',title:'タイムアウト元',author:'A',source:'googleBooks'}]};
+      api.adapters.rakuten.search=async()=>{srCalls++;return [{isbn:'9784088720998',title:'タイムアウト後フォールバック',author:'A',source:'rakuten'}]};
+      const st=await api.search('タイムアウト後フォールバック',5);
+      const timeoutFallback=st?.results?.[0]?.title==='タイムアウト後フォールバック'&&st?.attempts?.some(x=>x.provider==='googleBooks'&&x.ok===false&&String(x.error||'').includes('timeout'))&&st?.attempts?.some(x=>x.provider==='rakuten'&&x.ok===true);
+      const before=gCalls;const two=await api.resolveIsbn('9784088720722',{full:true}).catch(()=>null);const cooldownSkip=gCalls===before&&two?.resolution?.attempts?.some(x=>x.provider==='googleBooks'&&x.skipped===true);
+      api.adapters.googleBooks.isbn=old.google;api.adapters.rakuten.isbn=old.rak;api.adapters.googleBooks.search=old.searchG;api.adapters.rakuten.search=old.searchR;
+      api.providers.googleBooks.enabled=saved.g;api.providers.rakuten.enabled=saved.r;api.runtimePolicy.failureThreshold=saved.threshold;api.runtimePolicy.cooldownMs=saved.cooldown;api.runtimePolicy.requestTimeoutMs=saved.timeout;
+      return {firstFallback,searchFallback,timeoutFallback,cooldownSkip,gCalls,rCalls,sgCalls,srCalls};
+    }catch(e){return {error:String(e?.message||e)}}})()`);
+    check('E2E-API-006E ISBN自動フェイルオーバー',failoverSmoke?.firstFallback===true,JSON.stringify(failoverSmoke));
+    check('E2E-API-006F 検索自動フェイルオーバー',failoverSmoke?.searchFallback===true,JSON.stringify(failoverSmoke));
+    check('E2E-API-006G 障害Provider一時クールダウン',failoverSmoke?.cooldownSkip===true,JSON.stringify(failoverSmoke));
+    check('E2E-API-006H timeout時の自動フェイルオーバー',failoverSmoke?.timeoutFallback===true,JSON.stringify(failoverSmoke));
 
     const fnContracts={
       home:['renderHome'], add:['ensureTrailingIsbnRow','isbnLookup'], library:['renderLibrary','resetLibraryFilters','updateBookMeta','setPurchaseStatus'],

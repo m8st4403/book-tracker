@@ -5,7 +5,7 @@
  */
 (function(){
   "use strict";
-  const VERSION="1.3";
+  const VERSION="1.4";
   const CONF={UNKNOWN:0,LOW:1,MEDIUM:2,HIGH:3,VERIFIED:4};
   const CRITICAL=new Set(["isbn13","seriesId","seriesName","volumeNumber","listPrice","taxIncluded"]);
   const providers={
@@ -19,7 +19,7 @@
     seriesId:["googleBooks"],
     seriesName:["googleBooks","rakuten","openBD","ndl"],
     volumeNumber:["googleBooks","rakuten","ndl","openBD","titleParser"],
-    listPrice:["rakuten","openBD","googleBooks","ndl"],
+    listPrice:["openBD","googleBooks","ndl"],
     releaseDate:["rakuten","openBD","ndl","googleBooks"],
     bibliographicRecord:["ndl","openBD","googleBooks","rakuten"],
     cover:["googleBooks","openBD","ndl","rakuten"]
@@ -54,6 +54,15 @@
   function hasCapability(name,cap){return !!providers[name]?.enabled&&providers[name]?.capabilities?.[cap]===true}
 
   const resolverCache=new Map();
+  // Phase 6: provider health is runtime state, not remote executable configuration.
+  // A provider is temporarily skipped after repeated request failures, then retried after cooldown.
+  const runtimePolicy={failureThreshold:2,cooldownMs:30000,requestTimeoutMs:12000};
+  const providerHealth=new Map(Object.keys(providers).map(name=>[name,{failures:0,temporarilyDisabledUntil:0,lastFailureAt:0,lastSuccessAt:0,lastError:""}]));
+  function health(name){if(!providerHealth.has(name))providerHealth.set(name,{failures:0,temporarilyDisabledUntil:0,lastFailureAt:0,lastSuccessAt:0,lastError:""});return providerHealth.get(name)}
+  function providerTemporarilyDisabled(name,now=Date.now()){return (health(name).temporarilyDisabledUntil||0)>now}
+  function recordProviderSuccess(name){const h=health(name);h.failures=0;h.temporarilyDisabledUntil=0;h.lastSuccessAt=Date.now();h.lastError=""}
+  function recordProviderFailure(name,error){const h=health(name);h.failures+=1;h.lastFailureAt=Date.now();h.lastError=String(error?.message||error||"Provider error");if(h.failures>=runtimePolicy.failureThreshold)h.temporarilyDisabledUntil=Date.now()+runtimePolicy.cooldownMs}
+  async function withTimeout(promise,ms){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error("Provider timeout")),ms)})])}finally{clearTimeout(timer)}}
   function cloneCached(v){try{return JSON.parse(JSON.stringify(v))}catch(_){return v}}
   const adapters={
     googleBooks:{
@@ -288,28 +297,45 @@
     cands.sort((a,b)=>rank(b.confidence)-rank(a.confidence)||a.priority-b.priority);
     return cands[0];
   }
+  async function search(q,limit=20){
+    const names=(priority.search||[]).filter(n=>providerEnabled(n)&&hasCapability(n,"titleSearch")&&adapters[n]?.search);
+    const attempts=[],rows=[];
+    for(const name of names){
+      if(providerTemporarilyDisabled(name)){attempts.push({provider:name,ok:false,skipped:true,reason:"temporary provider cooldown"});continue;}
+      try{
+        const got=await withTimeout(adapters[name].search(q,limit),runtimePolicy.requestTimeoutMs);
+        if(Array.isArray(got)&&got.length){rows.push(...got.map(r=>({...r,source:r.source||name})));attempts.push({provider:name,ok:true,count:got.length});recordProviderSuccess(name);}
+        else{attempts.push({provider:name,ok:false,reason:"no results"});recordProviderSuccess(name);}
+      }catch(e){recordProviderFailure(name,e);attempts.push({provider:name,ok:false,error:String(e?.message||e),temporaryCooldown:providerTemporarilyDisabled(name)});}
+      if(rows.length)break;
+    }
+    if(!rows.length)throw Error("書籍検索に利用できるAPIから結果を取得できませんでした。");
+    const seen=new Set(),out=[];
+    for(const r of rows){const k=canonicalIsbn(r?.isbn)||norm((r?.title||"")+"|"+(r?.author||""));if(seen.has(k))continue;seen.add(k);out.push(r);}
+    return {results:out.slice(0,Math.max(1,limit)),attempts};
+  }
   async function resolveIsbn(isbn,opts={}){
     const ctx={isbn:canonicalIsbn(isbn)||isbn};
     const cacheKey=ctx.isbn+"|"+(opts.fast?"fast":"full");
     if(resolverCache.has(cacheKey))return cloneCached(resolverCache.get(cacheKey));
-    let names=["googleBooks","openBD","rakuten","ndl"].filter(n=>providerEnabled(n)&&hasCapability(n,"isbnSearch")&&adapters[n]?.isbn);
-    if(opts.fast)names=names.filter(n=>n==="googleBooks"||n==="openBD");
+    let names=(priority.search||[]).filter(n=>providerEnabled(n)&&hasCapability(n,"isbnSearch")&&adapters[n]?.isbn);
     const rows=[];
     const attempts=[];
     for(const name of names){
+      if(providerTemporarilyDisabled(name)) { attempts.push({provider:name,ok:false,skipped:true,reason:"temporary provider cooldown"}); continue; }
       try{
-        const got=await adapters[name].isbn(isbn);
+        const got=await withTimeout(adapters[name].isbn(isbn),runtimePolicy.requestTimeoutMs);
         const exact=got.filter(r=>canonicalIsbn(r?.isbn)===ctx.isbn);
         const usable=exact.length?exact:got;
         if(usable.length){
-          rows.push(...usable.map(r=>({...r,source:r.source||name})));attempts.push({provider:name,ok:true,count:usable.length});
+          rows.push(...usable.map(r=>({...r,source:r.source||name})));attempts.push({provider:name,ok:true,count:usable.length});recordProviderSuccess(name);
           if(opts.fast){
             const hasSeries=usable.some(r=>r?.series?.name&&((r?.series?.volumeNumber!=null)||r?.series?.id));
             if(hasSeries)break;
           }
         }
-        else attempts.push({provider:name,ok:false,reason:"no matching record"});
-      }catch(e){attempts.push({provider:name,ok:false,error:String(e?.message||e)})}
+        else { attempts.push({provider:name,ok:false,reason:"no matching record"}); recordProviderSuccess(name); }
+      }catch(e){recordProviderFailure(name,e);attempts.push({provider:name,ok:false,error:String(e?.message||e),temporaryCooldown:providerTemporarilyDisabled(name)})}
     }
     if(!rows.length)throw Error("このISBNに一致する書誌情報が見つかりませんでした。");
     const fields=["isbn13","title","author","publisher","releaseDate","seriesId","seriesName","volumeNumber","listPrice","taxIncluded","cover","description","categories"];
@@ -347,9 +373,9 @@
   function seriesAcceptable(s){return !!s&&!!s.name&&rank(s.confidence.seriesName)>=rank("HIGH")&&(s.volumeNumber==null||rank(s.confidence.volumeNumber)>=rank("HIGH"))}
   async function runField(field,ctx={}){
     const list=priority[field]||[];const attempts=[];
-    for(const name of list){if(name==="titleParser")continue;const ad=adapters[name];if(!providerEnabled(name)||!hasCapability(name,ctx.capability||field)||!ad)continue;try{const rows=ctx.isbn&&ad.isbn?await ad.isbn(ctx.isbn):[];for(const row of rows){const c=candidate(field,row,ctx);if(!c){attempts.push({provider:name,confidence:"UNKNOWN",accepted:false,reason:"required field unavailable"});continue}const result={value:c.value,confidence:c.confidence,evidence:c.evidence};attempts.push({provider:name,confidence:c.confidence,accepted:acceptable(field,result)});if(acceptable(field,result))return {value:c.value,confidence:c.confidence,provider:name,evidence:c.evidence,attempts}}}catch(e){attempts.push({provider:name,ok:false,error:String(e?.message||e)})}}
+    for(const name of list){if(name==="titleParser")continue;const ad=adapters[name];if(!providerEnabled(name)||!hasCapability(name,ctx.capability||field)||!ad)continue;if(providerTemporarilyDisabled(name)){attempts.push({provider:name,skipped:true,reason:"temporary provider cooldown"});continue;}try{const rows=ctx.isbn&&ad.isbn?await withTimeout(ad.isbn(ctx.isbn),runtimePolicy.requestTimeoutMs):[];for(const row of rows){const c=candidate(field,row,ctx);if(!c){attempts.push({provider:name,confidence:"UNKNOWN",accepted:false,reason:"required field unavailable"});continue}const result={value:c.value,confidence:c.confidence,evidence:c.evidence};attempts.push({provider:name,confidence:c.confidence,accepted:acceptable(field,result)});if(acceptable(field,result)){recordProviderSuccess(name);return {value:c.value,confidence:c.confidence,provider:name,evidence:c.evidence,attempts}}}}catch(e){recordProviderFailure(name,e);attempts.push({provider:name,ok:false,error:String(e?.message||e),temporaryCooldown:providerTemporarilyDisabled(name)})}}
     return {value:null,confidence:"UNKNOWN",provider:null,evidence:null,attempts};
   }
-  function config(){return {version:VERSION,providers:JSON.parse(JSON.stringify(providers)),priority:JSON.parse(JSON.stringify(priority)),thresholds:JSON.parse(JSON.stringify(thresholds))}}
-  window.bookTrackerApiManagement={VERSION,CONFIDENCE:CONF,CRITICAL_FIELDS:[...CRITICAL],providers,priority,thresholds,adapters,evidenceFor,acceptable,listPriceAccepted,runField,resolveIsbn,seriesAcceptable,mergeCandidates,config,normalizeRakuten,normalizeNDLFixture};
+  function config(){return {version:VERSION,runtimePolicy:JSON.parse(JSON.stringify(runtimePolicy)),providerHealth:JSON.parse(JSON.stringify(Object.fromEntries(providerHealth))),providers:JSON.parse(JSON.stringify(providers)),priority:JSON.parse(JSON.stringify(priority)),thresholds:JSON.parse(JSON.stringify(thresholds))}}
+  window.bookTrackerApiManagement={VERSION,CONFIDENCE:CONF,CRITICAL_FIELDS:[...CRITICAL],providers,priority,thresholds,adapters,evidenceFor,acceptable,listPriceAccepted,runField,resolveIsbn,seriesAcceptable,mergeCandidates,config,normalizeRakuten,normalizeNDLFixture,providerHealth,runtimePolicy,providerTemporarilyDisabled,search};
 })();

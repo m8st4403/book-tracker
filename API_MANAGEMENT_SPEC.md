@@ -625,3 +625,38 @@ purchaseGroups: {
 
 ## v4.13.41 Phase 5 Adapter追加
 楽天Books / NDL SearchのAdapterを実装した。楽天Booksは認証情報がない限り無効、NDL Searchも利用条件確認が済むまで無効。両者とも共通BookRecordへ正規化し、critical項目は既存Evidence/Confidence判定を通す。
+
+
+## Phase 5 — Rakuten Books / NDL Search Adapter追加（v4.13.41〜v4.13.42）
+- Rakuten Books Adapter と NDL Search Adapter を実装した。
+- 認証情報・利用条件が未設定のProviderは既定OFFとする。
+- Rakuten `itemPrice` は販売価格として保持し、正式な定価には使用しない。
+- NDLはSRUを入口とし、DC-NDL系のseriesTitle / volume / ISBN等を共通形式へ正規化する。
+
+## Phase 6 — 自動フェイルオーバーの実運用化（v4.13.42）
+### 6.1 Provider選択
+ISBN照会・検索とも、固定された `priority.search` を起点に、enabled / capability を満たすProviderだけを順番に試行する。
+
+### 6.2 フェイルオーバー
+Providerの通信失敗、HTTP/解析エラー、timeout、結果なしの場合は次候補へ進む。結果が得られても、Critical項目の採用は既存のEvidence / Confidence規則で別途判定する。
+
+### 6.3 一時障害
+Provider単位の実行時ヘルスを保持する。連続失敗が閾値に達したProviderは短時間のcooldownへ入り、その間は候補から一時的に除外する。cooldown終了後は自動的に再試行可能とする。
+
+初期実装値：
+- 連続失敗閾値: 2回
+- cooldown: 30秒
+- Provider request timeout: 12秒
+
+これらはコード実行を伴わない固定ランタイムポリシーであり、既存のRemote Config安全方針とは独立している。
+
+### 6.4 監査
+`resolution.attempts` にProviderごとの成功・失敗・skip理由を残し、どの候補を経由したか追跡可能とする。
+
+### 6.5 検証
+外部Release Gateで以下を確認する。
+- ISBN照会でGoogle Books障害→楽天Booksへの自動移行
+- 検索でGoogle Books障害→楽天Booksへの自動移行
+- timeout→次Providerへの移行
+- 連続障害Providerのtemporary cooldown
+- 既存Providerが復帰可能な状態を維持

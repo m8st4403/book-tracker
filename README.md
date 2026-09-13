@@ -203,3 +203,13 @@ Registration/search hardening and performance refinement: fixed result thumbnail
 
 ## v4.13.40 データ操作カタログ
 `OPERATION_CATALOG_v4_13_40.md` をデータ変更操作の正本とし、UI入口と関数入口の二重ロックで排他制御する。
+
+
+## v4.13.42 — Phase 5 completion / Phase 6 automatic failover operationalization
+- Rakuten Books / NDL Search adapters are part of the installed Provider layer.
+- ISBN resolution now follows the configured `priority.search` Provider order instead of a hard-coded Provider list.
+- Search requests use the same Provider failover path and return normalized results.
+- Provider runtime health tracks repeated request failures and temporarily cools down unhealthy Providers before retrying later.
+- Provider request timeout is enforced by the API manager.
+- Rakuten `itemPrice` remains sale price only; it is never promoted to the app's formal list price.
+- Release verification includes deterministic ISBN/search failover, timeout, and temporary-cooldown tests.
