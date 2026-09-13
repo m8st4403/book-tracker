@@ -262,3 +262,11 @@ SPEC.md と DEV_GUARD.md の変更履歴に、変更理由・影響範囲・回�
 
 ## v4.13.40 データ操作カタログ
 `OPERATION_CATALOG_v4_13_40.md` をデータ変更操作の正本とし、UI入口と関数入口の二重ロックで排他制御する。
+
+## v4.13.44 ルール／検証体系監査
+
+- 重要状態は、単にlocalStorageへ書き込めることではなく、実際のページreload後に意味が維持されることを検証する。
+- 複数storageを変更する操作は、途中の保存失敗で部分更新を残さないよう、メモリ状態と保存状態を元へ戻す。
+- バックアップはschemaVersion、appVersion、許可されたstorage keyの範囲を検証対象とする。
+- package.json、APP_VERSION、DEV_GUARD_VERSIONは同一バージョンで配布する。
+- 新機能の実装前に、既存ルールに「検証方法」「失敗時の期待状態」「reload後の確認」が存在するか監査する。

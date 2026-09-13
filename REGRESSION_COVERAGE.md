@@ -262,6 +262,19 @@ Chromiumを使ったUI回帰では390×844で小・中・大フォントをレ�
 - 実ブラウザの `getComputedStyle` と実寸（width/height）で5名称の表示状態を検証する。
 
 
+### v4.13.44
+
+- ルール／検証体系監査・永続化安定化
+
 ### v4.13.42
 - Phase 5: 楽天Books / NDL Search Adapterの実装を完了。
 - Phase 6: ISBN/検索の自動フェイルオーバー、timeout、Provider temporary cooldownを外部Release Gateで検証。
+
+## v4.13.44 検証体系監査
+
+| 仕様 | 回帰確認 | 方法 |
+|---|---|---|
+| 重要状態の保存 | books/meta/calendarExtras/purchaseGroups/settingsを実reloadで確認 | Browser E2E |
+| バックアップ契約 | schemaVersion/appVersion/許可storageキー | E2E |
+| 購入総額保存失敗 | storage書込み失敗時にmemory状態をrollback | failure injection E2E |
+| バージョン整合 | package.json / APP_VERSION / DEV_GUARD_VERSION | static |

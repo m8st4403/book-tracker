@@ -22,7 +22,15 @@ function check(name, ok, detail='') { (ok ? pass : fail)(name, detail); }
 const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
 const dupIds = [...new Set(ids.filter((id,i)=>ids.indexOf(id)!==i))];
 check('STATIC-001 unique DOM ids', dupIds.length===0, dupIds.join(', '));
-check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.41["']/.test(html) || /APP_VERSION\s*=\s*["']4\.13\.41["']/.test(html), 'version marker present');
+check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.44["']/.test(html) || /APP_VERSION\s*=\s*["']4\.13\.44["']/.test(html), 'version marker present');
+const packagePath=path.join(path.dirname(target),'package.json');
+let packageVersion='';
+try{packageVersion=JSON.parse(fs.readFileSync(packagePath,'utf8')).version||''}catch(e){}
+const appVersionMatch=html.match(/const APP_VERSION=\"([^\"]+)\"/);
+const guardVersionMatch=html.match(/const DEV_GUARD_VERSION=\"([^\"]+)\"/);
+check('STATIC-018 version sources are consistent', !!packageVersion&&appVersionMatch?.[1]===packageVersion&&guardVersionMatch?.[1]===packageVersion, `package=${packageVersion} app=${appVersionMatch?.[1]||''} guard=${guardVersionMatch?.[1]||''}`);
+check('STATIC-019 persistence/backup gap audit exists', fs.existsSync(path.join(path.dirname(target),'RULE_GAP_AUDIT_v4_13_44.md'))&&fs.existsSync(path.join(path.dirname(target),'NEXT_IMPLEMENTATION_PRIORITY_v4_13_44.md')), 'persistence/backup/priority contracts');
+check('STATIC-020 backup schema validation contract', /Number\(d\.schemaVersion\)!==3/.test(html), 'backup schemaVersion validation');
 check('STATIC-003 required six tabs', ['home','add','library','search','calendar','settings'].every(id=>new RegExp(`id=["']${id}["']`).test(html)), 'home/add/library/search/calendar/settings');
 check('STATIC-004 price filter exists', /id=["']filterPrice["']/.test(html), 'library price filter');
 check('STATIC-005 canonical registration routes exist', /window\.addBook\s*=/.test(html) && /window\.bulkAdd\s*=/.test(html), 'addBook/bulkAdd');
@@ -96,8 +104,8 @@ async function main(){
     // local JS dependency is inlined only for the browser harness because this sandbox blocks loopback navigation.
     const apiPath=path.join(path.dirname(target),'api_management.js');
     const apiCode=fs.readFileSync(apiPath,'utf8').replace(/<\/script/gi,'<\\/script');
-    const storageShim=`<script>(function(){const s=new Map();window.__guardStorage={get length(){return s.size},key(i){return [...s.keys()][i]??null},getItem(k){return s.has(String(k))?s.get(String(k)):null},setItem(k,v){s.set(String(k),String(v))},removeItem(k){s.delete(String(k))},clear(){s.clear()}}})();<\/script>`;
-    const browserHtml=storageShim+html.replaceAll('localStorage','__guardStorage').replace('<script src="./api_management.js"></script>',`<script>${apiCode}</script>`);
+    const makeBrowserHtml=(seed={})=>{const seeded=JSON.stringify(seed);const shim=`<script>(function(){const initial=${seeded};const s=new Map(Object.entries(initial));window.__guardStorage={get length(){return s.size},key(i){return [...s.keys()][i]??null},getItem(k){return s.has(String(k))?s.get(String(k)):null},setItem(k,v){s.set(String(k),String(v))},removeItem(k){s.delete(String(k))},clear(){s.clear()}}})();<\/script>`;return shim+html.replaceAll('localStorage','__guardStorage').replace('<script src="./api_management.js"></script>',`<script>${apiCode}</script>`)};
+    const browserHtml=makeBrowserHtml();
     await cdp.send('Page.setDocumentContent',{frameId:(await cdp.send('Page.getFrameTree')).frameTree.frame.id,html:browserHtml}); await wait(1200);
 
     const loadState=await evalJS('({url:location.href,ready:document.readyState,title:document.title,storage:(()=>{try{__guardStorage.setItem("__guard","1");__guardStorage.removeItem("__guard");return true}catch(e){return false}})()})');
@@ -384,6 +392,9 @@ async function main(){
     // App-internal guard remains available, but external guard is authoritative.
     const internalGuard=await evalJS(`typeof window.runBookTrackerSpecGuard==='function'`);
     check('E2E-GUARD-001 internal guard exported',internalGuard,'optional developer UI guard');
+    const atomicitySmoke=await evalJS(`(()=>{const before=JSON.parse(JSON.stringify(purchaseGroups));const oldPersist=persistPurchaseGroups;persistPurchaseGroups=()=>false;const ok=setPurchaseGroupForBooks(['9784000000001'],1234,'atomicity-test');persistPurchaseGroups=oldPersist;return {rejected:ok===false,unchanged:JSON.stringify(purchaseGroups)===JSON.stringify(before)}})()`);
+    check('E2E-PERSIST-002 purchase-group write failure rolls back memory state',atomicitySmoke?.rejected===true&&atomicitySmoke?.unchanged===true,JSON.stringify(atomicitySmoke));
+
     // Screenshot smoke at the final state. This catches catastrophic blank pages in addition to geometry tests.
     const shot=await cdp.send('Page.captureScreenshot',{format:'png'});
     check('E2E-SCREEN-001 screenshot captured',!!shot.data && shot.data.length>1000,'390x844 rendered screenshot');

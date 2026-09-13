@@ -37,3 +37,12 @@ UIは「存在する」だけで完了としない。仕様が「読める」を
 
 ## v4.13.40 データ操作カタログ
 `OPERATION_CATALOG_v4_13_40.md` をデータ変更操作の正本とし、UI入口と関数入口の二重ロックで排他制御する。
+
+## v4.13.44 検証体系監査で追加した不変条件
+
+| ID | ルール | 検証方法 | 状態 |
+|---|---|---|---|
+| PERSIST-002 | 複数storageを変更する操作は途中失敗で部分状態を残さない | failure injection + rollback E2E | CURRENT |
+| PERSIST-003 | 重要状態は実reload後に意味を維持する | browser reload E2E | CURRENT |
+| BACKUP-001 | バックアップはschema/version/許可キーを満たす | logic + E2E | CURRENT |
+| VERSION-001 | package/app/guardのバージョンを一致させる | static release gate | CURRENT |
