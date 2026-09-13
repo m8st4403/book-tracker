@@ -660,3 +660,31 @@ Provider単位の実行時ヘルスを保持する。連続失敗が閾値に達
 - timeout→次Providerへの移行
 - 連続障害Providerのtemporary cooldown
 - 既存Providerが復帰可能な状態を維持
+
+
+## Phase 7 — Resolver Cache / Critical Field Protection / Provider Contract運用化 (v4.13.43)
+### 7.1 Resolver session cache
+- ISBN解決結果はセッション内で再利用する。
+- キャッシュTTLは10分、最大200件とする。
+- Providerのenabled状態またはpriorityが変化した場合、旧キャッシュは使用しない。
+- 明示的に `clearResolverCache()` で破棄できる。
+- キャッシュは深いコピーを返し、呼び出し側の変更で保存値を汚染しない。
+
+### 7.2 Critical field non-downgrade
+- `seriesId / seriesName / volumeNumber / listPrice / taxIncluded` はHIGH以上を採用条件とする。
+- Resolverが不十分な値を返した場合、既存の確定済み蔵書データを上書きしない。
+- 定価は税込確認済みの値だけを正式な定価として反映する。
+- シリーズ情報も `seriesAcceptable()` を通過した場合だけ既存情報を更新する。
+
+### 7.3 Provider contract
+- Adapter実装とProvider capabilityの組み合わせをRelease Gateで検査する。
+- `isbnSearch:true` のProviderは `adapters.<provider>.isbn()` を持つ。
+- `titleSearch:true` のProviderは `adapters.<provider>.search()` を持つ。
+- これにより設定だけ先に有効化され、実装されていないAdapterへ到達する状態を配布前に検出する。
+
+### 7.4 検証
+外部Release Gateで以下を確認する。
+- 同一ISBNの2回目照会がセッションキャッシュを利用する
+- Provider設定変更後に旧キャッシュを利用しない
+- 拒否されたCritical情報が既存の確定値を上書きしない
+- capabilityとAdapter実装の契約が一致する

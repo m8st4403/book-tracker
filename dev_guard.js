@@ -159,6 +159,41 @@ async function main(){
     check('E2E-API-006G 障害Provider一時クールダウン',failoverSmoke?.cooldownSkip===true,JSON.stringify(failoverSmoke));
     check('E2E-API-006H timeout時の自動フェイルオーバー',failoverSmoke?.timeoutFallback===true,JSON.stringify(failoverSmoke));
 
+    // Phase 7: bounded/config-aware resolver cache and critical-field non-downgrade contracts.
+    const phase7Cache=await evalJS(`(async()=>{try{
+      const api=window.bookTrackerApiManagement, old={isbn:api.adapters.googleBooks.isbn};
+      api.clearResolverCache();
+      for(const h of api.providerHealth.values()){h.failures=0;h.temporarilyDisabledUntil=0;h.lastError='';}
+      api.providers.googleBooks.enabled=true;
+      api.runtimePolicy.requestTimeoutMs=500;
+      let calls=0;
+      api.adapters.googleBooks.isbn=async isbn=>{calls++;return [{isbn,title:'Cache Test '+calls,author:'A',publisher:'P',source:'googleBooks',fieldEvidence:{title:api.evidenceFor('title','Cache Test '+calls,{identifierMatched:true,countryMatched:true})}}]};
+      const a=await api.resolveIsbn('9784088720990',{full:true});
+      const b=await api.resolveIsbn('9784088720990',{full:true});
+      const cacheHit=calls===1&&a.title===b.title;
+      const oldEnabled={g:api.providers.googleBooks.enabled,r:api.providers.rakuten.enabled,n:api.providers.ndl.enabled,o:api.providers.openBD.enabled};
+      api.providers.googleBooks.enabled=false;api.providers.rakuten.enabled=false;api.providers.ndl.enabled=false;api.providers.openBD.enabled=false;
+      const invalidated=api.cacheInfo().size===1 && (await api.resolveIsbn('9784088720990',{full:true}).catch(()=>null))===null;
+      api.providers.googleBooks.enabled=oldEnabled.g;api.providers.rakuten.enabled=oldEnabled.r;api.providers.ndl.enabled=oldEnabled.n;api.providers.openBD.enabled=oldEnabled.o;
+      api.adapters.googleBooks.isbn=old.isbn;
+      api.clearResolverCache();
+      return {cacheHit,invalidated,cacheInfo:api.cacheInfo()};
+    }catch(e){return {error:String(e?.message||e)}}})()`);
+    check('E2E-API-007A resolver cache is bounded and config-aware',phase7Cache?.cacheHit===true&&phase7Cache?.invalidated===true,JSON.stringify(phase7Cache));
+
+    const phase7Critical=await evalJS(`(()=>{try{
+      const bad={resolution:{accepted:{series:false,listPrice:false}},series:{id:'BAD',name:'別作品',volumeNumber:9},priceMeta:{listPrice:100,taxIncluded:false},title:'API title'};
+      const base={isbn:'9784088720715',title:'既存タイトル',series:{id:'GOOD',name:'レベルE',volumeNumber:1},price:{listPrice:550,status:'confirmed',currency:'JPY',taxIncluded:true,source:'manual',confidence:'HIGH'}};
+      const merged=mergeRegistrationBook(base,bad);
+      const seriesKept=merged.series?.id==='GOOD'&&merged.series?.name==='レベルE'&&merged.series?.volumeNumber===1;
+      const priceKept=merged.price?.listPrice===550&&merged.price?.status==='confirmed'&&merged.price?.taxIncluded===true;
+      return {seriesKept,priceKept};
+    }catch(e){return {error:String(e?.message||e)}}})()`);
+    check('LOGIC-API-007B critical fields are never downgraded by rejected resolver data',phase7Critical?.seriesKept===true&&phase7Critical?.priceKept===true,JSON.stringify(phase7Critical));
+
+    const providerContracts=await evalJS(`(()=>{const api=window.bookTrackerApiManagement;return Object.entries(api.adapters).every(([name,a])=>{if(!a||typeof a.isbn!=='function')return false;if(api.providers[name]?.capabilities?.titleSearch&&typeof a.search!=='function')return false;return true})})()`);
+    check('STATIC-API-007C enabled Adapter capability contract',providerContracts===true,'ISBN adapter and titleSearch capability must match implementation');
+
     const fnContracts={
       home:['renderHome'], add:['ensureTrailingIsbnRow','isbnLookup'], library:['renderLibrary','resetLibraryFilters','updateBookMeta','setPurchaseStatus'],
       search:['searchGoogle','findSimilarWorks'], calendar:['renderCalendar','showDay','allEvents','addCalendarExtra','checkReleaseNotifications'], settings:['loadSettingsUI','saveSettings','createBackupData']

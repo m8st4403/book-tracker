@@ -4,7 +4,7 @@ iPhone向けの書籍管理アプリのプロトタイプです。
 
 ## 現在のバージョン
 
-**v4.13.39**
+**v4.13.43**
 
 v4.13.36では、全タブのデータ変更操作を共通排他制御し、検索中も登録・削除などのデータ変更を開始できないようにしました。また蔵書の並び順は、選択した並び順を最優先キーとし、同値時は「作品名 → 巻数 → 登録順」で統一しました。
 
@@ -21,11 +21,11 @@ Phase 4で定価（税込）の正式取得・保存モデル（`price.listPrice
 v4.10.0は新機能追加ではなく、今後の開発を安全に進めるための
 「仕様ガード＋頻発バグ回帰チェック」を中心とした開発基盤版です。
 
-## API管理・自動フェイルオーバー仕様 v1.0
+## API管理・自動フェイルオーバー仕様 v1.5
 
 外部APIは固定順ではなく情報項目単位で管理し、Provider Adapter、Capability、schema/値/意味の検証、Evidenceベースの信頼度判定を経て自動フェイルオーバーする。詳細は `API_MANAGEMENT_SPEC.md`。
 
-重要項目であるシリーズ統合と定価（税込）は低信頼情報を自動確定しない。未知APIの自動コード取得・実行は行わず、Adapter実装済みAPIのみリモート設定で後から有効化・優先順位変更できる。
+重要項目であるシリーズ統合と定価（税込）は低信頼情報を自動確定しない。未知APIの自動コード取得・実行は行わず、Adapter実装済みAPIのみリモート設定で後から有効化・優先順位変更できる。ResolverキャッシュはTTL・上限・Provider設定変更検知を持ち、既存の確定済みCritical情報は低信頼なResolver結果で上書きしない。
 
 
 ## 主な機能
@@ -205,7 +205,7 @@ Registration/search hardening and performance refinement: fixed result thumbnail
 `OPERATION_CATALOG_v4_13_40.md` をデータ変更操作の正本とし、UI入口と関数入口の二重ロックで排他制御する。
 
 
-## v4.13.42 — Phase 5 completion / Phase 6 automatic failover operationalization
+## v4.13.43 — Phase 7 API management operational stabilization
 - Rakuten Books / NDL Search adapters are part of the installed Provider layer.
 - ISBN resolution now follows the configured `priority.search` Provider order instead of a hard-coded Provider list.
 - Search requests use the same Provider failover path and return normalized results.
@@ -213,3 +213,8 @@ Registration/search hardening and performance refinement: fixed result thumbnail
 - Provider request timeout is enforced by the API manager.
 - Rakuten `itemPrice` remains sale price only; it is never promoted to the app's formal list price.
 - Release verification includes deterministic ISBN/search failover, timeout, and temporary-cooldown tests.
+
+## Phase 7 — API管理の実運用安定化
+- Resolver session cache: 10分TTL / 最大200件 / Provider設定変更時は自動無効化
+- Critical field non-downgrade: 確定済みシリーズ・定価を低信頼結果で上書きしない
+- Provider capability と Adapter実装の契約をRelease Gateで検査

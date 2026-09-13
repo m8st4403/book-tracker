@@ -54,6 +54,26 @@
   function hasCapability(name,cap){return !!providers[name]?.enabled&&providers[name]?.capabilities?.[cap]===true}
 
   const resolverCache=new Map();
+  // Phase 7: session cache is bounded and configuration-aware. A cached answer must
+  // never survive indefinitely or cross a Provider-priority/enabled-state change.
+  const cachePolicy={ttlMs:10*60*1000,maxEntries:200};
+  function providerConfigSignature(){
+    return JSON.stringify({providers,priority});
+  }
+  function cacheGet(key){
+    const entry=resolverCache.get(key);
+    if(!entry)return null;
+    if(entry.signature!==providerConfigSignature()||entry.expiresAt<=Date.now()){
+      resolverCache.delete(key);return null;
+    }
+    return cloneCached(entry.value);
+  }
+  function cacheSet(key,value){
+    if(resolverCache.size>=cachePolicy.maxEntries){const first=resolverCache.keys().next().value;if(first)resolverCache.delete(first);}
+    resolverCache.set(key,{value:cloneCached(value),createdAt:Date.now(),expiresAt:Date.now()+cachePolicy.ttlMs,signature:providerConfigSignature()});
+  }
+  function clearResolverCache(){resolverCache.clear();}
+  function cacheInfo(){return {size:resolverCache.size,ttlMs:cachePolicy.ttlMs,maxEntries:cachePolicy.maxEntries};}
   // Phase 6: provider health is runtime state, not remote executable configuration.
   // A provider is temporarily skipped after repeated request failures, then retried after cooldown.
   const runtimePolicy={failureThreshold:2,cooldownMs:30000,requestTimeoutMs:12000};
@@ -317,7 +337,8 @@
   async function resolveIsbn(isbn,opts={}){
     const ctx={isbn:canonicalIsbn(isbn)||isbn};
     const cacheKey=ctx.isbn+"|"+(opts.fast?"fast":"full");
-    if(resolverCache.has(cacheKey))return cloneCached(resolverCache.get(cacheKey));
+    const cached=cacheGet(cacheKey);
+    if(cached)return cached;
     let names=(priority.search||[]).filter(n=>providerEnabled(n)&&hasCapability(n,"isbnSearch")&&adapters[n]?.isbn);
     const rows=[];
     const attempts=[];
@@ -366,7 +387,7 @@
     if(out.series&&!out.series.id&&!out.series.name)out.series=null;
     out.series?.confidence&&(out.series.confidence.overall=seriesConfidence(out.series));
     out.resolution.accepted={series:!!out.series&&seriesAcceptable(out.series),listPrice:acceptable("listPrice",out.fieldEvidence.listPrice)};
-    resolverCache.set(cacheKey,out);
+    cacheSet(cacheKey,out);
     return cloneCached(out);
   }
   function seriesConfidence(s){const a=[s.confidence.seriesId,s.confidence.seriesName,s.confidence.volumeNumber].filter(Boolean).map(rank);if(!a.length)return"UNKNOWN";return Object.keys(s.confidence).filter(k=>k!=="overall").length&&a.every(x=>x>=rank("VERIFIED"))?"VERIFIED":a.every(x=>x>=rank("HIGH"))?"HIGH":a.some(x=>x>=rank("MEDIUM"))?"MEDIUM":"LOW"}
@@ -377,5 +398,5 @@
     return {value:null,confidence:"UNKNOWN",provider:null,evidence:null,attempts};
   }
   function config(){return {version:VERSION,runtimePolicy:JSON.parse(JSON.stringify(runtimePolicy)),providerHealth:JSON.parse(JSON.stringify(Object.fromEntries(providerHealth))),providers:JSON.parse(JSON.stringify(providers)),priority:JSON.parse(JSON.stringify(priority)),thresholds:JSON.parse(JSON.stringify(thresholds))}}
-  window.bookTrackerApiManagement={VERSION,CONFIDENCE:CONF,CRITICAL_FIELDS:[...CRITICAL],providers,priority,thresholds,adapters,evidenceFor,acceptable,listPriceAccepted,runField,resolveIsbn,seriesAcceptable,mergeCandidates,config,normalizeRakuten,normalizeNDLFixture,providerHealth,runtimePolicy,providerTemporarilyDisabled,search};
+  window.bookTrackerApiManagement={VERSION,CONFIDENCE:CONF,CRITICAL_FIELDS:[...CRITICAL],providers,priority,thresholds,adapters,evidenceFor,acceptable,listPriceAccepted,runField,resolveIsbn,seriesAcceptable,mergeCandidates,config,normalizeRakuten,normalizeNDLFixture,providerHealth,runtimePolicy,providerTemporarilyDisabled,search,clearResolverCache,cacheInfo,cachePolicy};
 })();
