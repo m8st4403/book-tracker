@@ -22,7 +22,7 @@ function check(name, ok, detail='') { (ok ? pass : fail)(name, detail); }
 const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
 const dupIds = [...new Set(ids.filter((id,i)=>ids.indexOf(id)!==i))];
 check('STATIC-001 unique DOM ids', dupIds.length===0, dupIds.join(', '));
-check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.30["']/.test(html) || /APP_VERSION\s*=\s*["']4\.13\.30["']/.test(html), 'version marker present');
+check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.31["']/.test(html) || /APP_VERSION\s*=\s*["']4\.13\.31["']/.test(html), 'version marker present');
 check('STATIC-003 required six tabs', ['home','add','library','search','calendar','settings'].every(id=>new RegExp(`id=["']${id}["']`).test(html)), 'home/add/library/search/calendar/settings');
 check('STATIC-004 price filter exists', /id=["']filterPrice["']/.test(html), 'library price filter');
 check('STATIC-005 canonical registration routes exist', /window\.addBook\s*=/.test(html) && /window\.bulkAdd\s*=/.test(html), 'addBook/bulkAdd');
@@ -135,6 +135,9 @@ async function main(){
       const api=window.bookTrackerApiManagement; const lowApi=api.evidenceFor('listPrice',484,{identifierMatched:true,countryMatched:true,taxIncludedConfirmed:false}); const highApi=api.evidenceFor('listPrice',484,{identifierMatched:true,countryMatched:true,taxIncludedConfirmed:true}); out.apiPriceTrust=!api.acceptable('listPrice',lowApi)&&api.acceptable('listPrice',highApi);
       const backup=createBackupData(); out.backupVersion=backup.appVersion===APP_VERSION;
       out.ownershipRoute=typeof setPurchaseStatus==='function'&&typeof updateBookMeta==='function'&&typeof window.addBook==='function';
+      out.registrationSeriesPreserved=(()=>{const base={isbn:"logic-series",title:"レベルE 2",price:550,series:null};const resolved={title:"レベルE",author:"冨樫義博",publisher:"集英社",series:{id:"LEVEL-E",name:"レベルE",volumeNumber:2},resolution:{accepted:{series:true}}};const x=mergeRegistrationBook(base,resolved);return x.series?.id==="LEVEL-E"&&x.series?.name==="レベルE"&&x.series?.volumeNumber===2})();
+      out.searchSingleFlight=typeof runSingleFlight==='function'&&activeActions instanceof Set;
+      const regA=registrationKey({isbn:"9780000000000",title:"A"}),regB=registrationKey({isbn:"9780000000000",title:"A"});registrationLocks.add(regA);out.registrationLockShared=regA===regB&&registrationLocks.has(regB);registrationLocks.delete(regA);
       return out;
     })()`);
     for(const [name,ok] of Object.entries(logic)) check(`LOGIC-${name}`,ok,ok?'OK':'spec contract failed');
