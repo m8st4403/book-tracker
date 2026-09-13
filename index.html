@@ -501,11 +501,12 @@ body.font-large{--unified-card-heading-size:20px}
 .actions button[data-busy="1"],.result-toolbar button[data-busy="1"],#registerIsbnRows[data-busy="1"]{opacity:.65;cursor:wait}
 #homeBookTotalSub{display:block;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;line-height:1.35!important;overflow-wrap:anywhere}
 .library-stats .stat-price-summary{display:block;white-space:normal;overflow-wrap:anywhere;line-height:1.35}
-.library-stats.is-compact .stat-price-summary,.library-stats.is-compact .statbox>.muted{display:none!important}
+.library-stats.is-compact .stat-price-summary,.library-stats.is-compact .statbox>.muted:not(.library-stat-label){display:none!important}
 .library-stats.is-compact .statbox{overflow:hidden}
 .library-stats.is-compact .library-stat-label{max-width:100%;overflow:hidden;text-overflow:ellipsis}.library-stats.is-compact .statbox b{max-width:100%;overflow:visible;text-overflow:clip}
 
 /* v4.13.37: Home and Library statistics use one shared panel geometry and markup. */
+/* v4.13.38: Compact one-row Library statistics keep the panel name visible. */
 .home-stats.unified-stats{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;margin:14px 0 0!important}
 .home-stats.unified-stats .statbox,.library-stats .statbox{min-width:0!important;padding:12px!important;border-radius:12px!important;border:1px solid var(--border)!important;box-shadow:0 1px 2px #00000008!important;box-sizing:border-box!important}
 .home-stats.unified-stats .statbox .muted,.library-stats .statbox .muted{display:block;font-size:11px;line-height:1.35;color:var(--theme-muted)!important}
@@ -1983,7 +1984,7 @@ window.bulkAdd=async(id,button)=>{const actionKey="register:bulk:"+id;if(isActio
   // REG-011: compact stats must hide all subtext, and home price summary must not be clipped.
   try{
     const css=[...document.querySelectorAll("style")].map(x=>x.textContent).join("\n");
-    const compactRule=/\.library-stats\.is-compact \.stat-price-summary,\.library-stats\.is-compact \.statbox>\.muted\{display:none!important\}/.test(css);
+    const compactRule=/\.library-stats\.is-compact \.stat-price-summary,\.library-stats\.is-compact \.statbox>\.muted:not\(\.library-stat-label\)\{display:none!important\}/.test(css);
     const homeSub=$("homeBookTotalSub");
     const cs=homeSub?getComputedStyle(homeSub):null;
     const homeNoClip=!!cs&&cs.whiteSpace!=="nowrap"&&cs.textOverflow!=="ellipsis"&&cs.overflow!=="hidden";
@@ -1992,13 +1993,21 @@ window.bulkAdd=async(id,button)=>{const actionKey="register:bulk:"+id;if(isActio
     if(librarySec)librarySec.hidden=false;
     $("libraryStats")?.classList.add("is-compact");
     const compactBoxes=[...document.querySelectorAll("#libraryStats.is-compact .statbox")];
-    const hiddenSub=[...document.querySelectorAll("#libraryStats .statbox>.muted")].every(el=>getComputedStyle(el).display==="none");
+    const hiddenSub=[...document.querySelectorAll("#libraryStats .statbox>.muted:not(.library-stat-label)")].every(el=>getComputedStyle(el).display==="none");
+    const visibleLabels=[...document.querySelectorAll("#libraryStats .library-stat-label")].length===5&&[...document.querySelectorAll("#libraryStats .library-stat-label")].every(el=>getComputedStyle(el).display!=="none");
     const compactGeometry=compactBoxes.length===5&&compactBoxes.every(box=>{const r=box.getBoundingClientRect(),p=box.parentElement.getBoundingClientRect();return r.left>=p.left-0.5&&r.right<=p.right+0.5&&r.width>0});
     const numericNoEllipsis=compactBoxes.every(box=>{const b=box.querySelector("b"),c=b?getComputedStyle(b):null;return !!c&&c.textOverflow!=="ellipsis"&&c.overflow!=="hidden"});
     if(!oldClass)$("libraryStats")?.classList.remove("is-compact");
     if(librarySec)librarySec.hidden=oldLibraryHidden;
-    results.push(add("蔵書サマリー表示崩れ防止",homeNoClip&&hiddenSub&&compactGeometry&&numericNoEllipsis,"縮小版サブテキスト非表示／5枚の収まり／ホーム価格コメント折返し"));
+    results.push(add("蔵書サマリー表示崩れ防止",homeNoClip&&hiddenSub&&visibleLabels&&compactGeometry&&numericNoEllipsis,"縮小版は名称を表示／補足非表示／5枚の収まり／ホーム価格コメント折返し"));
   }catch(e){results.push(add("蔵書サマリー表示崩れ防止",false,e.message))}
+
+  // REG-011B: compact one-row stats must keep the five panel names visible.
+  try{
+    const compactLabels=[...document.querySelectorAll("#libraryStats .library-stat-label")].map(el=>el.textContent.trim());
+    const expectedLabels=["蔵書冊数","蔵書総額","購入予定","積読","お気に入り"];
+    results.push(add("縮小版パネル名称表示",compactLabels.length===5&&expectedLabels.every(x=>compactLabels.includes(x)),"横一列でも5項目の名称を表示"));
+  }catch(e){results.push(add("縮小版パネル名称表示",false,e.message))}
 
   // REG-012: price filter must distinguish unconfirmed from confirmed, including confirmed zero.
   try{

@@ -128,5 +128,5 @@ UIの見た目はブラウザE2Eで別途検査する。新機能を追加する
 - Existing-series repair accepts explicit `vol.N` titles only when the trusted series name is an exact prefix; variant titles remain separate.
 
 
-### v4.13.37
+### v4.13.38
 - Home/Library shared statistics renderer and visual geometry consistency.
