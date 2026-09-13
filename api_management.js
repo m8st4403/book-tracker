@@ -182,7 +182,8 @@
   }
   async function resolveIsbn(isbn,opts={}){
     const ctx={isbn:canonicalIsbn(isbn)||isbn};
-    const names=["googleBooks","openBD","rakuten","ndl"].filter(n=>providerEnabled(n)&&hasCapability(n,"isbnSearch")&&adapters[n]?.isbn);
+    let names=["googleBooks","openBD","rakuten","ndl"].filter(n=>providerEnabled(n)&&hasCapability(n,"isbnSearch")&&adapters[n]?.isbn);
+    if(opts.fast)names=names.filter(n=>n==="googleBooks"||n==="openBD");
     const rows=[];
     const attempts=[];
     for(const name of names){
@@ -190,7 +191,7 @@
         const got=await adapters[name].isbn(isbn);
         const exact=got.filter(r=>canonicalIsbn(r?.isbn)===ctx.isbn);
         const usable=exact.length?exact:got;
-        if(usable.length){rows.push(...usable.map(r=>({...r,source:r.source||name})));attempts.push({provider:name,ok:true,count:usable.length})}
+        if(usable.length){rows.push(...usable.map(r=>({...r,source:r.source||name})));attempts.push({provider:name,ok:true,count:usable.length});if(opts.fast)break}
         else attempts.push({provider:name,ok:false,reason:"no matching record"});
       }catch(e){attempts.push({provider:name,ok:false,error:String(e?.message||e)})}
     }

@@ -156,5 +156,23 @@ v4.11.3を蔵書タブのVisual Baselineとして固定し、v4.11.4〜v4.11.7�
 ## API Management v1.0
 API管理・自動フェイルオーバー仕様を正式化し、Phase 1の管理基盤に続き、Phase 2では既存Google Books/openBDのISBN照会・検索をAdapter経由へ移行しました。既存の検索・登録UIの挙動は維持し、Provider固有処理をAdapter層へ隔離しています。詳細は `API_MANAGEMENT_SPEC.md` を参照してください。
 
-## v4.13.32
+## v4.13.34
 既存蔵書のシリーズ再整理を追加。APIで確実にシリーズ情報を再確認し、既存蔵書の `series` だけを更新する。外伝・スピンオフ・短編集などは保守的に自動統合しない。
+
+
+## v4.13.34
+Registration/search hardening and performance refinement: fixed result thumbnails, immediate async action locks, fast/concurrent ISBN lookup, series metadata reuse, and safer existing-series repair.
+
+## v4.13.34 release notes
+- Search/add result thumbnails are fixed at 68x96 CSS px and cannot flex-shrink due to status badges.
+- Individual registration buttons disable immediately and share ISBN-scoped registration locks with bulk registration.
+- All selected-ISBN registration is single-flight.
+- ISBN batch lookup uses the fast Google-first path and resolves independent rows concurrently; full resolver remains available for repair/audit.
+- Registration reuses complete series metadata from search results instead of re-resolving every book.
+- Existing-series repair safely recognizes titles such as `レベルE vol.1 (An alien on the planet)` when the trusted API series name is an exact prefix; variant titles remain separate.
+
+
+## v4.13.34
+- 登録処理を個別／一括／詳細／カレンダー間で共有するグローバル登録ロックを導入。ボタン表示更新前の連打もロジック側で拒否する。
+- 検索結果領域ごとの世代トークンを導入し、古い検索レスポンスが新しい検索結果を上書きしないようにした。追加タブの作品検索／ISBN検索、検索タブの書籍／作家／作家新刊／類似作品、詳細の関連書籍検索を対象とする。
+- 連打・同時実行の回帰テストを追加。

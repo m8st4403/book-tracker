@@ -22,10 +22,12 @@ function check(name, ok, detail='') { (ok ? pass : fail)(name, detail); }
 const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
 const dupIds = [...new Set(ids.filter((id,i)=>ids.indexOf(id)!==i))];
 check('STATIC-001 unique DOM ids', dupIds.length===0, dupIds.join(', '));
-check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.32["']/.test(html) || /APP_VERSION\s*=\s*["']4\.13\.32["']/.test(html), 'version marker present');
+check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.34["']/.test(html) || /APP_VERSION\s*=\s*["']4\.13\.34["']/.test(html), 'version marker present');
 check('STATIC-003 required six tabs', ['home','add','library','search','calendar','settings'].every(id=>new RegExp(`id=["']${id}["']`).test(html)), 'home/add/library/search/calendar/settings');
 check('STATIC-004 price filter exists', /id=["']filterPrice["']/.test(html), 'library price filter');
 check('STATIC-005 canonical registration routes exist', /window\.addBook\s*=/.test(html) && /window\.bulkAdd\s*=/.test(html), 'addBook/bulkAdd');
+check('STATIC-009 global registration lock contract', /registrationBusy/.test(html) && /runRegistrationAction/.test(html) && /data-register-action/.test(html), 'individual/bulk/detail/calendar registration shares one lock');
+check('STATIC-010 search generation contract', /searchGenerations/.test(html) && /runSearchSingleFlight/.test(html) && /isCurrentSearch/.test(html), 'stale search responses cannot overwrite current results');
 check('STATIC-006 roadmap guard docs exist', fs.existsSync(path.join(path.dirname(target),'ROADMAP_TEST_MATRIX.md')), 'roadmap test matrix');
 check('STATIC-007 release gate docs exist', fs.existsSync(path.join(path.dirname(target),'RELEASE_TEST_GATE.md')), 'release gate');
 check('STATIC-008 package test script exists', fs.existsSync(path.join(path.dirname(target),'package.json')), 'package.json');
@@ -137,11 +139,26 @@ async function main(){
       out.ownershipRoute=typeof setPurchaseStatus==='function'&&typeof updateBookMeta==='function'&&typeof window.addBook==='function';
       out.registrationSeriesPreserved=(()=>{const base={isbn:"logic-series",title:"レベルE 2",price:550,series:null};const resolved={title:"レベルE",author:"冨樫義博",publisher:"集英社",series:{id:"LEVEL-E",name:"レベルE",volumeNumber:2},resolution:{accepted:{series:true}}};const x=mergeRegistrationBook(base,resolved);return x.series?.id==="LEVEL-E"&&x.series?.name==="レベルE"&&x.series?.volumeNumber===2})();
       out.searchSingleFlight=typeof runSingleFlight==='function'&&activeActions instanceof Set;
+      out.globalRegistrationLock=typeof runRegistrationAction==='function'&&typeof setRegistrationUiBusy==='function'&&registrationBusy===false;
       const regA=registrationKey({isbn:"9780000000000",title:"A"}),regB=registrationKey({isbn:"9780000000000",title:"A"});registrationLocks.add(regA);out.registrationLockShared=regA===regB&&registrationLocks.has(regB);registrationLocks.delete(regA);
+      const sg1=beginSearchRequest('guard-search-target'),sg2=beginSearchRequest('guard-search-target');out.searchGenerationInvalidation=sg2>sg1&&!isCurrentSearch('guard-search-target',sg1)&&isCurrentSearch('guard-search-target',sg2);
+      out.registrationActionDataAttrs=document.querySelectorAll('[data-register-action="1"]').length>0;
       out.existingSeriesRepairContract=typeof repairExistingSeries==='function'&&typeof safeSeriesRepairCandidate==='function'&&(()=>{const s={id:'LEVEL-E',name:'レベルE',volumeNumber:2,confidence:{seriesName:'HIGH',volumeNumber:'HIGH',seriesId:'HIGH'}};const r={series:s,resolution:{accepted:{series:true}}};const ok=safeSeriesRepairCandidate({title:'レベルE 2'},r);const no=safeSeriesRepairCandidate({title:'レベルE 外伝 1'},r);const sub=safeSeriesRepairCandidate({title:'レベルE 2 Full moon'},r);return ok?.id==='LEVEL-E'&&ok?.volumeNumber===2&&!no&&!sub})();
       return out;
     })()`);
     for(const [name,ok] of Object.entries(logic)) check(`LOGIC-${name}`,ok,ok?'OK':'spec contract failed');
+    const concurrencySmoke=await evalJS(`(async()=>{
+      const first=runSearchSingleFlight('guard-search-a','guard-concurrency',null,async token=>{await sleep(80);return isCurrentSearch('guard-concurrency',token)});
+      await sleep(10);
+      const second=runSearchSingleFlight('guard-search-b','guard-concurrency',null,async token=>isCurrentSearch('guard-concurrency',token));
+      const r=await Promise.all([first,second]);
+      const regFirst=runRegistrationAction(async()=>{await sleep(40);return 'first'});
+      await sleep(5);const regSecond=runRegistrationAction(async()=> 'second');
+      const rr=await Promise.all([regFirst,regSecond]);
+      return {staleRejected:r[0]===false,currentAccepted:r[1]===true,registrationSecondRejected:rr[1]===false,registrationFirstCompleted:rr[0]==='first'};
+    })()`);
+    check('E2E-CONCURRENCY-001 stale search response cannot win',concurrencySmoke?.staleRejected===true&&concurrencySmoke?.currentAccepted===true,JSON.stringify(concurrencySmoke));
+    check('E2E-CONCURRENCY-002 registration actions are globally serialized',concurrencySmoke?.registrationSecondRejected===true&&concurrencySmoke?.registrationFirstCompleted===true,JSON.stringify(concurrencySmoke));
     const repairSmoke=await evalJS(`(async()=>{
       const api=window.bookTrackerApiManagement, oldResolve=api.resolveIsbn, oldConfirm=window.confirm, oldAlert=window.alert, oldBooks=books.slice();
       const sample=[

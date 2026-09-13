@@ -118,3 +118,11 @@ UIの見た目はブラウザE2Eで別途検査する。新機能を追加する
 - 検索single-flight境界
 - 個別／一括登録の共有ISBNロック
 - 確定価格あり＋シリーズ情報不足時のみResolver補完
+
+
+## v4.13.33
+- Search ISBN lookup uses a fast primary-provider path; independent ISBN rows may resolve concurrently.
+- Complete series metadata in a search result is reused during registration.
+- Individual registration, checked-ISBN registration, and bulk registration are all single-flight/ISBN-locked.
+- Result-card thumbnails remain fixed at 68×96 CSS px regardless of status badges.
+- Existing-series repair accepts explicit `vol.N` titles only when the trusted series name is an exact prefix; variant titles remain separate.
