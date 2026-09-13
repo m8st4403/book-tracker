@@ -544,7 +544,7 @@ body.font-large{--unified-card-heading-size:20px}
 <div class="card"><b>✍️ 作家検索</b><p class="muted">作家名から作品を探したり、新刊をチェックできます。</p><div class="row"><div class="clearwrap"><input id="author" placeholder="作家名"/><button class="clearbtn" data-clear="author">×</button></div><button id="authorBtn" data-search-action="1">検索</button></div><button class="secondary" id="authorNewBtn" data-search-action="1" style="width:100%;margin-top:8px">🆕 この作家の新刊をチェック</button></div><div id="authorResults"></div>
 </div>
 </section>
-<section hidden="" id="settings"><div class="card settings-card"><b>⚙️ 設定</b><p class="muted">プロフィール・見た目・データ管理は、この端末に保存されます。</p></div><div class="card"><h3>👤 プロフィール</h3><div class="settings-grid"><label>表示名<input id="profileName" placeholder="例）まさる"/></label><label>好きなジャンル<input id="profileGenre" placeholder="例）漫画・ミステリー"/></label><label>好きな作家<input id="profileAuthor" placeholder="例）○○先生"/></label><label>メモ<textarea id="profileMemo" placeholder="本棚についてのメモ" rows="3"></textarea></label></div><button id="profileSave" style="width:100%;margin-top:8px">プロフィールを保存</button></div><div class="card"><h3>🎨 テーマ</h3><p class="muted">選んだテーマをアプリ全体へ反映します。</p><div class="theme-grid"><button class="theme-choice" data-theme="blue" type="button">🔵 UIブルー</button><button class="theme-choice" data-theme="green" type="button">🟢 ナチュラル</button><button class="theme-choice" data-theme="dark" type="button">🌙 ダーク</button></div><div class="current-setting" id="themeCurrent">現在：UIブルー</div></div><div class="card"><h3>🔤 文字サイズ</h3><p class="muted">ボタンや一覧の文字も一緒に調整します。折り返しが起きにくいようレイアウトも調整します。</p><div class="font-size-grid"><button class="font-choice" data-font="small" type="button">小</button><button class="font-choice" data-font="medium" type="button">中</button><button class="font-choice" data-font="large" type="button">大</button></div><div class="current-setting" id="fontCurrent">現在：中</div></div><div class="card"><h3>🖌️ 自作スキン</h3><p class="muted">色を決めた簡易スキンを保存して適用できます。</p><div class="skin-grid"><label>メイン色<input id="skinPrimary" type="color" value="#2563eb"/></label><label>背景色<input id="skinBg" type="color" value="#f6f8fc"/></label><label>カード色<input id="skinSurface" type="color" value="#ffffff"/></label><label>文字色<input id="skinText" type="color" value="#172033"/></label></div><button class="secondary" id="skinSave" style="width:100%;margin-top:8px">自作スキンを保存</button><button id="skinApply" style="width:100%;margin-top:8px">自作スキンを適用</button></div><div class="card"><h3>🖼️ 背景画像</h3><p class="muted">iPhone内の写真・画像をアプリ背景に設定できます。画像は端末内に圧縮保存します。</p><input accept="image/*" id="bgImageInput" style="width:100%" type="file"/><button class="secondary" id="bgImageRemove" style="width:100%;margin-top:8px">背景画像を削除</button><div class="muted" id="bgImageStatus" style="margin-top:7px"></div></div><div class="card"><h3>👁️ 文字色の自動補正</h3><p class="muted">スキン／テーマで選んだ文字色の「色味」は保ちつつ、背景色や背景画像に合わせて明るさを自動調整します。</p><label class="toggle-row"><input checked="" id="autoTextContrast" type="checkbox"/> <span>自動補正をオン</span><span class="setting-state" id="stateAutoTextContrast">ON</span></label></div><div class="card"><h3>💾 データ管理</h3><p class="muted">蔵書・発売予定・カレンダー追加・プロフィール・テーマ・背景画像などの端末内データをJSONで保存／復元できます。</p><div class="backup-row"><button id="backupDataBtn" type="button">⬇️ バックアップ</button><button id="restoreDataBtn" type="button">⬆️ 復元</button><button class="secondary" id="deleteDemoBtn" type="button" style="width:100%;margin-top:8px">サンプル蔵書を削除</button><button id="resetDemoBtn" type="button" style="width:100%;margin-top:8px">開発用：サンプルを再表示</button><button id="runDevGuardBtn" type="button" style="width:100%;margin-top:8px">🛡️ 開発用：仕様・回帰チェック</button><div class="muted" id="devGuardStatus" style="margin-top:7px"></div></div><input accept="application/json,.json" hidden="" id="restoreDataInput" type="file"/><div class="muted" id="backupStatus" style="margin-top:7px"></div></div><div class="card settings-card"><h3>🔎 検索設定</h3><div class="settings-grid"><label>検索結果の表示数<select id="setSearchCount"><option value="10">10件</option><option value="20">20件</option><option value="40">40件</option></select></label><label>並び順<select id="setSearchSort"><option value="relevance">関連度順</option><option value="release-desc">発売日が新しい順</option><option value="release-asc">発売日が古い順</option><option value="title-asc">タイトル順</option></select></label></div><label class="toggle-row"><input id="setJpPriority" type="checkbox"/> <span>日本語の書籍を優先</span><span class="setting-state" id="stateSetJpPriority">OFF</span></label><label class="toggle-row"><input id="setUnownedFirst" type="checkbox"/> <span>未登録の本を優先</span><span class="setting-state" id="stateSetUnownedFirst">OFF</span></label><label class="toggle-row"><input id="setSearchCache" type="checkbox"/> <span>検索結果を一時キャッシュ</span><span class="setting-state" id="stateSetSearchCache">OFF</span></label><div class="muted" id="searchSettingStatus" style="margin-top:7px"></div></div><div class="card settings-card"><h3>🗓 カレンダー設定</h3><div class="settings-grid"><label>週の始まり<select id="setWeekStart"><option value="0">日曜日</option><option value="1">月曜日</option></select></label></div><label class="toggle-row"><input id="setCalLibrary" type="checkbox"/> <span>蔵書を表示</span><span class="setting-state" id="stateSetCalLibrary">OFF</span></label><label class="toggle-row"><input id="setCalRelated" type="checkbox"/> <span>関連図書を表示</span><span class="setting-state" id="stateSetCalRelated">OFF</span></label><label class="toggle-row"><input id="setCalRecommended" type="checkbox"/> <span>おすすめを表示</span><span class="setting-state" id="stateSetCalRecommended">OFF</span></label><label class="toggle-row"><input id="setOpenToday" type="checkbox"/> <span>カレンダーを開いたら今日を表示</span><span class="setting-state" id="stateSetOpenToday">OFF</span></label><label class="toggle-row"><input id="setICS" type="checkbox"/> <span>iPhoneカレンダー用ICSボタンを表示</span><span class="setting-state" id="stateSetICS">OFF</span></label><div class="muted" style="margin-top:7px">※ここで設定した表示項目はカレンダーの初期表示に使われます。カレンダータブ内の「表示」は、その場だけの一時的な絞り込みです。カレンダー上部で左右フリックすると月変更。タブ移動はタップのみです。</div></div><div class="card settings-card"><h3>ℹ️ このアプリについて</h3><p><b>本棚スケジュール</b><br/>ISBNで蔵書を登録し、発売予定・関連図書・おすすめをカレンダーで管理する本棚アプリです。</p><p class="muted">バージョン：4.13.33（シリーズ巻数表記統一・作品分類ルール固定・カード見出し文字サイズ統一・表示検証強化・詳細画面透過なし・冊数別シリーズ表示切替）<br/>通常の閲覧・蔵書管理・設定・カレンダーは端末内で動作し、書誌情報の検索時だけ通信します。</p><p class="muted">個人情報や蔵書データは、この試作版では外部サーバーへ自動送信しません。App Store公開時にはプライバシーポリシー等を別途整備します。</p></div><div class="card"><h3>🌐 通信</h3><div class="offline-note">検索・ISBN照会など、書誌情報を取得する「検索操作」のときだけインターネットを使用します。蔵書表示・編集・削除・カレンダー・設定・バックアップ／復元は端末内で動作します。</div></div></section>
+<section hidden="" id="settings"><div class="card settings-card"><b>⚙️ 設定</b><p class="muted">プロフィール・見た目・データ管理は、この端末に保存されます。</p></div><div class="card"><h3>👤 プロフィール</h3><div class="settings-grid"><label>表示名<input id="profileName" placeholder="例）まさる"/></label><label>好きなジャンル<input id="profileGenre" placeholder="例）漫画・ミステリー"/></label><label>好きな作家<input id="profileAuthor" placeholder="例）○○先生"/></label><label>メモ<textarea id="profileMemo" placeholder="本棚についてのメモ" rows="3"></textarea></label></div><button id="profileSave" data-data-operation="1" style="width:100%;margin-top:8px">プロフィールを保存</button></div><div class="card"><h3>🎨 テーマ</h3><p class="muted">選んだテーマをアプリ全体へ反映します。</p><div class="theme-grid"><button class="theme-choice" data-data-operation="1" data-theme="blue" type="button">🔵 UIブルー</button><button class="theme-choice" data-data-operation="1" data-theme="green" type="button">🟢 ナチュラル</button><button class="theme-choice" data-data-operation="1" data-theme="dark" type="button">🌙 ダーク</button></div><div class="current-setting" id="themeCurrent">現在：UIブルー</div></div><div class="card"><h3>🔤 文字サイズ</h3><p class="muted">ボタンや一覧の文字も一緒に調整します。折り返しが起きにくいようレイアウトも調整します。</p><div class="font-size-grid"><button class="font-choice" data-data-operation="1" data-font="small" type="button">小</button><button class="font-choice" data-data-operation="1" data-font="medium" type="button">中</button><button class="font-choice" data-data-operation="1" data-font="large" type="button">大</button></div><div class="current-setting" id="fontCurrent">現在：中</div></div><div class="card"><h3>🖌️ 自作スキン</h3><p class="muted">色を決めた簡易スキンを保存して適用できます。</p><div class="skin-grid"><label>メイン色<input id="skinPrimary" type="color" value="#2563eb"/></label><label>背景色<input id="skinBg" type="color" value="#f6f8fc"/></label><label>カード色<input id="skinSurface" type="color" value="#ffffff"/></label><label>文字色<input id="skinText" type="color" value="#172033"/></label></div><button class="secondary" id="skinSave" data-data-operation="1" style="width:100%;margin-top:8px">自作スキンを保存</button><button id="skinApply" data-data-operation="1" style="width:100%;margin-top:8px">自作スキンを適用</button></div><div class="card"><h3>🖼️ 背景画像</h3><p class="muted">iPhone内の写真・画像をアプリ背景に設定できます。画像は端末内に圧縮保存します。</p><input accept="image/*" id="bgImageInput" style="width:100%" type="file"/><button class="secondary" id="bgImageRemove" data-data-operation="1" style="width:100%;margin-top:8px">背景画像を削除</button><div class="muted" id="bgImageStatus" style="margin-top:7px"></div></div><div class="card"><h3>👁️ 文字色の自動補正</h3><p class="muted">スキン／テーマで選んだ文字色の「色味」は保ちつつ、背景色や背景画像に合わせて明るさを自動調整します。</p><label class="toggle-row"><input checked="" id="autoTextContrast" type="checkbox"/> <span>自動補正をオン</span><span class="setting-state" id="stateAutoTextContrast">ON</span></label></div><div class="card"><h3>💾 データ管理</h3><p class="muted">蔵書・発売予定・カレンダー追加・プロフィール・テーマ・背景画像などの端末内データをJSONで保存／復元できます。</p><div class="backup-row"><button id="backupDataBtn" type="button">⬇️ バックアップ</button><button id="restoreDataBtn" data-data-operation="1" type="button">⬆️ 復元</button><button class="secondary" id="deleteDemoBtn" data-data-operation="1" type="button" style="width:100%;margin-top:8px">サンプル蔵書を削除</button><button id="resetDemoBtn" data-data-operation="1" type="button" style="width:100%;margin-top:8px">開発用：サンプルを再表示</button><button id="runDevGuardBtn" data-data-operation="1" type="button" style="width:100%;margin-top:8px">🛡️ 開発用：仕様・回帰チェック</button><div class="muted" id="devGuardStatus" style="margin-top:7px"></div></div><input accept="application/json,.json" hidden="" id="restoreDataInput" type="file"/><div class="muted" id="backupStatus" style="margin-top:7px"></div></div><div class="card settings-card"><h3>🔎 検索設定</h3><div class="settings-grid"><label>検索結果の表示数<select id="setSearchCount"><option value="10">10件</option><option value="20">20件</option><option value="40">40件</option></select></label><label>並び順<select id="setSearchSort"><option value="relevance">関連度順</option><option value="release-desc">発売日が新しい順</option><option value="release-asc">発売日が古い順</option><option value="title-asc">タイトル順</option></select></label></div><label class="toggle-row"><input id="setJpPriority" type="checkbox"/> <span>日本語の書籍を優先</span><span class="setting-state" id="stateSetJpPriority">OFF</span></label><label class="toggle-row"><input id="setUnownedFirst" type="checkbox"/> <span>未登録の本を優先</span><span class="setting-state" id="stateSetUnownedFirst">OFF</span></label><label class="toggle-row"><input id="setSearchCache" type="checkbox"/> <span>検索結果を一時キャッシュ</span><span class="setting-state" id="stateSetSearchCache">OFF</span></label><div class="muted" id="searchSettingStatus" style="margin-top:7px"></div></div><div class="card settings-card"><h3>🗓 カレンダー設定</h3><div class="settings-grid"><label>週の始まり<select id="setWeekStart"><option value="0">日曜日</option><option value="1">月曜日</option></select></label></div><label class="toggle-row"><input id="setCalLibrary" type="checkbox"/> <span>蔵書を表示</span><span class="setting-state" id="stateSetCalLibrary">OFF</span></label><label class="toggle-row"><input id="setCalRelated" type="checkbox"/> <span>関連図書を表示</span><span class="setting-state" id="stateSetCalRelated">OFF</span></label><label class="toggle-row"><input id="setCalRecommended" type="checkbox"/> <span>おすすめを表示</span><span class="setting-state" id="stateSetCalRecommended">OFF</span></label><label class="toggle-row"><input id="setOpenToday" type="checkbox"/> <span>カレンダーを開いたら今日を表示</span><span class="setting-state" id="stateSetOpenToday">OFF</span></label><label class="toggle-row"><input id="setICS" type="checkbox"/> <span>iPhoneカレンダー用ICSボタンを表示</span><span class="setting-state" id="stateSetICS">OFF</span></label><div class="muted" style="margin-top:7px">※ここで設定した表示項目はカレンダーの初期表示に使われます。カレンダータブ内の「表示」は、その場だけの一時的な絞り込みです。カレンダー上部で左右フリックすると月変更。タブ移動はタップのみです。</div></div><div class="card settings-card"><h3>ℹ️ このアプリについて</h3><p><b>本棚スケジュール</b><br/>ISBNで蔵書を登録し、発売予定・関連図書・おすすめをカレンダーで管理する本棚アプリです。</p><p class="muted">バージョン：4.13.33（シリーズ巻数表記統一・作品分類ルール固定・カード見出し文字サイズ統一・表示検証強化・詳細画面透過なし・冊数別シリーズ表示切替）<br/>通常の閲覧・蔵書管理・設定・カレンダーは端末内で動作し、書誌情報の検索時だけ通信します。</p><p class="muted">個人情報や蔵書データは、この試作版では外部サーバーへ自動送信しません。App Store公開時にはプライバシーポリシー等を別途整備します。</p></div><div class="card"><h3>🌐 通信</h3><div class="offline-note">検索・ISBN照会など、書誌情報を取得する「検索操作」のときだけインターネットを使用します。蔵書表示・編集・削除・カレンダー・設定・バックアップ／復元は端末内で動作します。</div></div></section>
 <section hidden="" id="calendar"><div class="card" id="calendarMonthCard"><div class="monthbar"><button class="secondary" id="prevMonth">‹</button><button class="secondary today-btn" id="todayMonth">今日</button><b id="monthTitle"></b><button class="secondary" id="nextMonth">›</button></div><p class="muted">「発売」マーク：蔵書の発売予定</p><div class="calhead" id="calHead"></div><div class="calgrid" id="calendarGrid"></div><div class="event-legend"><span class="legend-item"><span class="release-mark">発売</span>蔵書の発売予定</span><span class="legend-item">関連図書・おすすめは日付をタップして確認</span></div><div class="calendar-filters"><b>表示</b><label><input checked="" id="calFilterLibrary" type="checkbox"/> 蔵書</label><label><input checked="" id="calFilterRelated" type="checkbox"/> 関連</label><label><input checked="" id="calFilterRecommended" type="checkbox"/> おすすめ</label></div><button id="ics" style="width:100%;margin-top:12px">iPhoneカレンダー用ICS</button></div><div class="card" id="calendarDayCard"><b id="selectedDateTitle">日付を選択してください</b><div class="muted" id="selectedEvents" style="margin-top:8px">カレンダーの日をタップしてください。</div></div><div class="card" id="calendarMonthReleasedCard"><div class="calendar-month-title"><b id="calendarMonthReleasedTitle">今月に発売された書籍</b><span class="muted" id="calendarMonthReleasedCount"></span></div><div id="calendarMonthReleasedList" class="calendar-month-released-list"><p class="muted">表示中の月に発売された書籍はありません。</p></div></div></section>
 </main>
 <style id="v41311-ui-fit">
@@ -621,7 +621,7 @@ let calendarExtras=readJSONStorage("calendarExtras_v442",[]);if(!Array.isArray(c
 const DEMO_ENABLED=true;
 // Prototype/dev builds: a deleted sample set stays deleted within this build, but a new build/version starts with samples again.
 // Production/App Store builds set DEMO_ENABLED=false, so this logic is never exposed to end users.
-const APP_VERSION="4.13.35";
+const APP_VERSION="4.13.36";
 const DEMO_DELETED_KEY="bookTrackerDemoDeleted";
 const DEMO_RESET_VERSION_KEY="bookTrackerDemoResetVersion";
 const DEMO_TITLES=["サンプル本棚：前月の便り","サンプル本棚：月夜の標本","サンプルシリーズ：星の余白 1巻","サンプルシリーズ：星の余白 2巻","サンプル本棚：翌月の灯り"];
@@ -784,6 +784,7 @@ function normalizeOwnedPurchaseStatuses(){
 normalizeOwnedPurchaseStatuses();
 function saveMeta(){try{localStorage.setItem("bookTrackerMeta_v483",JSON.stringify(bookMeta));return true}catch(e){console.error("meta save",e);return false}}
 function updateBookMeta(isbn,patch,doRender=true){
+ if(dataOperationBusy||searchBusyCount>0)return false;
  const m=getMeta(isbn);
  const owned=books.some(b=>canonicalIsbn(b.isbn)===canonicalIsbn(isbn));
  const next={...patch};
@@ -880,19 +881,35 @@ function displayBookTitle(b){
 function compareLibraryItems(x,y){
  const mode=$("librarySort")?.value||"registered-desc";
  const text=v=>String(v||"").toLowerCase();
+ const titleKey=b=>parseVolumeTitle(b?.title).title.toLowerCase();
+ const titleCompare=(a,b)=>titleKey(a).localeCompare(titleKey(b),"ja");
+ const volumeCompare=(a,b)=>volumeNo(a)-volumeNo(b);
  let r=0;
  if(mode==="registered-desc")r=y.i-x.i;
  else if(mode==="registered-asc")r=x.i-y.i;
- else if(mode==="title-asc")r=text(x.b.title).localeCompare(text(y.b.title),"ja");
+ else if(mode==="title-asc")r=titleCompare(x.b,y.b);
  else if(mode==="author-asc")r=text(x.b.author).localeCompare(text(y.b.author),"ja");
  else if(mode==="publisher-asc")r=text(x.b.publisher).localeCompare(text(y.b.publisher),"ja");
- else if(mode==="volume-asc")r=volumeNo(x.b)-volumeNo(y.b);
- else if(mode==="volume-desc")r=volumeNo(y.b)-volumeNo(x.b);
+ else if(mode==="volume-asc")r=volumeCompare(x.b,y.b);
+ else if(mode==="volume-desc")r=-volumeCompare(x.b,y.b);
  else if(mode==="release-asc")r=releaseTime(x.b)-releaseTime(y.b);
  else if(mode==="release-desc")r=releaseTime(y.b)-releaseTime(x.b);
+ // The selected sort is always the primary key. Ties then use work title,
+ // numeric volume, and finally registration order as the stable fallback.
+ if(r)return r;
+ r=titleCompare(x.b,y.b);
+ if(r)return r;
+ r=volumeCompare(x.b,y.b);
  return r||x.i-y.i;
 }
-function sortBooks(a,mode){return [...a].sort((x,y)=>mode==="release-desc"?releaseTime(y)-releaseTime(x):mode==="release-asc"?releaseTime(x)-releaseTime(y):mode==="volume-desc"?volumeNo(y)-volumeNo(x):volumeNo(x)-volumeNo(y))}
+function compareBookResults(x,y,mode){
+ const titleKey=b=>parseVolumeTitle(b?.title).title.toLowerCase();
+ const tc=titleKey(x).localeCompare(titleKey(y),"ja");
+ const vc=volumeNo(x)-volumeNo(y);
+ let r=mode==="release-desc"?releaseTime(y)-releaseTime(x):mode==="release-asc"?releaseTime(x)-releaseTime(y):mode==="volume-desc"?volumeNo(y)-volumeNo(x):mode==="volume-asc"?volumeNo(x)-volumeNo(y):0;
+ return r||tc||vc;
+}
+function sortBooks(a,mode){return [...a].sort((x,y)=>compareBookResults(x,y,mode))}
 const sortState={};
 function canonicalIsbn(v){
  const d=isbnDigits(v);
@@ -924,9 +941,17 @@ function renderSelectableResults(id,arr){
  $(id).querySelector(".selectAll")?.addEventListener("change",e=>$(id).querySelectorAll(".selectBook").forEach(x=>x.checked=e.target.checked));
 }
 function cycleSort(id){const modes=["release-desc","release-asc","volume-desc","volume-asc"];sortState[id]=((sortState[id]??0)+1)%4;renderSelectableResults(id,sortBooks(window[id+"Data"]||[],modes[sortState[id]]))}
-function toggleLibraryReading(isbn){const m=getMeta(isbn);updateBookMeta(isbn,{readingStatus:m.readingStatus==="read"?"unread":"read"})}
-function toggleLibraryFavorite(isbn){const m=getMeta(isbn);updateBookMeta(isbn,{favorite:!m.favorite})}
-async function deleteLibraryStatus(isbn){await removeBookFromCalendar(isbn,null)}
+document.addEventListener("click",e=>{
+ const el=e.target?.closest?.("button,[role=button]");
+ if(!el)return;
+ if((dataOperationBusy||searchBusyCount>0)&&isDataMutationElement(el)){
+  e.preventDefault();e.stopImmediatePropagation();
+  if(dataOperationBusy||searchBusyCount>0)alert(dataOperationBusy?"データ操作中のため、完了するまで操作できません。":"検索中のため、データ変更操作は完了するまでできません。");
+ }
+},true);
+function toggleLibraryReading(isbn){if(dataOperationBusy||searchBusyCount>0)return false;const m=getMeta(isbn);updateBookMeta(isbn,{readingStatus:m.readingStatus==="read"?"unread":"read"})}
+function toggleLibraryFavorite(isbn){if(dataOperationBusy||searchBusyCount>0)return false;const m=getMeta(isbn);updateBookMeta(isbn,{favorite:!m.favorite})}
+async function deleteLibraryStatus(isbn){if(dataOperationBusy||searchBusyCount>0)return false;return removeBookFromCalendar(isbn,null)}
 function seriesCycleKey(name){return "seriesCycle:"+String(name||"")}
 function seriesShortKey(name){return "seriesShort:"+String(name||"")}
 function getSeriesShortState(name){try{return localStorage.getItem(seriesShortKey(name))==="title"?"title":"all"}catch(e){return "all"}}
@@ -1019,33 +1044,42 @@ let addResultsMode="generic";
 const activeActions=new Set(),registrationLocks=new Set();
 let registrationBusy=false;
 let dataOperationBusy=false;
+let searchBusyCount=0;
 const searchGenerations=new Map();
+function isDataMutationElement(el){
+ if(!el)return false;
+ return !!el.closest?.('[data-data-operation="1"],[data-register-action="1"],#deleteSelected,#detailRemoveBook,#savePrice,.owned-badge,.library-status-stack .meta-badge,.calendar-register-btn,#profileSave,#skinSave,#skinApply,#bgImageRemove,#deleteDemoBtn,#resetDemoBtn,#restoreDataBtn,#runDevGuardBtn');
+}
+function syncOperationUi(){
+ const dataLock=!!dataOperationBusy,searchLock=searchBusyCount>0;
+ document.querySelectorAll('[data-data-operation="1"]').forEach(el=>{el.disabled=dataLock||searchLock;el.dataset.busy=(dataLock||searchLock)?'1':'0'});
+ document.querySelectorAll('[data-register-action="1"]').forEach(el=>{
+  if(dataLock){el.disabled=true;el.dataset.busy='1';}
+  else if(searchLock){el.disabled=true;el.dataset.busy='1';}
+  else if(!el.dataset.registerBusy){el.disabled=false;el.dataset.busy='0';}
+ });
+ document.querySelectorAll('[data-search-action="1"]').forEach(el=>{
+  if(dataLock){el.disabled=true;el.dataset.dataBusy='1';}
+  else if(el.dataset.dataBusy==='1'){el.disabled=false;delete el.dataset.dataBusy;}
+ });
+}
 async function runSingleFlight(key,button,fn){if(activeActions.has(key))return null;activeActions.add(key);const el=button||null,wasDisabled=!!el?.disabled;if(el)el.disabled=true;try{return await fn()}finally{activeActions.delete(key);if(el)el.disabled=wasDisabled}}
 function isActionActive(key){return activeActions.has(key)}
-function setDataOperationUiBusy(busy){
- const lock=!!busy;
- document.querySelectorAll('[data-data-operation="1"]').forEach(el=>{
-  el.disabled=lock;el.dataset.busy=lock?'1':'0';
- });
- if(lock){
-  document.querySelectorAll('[data-search-action="1"]').forEach(el=>{el.disabled=true;el.dataset.dataBusy='1'});
- }else{
-  document.querySelectorAll('[data-search-action="1"]').forEach(el=>{if(el.dataset.dataBusy==='1'){el.disabled=false;delete el.dataset.dataBusy}});
- }
-}
+function setDataOperationUiBusy(busy){dataOperationBusy=!!busy;syncOperationUi()}
 function setRegistrationUiBusy(busy){
  registrationBusy=!!busy;
  document.querySelectorAll('[data-register-action="1"]').forEach(el=>{
-  el.disabled=!!busy;
-  el.dataset.busy=busy?'1':'0';
+  el.dataset.registerBusy=busy?'1':'';
+  el.disabled=!!busy || searchBusyCount>0 || dataOperationBusy;
+  el.dataset.busy=(busy||searchBusyCount>0||dataOperationBusy)?'1':'0';
   if(busy){if(!el.dataset.registerText)el.dataset.registerText=el.textContent;el.textContent='登録中…';}
   else if(el.dataset.registerText){el.textContent=el.dataset.registerText;delete el.dataset.registerText;}
  });
 }
 async function runRegistrationAction(fn){
- if(registrationBusy||dataOperationBusy)return false;
- dataOperationBusy=true;setDataOperationUiBusy(true);setRegistrationUiBusy(true);
- try{return await fn()}finally{setRegistrationUiBusy(false);dataOperationBusy=false;setDataOperationUiBusy(false)}
+ if(registrationBusy||dataOperationBusy||searchBusyCount>0)return false;
+ dataOperationBusy=true;syncOperationUi();setRegistrationUiBusy(true);
+ try{return await fn()}finally{setRegistrationUiBusy(false);dataOperationBusy=false;syncOperationUi()}
 }
 function beginSearchRequest(target,button){
  const token=(searchGenerations.get(target)||0)+1;searchGenerations.set(target,token);
@@ -1055,8 +1089,8 @@ function beginSearchRequest(target,button){
 function isCurrentSearch(target,token){return searchGenerations.get(target)===token;}
 async function runSearchSingleFlight(key,target,button,fn){
  if(activeActions.has(key)||dataOperationBusy)return null;
- activeActions.add(key);const token=beginSearchRequest(target,button);
- try{return await fn(token)}finally{activeActions.delete(key);if(button)button.disabled=false;}
+ activeActions.add(key);searchBusyCount++;syncOperationUi();const token=beginSearchRequest(target,button);
+ try{return await fn(token)}finally{activeActions.delete(key);searchBusyCount=Math.max(0,searchBusyCount-1);if(button)button.disabled=false;syncOperationUi();}
 }
 function registrationKey(b){return bookResultKey(b)||canonicalIsbn(b?.isbn)||norm(b?.isbn||b?.title)}
 function renderIsbnResults(arr=window.addResultsData||[]){
@@ -1144,7 +1178,7 @@ const jpHolidays={
 "2029-01-01":"元日","2029-01-08":"成人の日","2029-02-11":"建国記念の日","2029-02-12":"振替休日","2029-02-23":"天皇誕生日","2029-03-20":"春分の日","2029-04-29":"昭和の日","2029-04-30":"振替休日","2029-05-03":"憲法記念日","2029-05-04":"みどりの日","2029-05-05":"こどもの日","2029-05-06":"振替休日","2029-07-16":"海の日","2029-08-11":"山の日","2029-09-17":"敬老の日","2029-09-23":"秋分の日","2029-09-24":"振替休日","2029-10-08":"スポーツの日","2029-11-03":"文化の日","2029-11-23":"勤労感謝の日",
 "2030-01-01":"元日","2030-01-14":"成人の日","2030-02-11":"建国記念の日","2030-02-23":"天皇誕生日","2030-03-21":"春分の日","2030-04-29":"昭和の日","2030-05-03":"憲法記念日","2030-05-04":"みどりの日","2030-05-05":"こどもの日","2030-05-06":"振替休日","2030-07-15":"海の日","2030-08-11":"山の日","2030-09-16":"敬老の日","2030-09-23":"秋分の日","2030-10-14":"スポーツの日","2030-11-03":"文化の日","2030-11-04":"振替休日","2030-11-23":"勤労感謝の日"};
 function isHoliday(k){return !!jpHolidays[k]}
-function addCalendarExtra(b,type){if(!/^\d{4}-\d{2}-\d{2}$/.test(b.date||"")){alert("発売日が取得できないため、カレンダーに追加できません。");return}let key=(b.isbn||b.title)+"|"+type;if(!calendarExtras.some(x=>x.key===key)){calendarExtras.push({key,date:b.date,title:b.title,author:b.author,isbn:b.isbn,base:b.title,sourceType:type,source:type==="related"?"関連図書":"おすすめ書籍"});if(!persistCalendarExtras()){alert("カレンダーへの保存に失敗しました。端末の空き容量を確認してください。");return}renderCalendar();alert(type==="related"?"関連図書としてカレンダーに追加しました":"おすすめ書籍としてカレンダーに追加しました")}else alert("すでにカレンダーに追加されています")}
+function addCalendarExtra(b,type){if(dataOperationBusy||searchBusyCount>0)return false;if(!/^\d{4}-\d{2}-\d{2}$/.test(b.date||"")){alert("発売日が取得できないため、カレンダーに追加できません。");return}let key=(b.isbn||b.title)+"|"+type;if(!calendarExtras.some(x=>x.key===key)){calendarExtras.push({key,date:b.date,title:b.title,author:b.author,isbn:b.isbn,base:b.title,sourceType:type,source:type==="related"?"関連図書":"おすすめ書籍"});if(!persistCalendarExtras()){alert("カレンダーへの保存に失敗しました。端末の空き容量を確認してください。");return}renderCalendar();alert(type==="related"?"関連図書としてカレンダーに追加しました":"おすすめ書籍としてカレンダーに追加しました")}else alert("すでにカレンダーに追加されています")}
 
 function refreshLibraryFilters(){
  const fill=(id,label,vals)=>{
@@ -1185,12 +1219,12 @@ function renderLibrary(){
  }else body=a.map(x=>card(x.b,false,"library",x.i)).join("");
  $("myBooks").innerHTML=a.length?`<div class="selectbar library-bulkbar">
  <label><input id="libAll" class="check" type="checkbox" aria-label="蔵書を全選択"> 全選択</label>
- <button id="markReadSelected" type="button">📖 読了</button>
- <button id="markUnreadSelected" type="button">📕 未読</button>
- <button id="favoriteSelected" type="button">★ お気に入り</button>
- <button id="unfavoriteSelected" type="button">☆ お気に入り解除</button>
- <button id="purchaseTotalSelected" type="button">💴 購入総額</button>
- <button id="deleteSelected" type="button">🗑️ 削除</button>
+ <button id="markReadSelected" data-data-operation="1" type="button">📖 読了</button>
+ <button id="markUnreadSelected" data-data-operation="1" type="button">📕 未読</button>
+ <button id="favoriteSelected" data-data-operation="1" type="button">★ お気に入り</button>
+ <button id="unfavoriteSelected" data-data-operation="1" type="button">☆ お気に入り解除</button>
+ <button id="purchaseTotalSelected" data-data-operation="1" type="button">💴 購入総額</button>
+ <button id="deleteSelected" data-data-operation="1" type="button">🗑️ 削除</button>
  </div>`+body:"<p class='muted'>該当する蔵書はありません。</p>";
  document.querySelectorAll("#myBooks .series-cyclic-head").forEach(el=>{const activate=()=>{const group=el.closest(".series-group"),name=group?.dataset.seriesCycle||"";if(group?.dataset.seriesShort==="1"){setSeriesShortState(name,nextSeriesShortState(getSeriesShortState(name)))}else{setSeriesCycleState(name,nextSeriesCycleState(getSeriesCycleState(name)))}renderLibrary()};el.addEventListener("click",activate);el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();activate()}})});
  document.querySelectorAll("#myBooks details.series-group[data-series-open]").forEach(el=>{el.addEventListener("toggle",()=>setSeriesOpenState(el.dataset.seriesOpen||"",el.open))});
@@ -1260,6 +1294,7 @@ window.addBookFromCalendar=async function(e,k){
  await window.addBook(b);renderCalendar();if(k){selectedDate=k;showDay(k)}
 };
 window.removeBookFromCalendar=async function(isbn,k){
+ if(dataOperationBusy||searchBusyCount>0)return false;
  const idx=books.findIndex(x=>norm(x.isbn)===norm(isbn));if(idx<0)return false;const b=books[idx];
  if(!confirm("この本を蔵書から削除しますか？\n\n"+(b.title||"この本")))return false;
  const removed=books.splice(idx,1)[0];
@@ -1275,8 +1310,8 @@ function calendarEventHtml(e,k){
  const owned=books.some(x=>canonicalIsbn(x.isbn)===canonicalIsbn(e.isbn)),future=isFutureDate(e.date);
  const type=e.sourceType==="related"?"関連図書":e.sourceType==="recommended"?"おすすめ":"蔵書";
  const action=owned
-  ? `<button class="secondary calendar-register-btn" type="button" onclick='event.stopPropagation();removeBookFromCalendar(${JSON.stringify(e.isbn||"")},"${k||""}")'>✓ 蔵書登録済み（タップで削除）</button>`
-  : (future ? `<button class="secondary calendar-register-btn" type="button" disabled>発売前のため登録不可</button>` : (e.isbn ? `<button class="calendar-register-btn" data-register-action="1" type="button" onclick='event.stopPropagation();addBookFromCalendar(${JSON.stringify(e).replace(/</g,"\u003c")},"${k||""}")'>＋ 蔵書に登録</button>` : `<button class="secondary calendar-register-btn" type="button" disabled>ISBN未取得</button>`));
+  ? `<button class="secondary calendar-register-btn" data-data-operation="1" type="button" onclick='event.stopPropagation();removeBookFromCalendar(${JSON.stringify(e.isbn||"")},"${k||""}")'>✓ 蔵書登録済み（タップで削除）</button>`
+  : (future ? `<button class="secondary calendar-register-btn" type="button" disabled>発売前のため登録不可</button>` : (e.isbn ? `<button class="calendar-register-btn" data-register-action="1" data-data-operation="1" type="button" onclick='event.stopPropagation();addBookFromCalendar(${JSON.stringify(e).replace(/</g,"\u003c")},"${k||""}")'>＋ 蔵書に登録</button>` : `<button class="secondary calendar-register-btn" type="button" disabled>ISBN未取得</button>`));
  return `<div class="event calendar-event-card"><div class="release"><span class="release-badge ${e.sourceType==="related"?"related":e.sourceType==="recommended"?"recommended":""}">${type}</span>${esc(e.title)}</div><div class="muted">${esc(e.date||"")} ・ ${esc(e.author||"")}</div><div class="muted">ISBN ${esc(e.isbn||"")}</div><div class="muted">📚 ${esc(e.source||"")}</div><div class="calendar-event-actions">${action}<button class="secondary" type="button" onclick='event.stopPropagation();openBookDetail(${JSON.stringify(calendarBookFromEvent(e)).replace(/</g,"\u003c")})'>詳細を見る</button></div></div>`;
 }
 function renderMonthReleased(){
@@ -1668,7 +1703,7 @@ window.openBookDetail=function(b){
  let d=b||{},desc=d.description||"紹介文は取得できませんでした。",cover=d.cachedCover||((books.some(x=>norm(x.isbn)===norm(d.isbn)))?"":(d.cover||""));
  const owned=books.some(x=>canonicalIsbn(x.isbn)===canonicalIsbn(d.isbn)),m=owned?getMeta(d.isbn):null,rating=Number(m?.rating)||0,future=isFutureDate(d.date);
  $("detailTitle").textContent=d.title||"書籍詳細";
- $("detailBody").innerHTML=`<div class="detail-grid"><div>${cover?`<img class="detail-cover" src="${esc(cover)}">`:""}</div><div><p><b>著者：</b><button class="detail-person-link" type="button" id="detailAuthorLink">${esc(d.author||"不明")}</button></p><p><b>出版社：</b><button class="detail-person-link" type="button" id="detailPublisherLink">${esc(d.publisher||"不明")}</button></p><p><b>発売日：</b>${esc(d.date||"")}</p><p><b>ISBN：</b>${esc(d.isbn||"")}</p><p><b>定価（税込）：</b><input id="detailPrice" type="number" min="0" step="1" value="${listPriceOf(d)||""}" placeholder="未確定"></p><div class="muted">${listPriceStatus(d)==="unconfirmed"?"未確定：蔵書総額には加算されません。":listPriceStatus(d)==="confirmed_zero"?"0円で確定：蔵書総額には加算されません。":"定価確定：蔵書総額に加算されます。"}</div>${owned?'<button type="button" id="savePrice" style="margin-top:4px">定価を保存</button>':""}${owned&&getPurchaseGroupForBook(d.isbn)?`<div class="purchase-group-box" style="margin-top:10px"><b>購入総額：</b>¥${Math.round(getPurchaseGroupForBook(d.isbn).totalAmount).toLocaleString()}（${getPurchaseGroupForBook(d.isbn).bookKeys.length}冊セット）${getPurchaseGroupForBook(d.isbn).note?`<div class="muted">${esc(getPurchaseGroupForBook(d.isbn).note)}</div>`:""}</div>`:""}</div></div>${owned?`<div class="status-row"><label>購入状態<div class="fixed-status">購入済み</div><div class="muted status-help">蔵書に登録されている本は購入済みとして管理されます。別の状態にする場合は、いったん蔵書から削除してください。</div></label><div class="detail-check-row"><label class="toggle-row"><input id="detailReading" type="checkbox"> 読了</label><label class="toggle-row"><input id="detailFavorite" type="checkbox"> ★ お気に入り</label></div></div><div style="margin-top:10px"><label>評価<div class="rating" id="detailRating">${[1,2,3,4,5].map(n=>`<button type="button" class="${n<=rating?'active':''}" data-rating="${n}">★</button>`).join("")}</div></label><label style="display:block;margin-top:9px">自分用メモ<textarea id="detailMemo" class="detail-note" placeholder="感想・買う理由・気になったことなど">${esc(m?.memo||"")}</textarea></label><label class="toggle-row"><input id="detailNotify" type="checkbox"> 発売日を知らせる</label><div class="notify-note muted">※試作版ではアプリを開いた際に発売予定を確認します。ネイティブ版ではiPhone通知へ拡張予定です。</div></div>`:""}<div class="detail-actions">${owned?`<button type="button" class="secondary" id="detailRemoveBook">✓ 蔵書登録済み（タップで削除）</button>`:(!d.isbn?"":(future?`<button type="button" class="secondary" disabled>発売前のため登録不可</button>`:`<button type="button" id="detailRegisterBook" data-register-action="1">＋ 蔵書に登録</button>`))}<a href="${amazonUrl(d)}" target="_blank" rel="noopener">Amazonで探す</a>${d.publisher?`<a href="https://www.google.com/search?q=${encodeURIComponent(d.publisher+" "+d.title)}" target="_blank" rel="noopener">出版社を探す</a>`:""}<button type="button" id="detailRelated">関連書籍を検索</button><button type="button" onclick='addCalendarExtra(${JSON.stringify(d).replace(/</g,"\u003c")},"related")'>関連図書としてカレンダー追加</button><button type="button" onclick='addCalendarExtra(${JSON.stringify(d).replace(/</g,"\u003c")},"recommended")'>おすすめとしてカレンダー追加</button></div><div><h3>紹介</h3><p>${esc(desc).replace(/\n/g,"<br>")}</p></div><div id="detailRelatedBox" class="detail-related"></div>`;
+ $("detailBody").innerHTML=`<div class="detail-grid"><div>${cover?`<img class="detail-cover" src="${esc(cover)}">`:""}</div><div><p><b>著者：</b><button class="detail-person-link" type="button" id="detailAuthorLink">${esc(d.author||"不明")}</button></p><p><b>出版社：</b><button class="detail-person-link" type="button" id="detailPublisherLink">${esc(d.publisher||"不明")}</button></p><p><b>発売日：</b>${esc(d.date||"")}</p><p><b>ISBN：</b>${esc(d.isbn||"")}</p><p><b>定価（税込）：</b><input id="detailPrice" type="number" min="0" step="1" value="${listPriceOf(d)||""}" placeholder="未確定"></p><div class="muted">${listPriceStatus(d)==="unconfirmed"?"未確定：蔵書総額には加算されません。":listPriceStatus(d)==="confirmed_zero"?"0円で確定：蔵書総額には加算されません。":"定価確定：蔵書総額に加算されます。"}</div>${owned?'<button type="button" id="savePrice" data-data-operation="1" style="margin-top:4px">定価を保存</button>':""}${owned&&getPurchaseGroupForBook(d.isbn)?`<div class="purchase-group-box" style="margin-top:10px"><b>購入総額：</b>¥${Math.round(getPurchaseGroupForBook(d.isbn).totalAmount).toLocaleString()}（${getPurchaseGroupForBook(d.isbn).bookKeys.length}冊セット）${getPurchaseGroupForBook(d.isbn).note?`<div class="muted">${esc(getPurchaseGroupForBook(d.isbn).note)}</div>`:""}</div>`:""}</div></div>${owned?`<div class="status-row"><label>購入状態<div class="fixed-status">購入済み</div><div class="muted status-help">蔵書に登録されている本は購入済みとして管理されます。別の状態にする場合は、いったん蔵書から削除してください。</div></label><div class="detail-check-row"><label class="toggle-row"><input id="detailReading" type="checkbox"> 読了</label><label class="toggle-row"><input id="detailFavorite" type="checkbox"> ★ お気に入り</label></div></div><div style="margin-top:10px"><label>評価<div class="rating" id="detailRating">${[1,2,3,4,5].map(n=>`<button type="button" class="${n<=rating?'active':''}" data-rating="${n}">★</button>`).join("")}</div></label><label style="display:block;margin-top:9px">自分用メモ<textarea id="detailMemo" class="detail-note" placeholder="感想・買う理由・気になったことなど">${esc(m?.memo||"")}</textarea></label><label class="toggle-row"><input id="detailNotify" type="checkbox"> 発売日を知らせる</label><div class="notify-note muted">※試作版ではアプリを開いた際に発売予定を確認します。ネイティブ版ではiPhone通知へ拡張予定です。</div></div>`:""}<div class="detail-actions">${owned?`<button type="button" class="secondary" id="detailRemoveBook" data-data-operation="1">✓ 蔵書登録済み（タップで削除）</button>`:(!d.isbn?"":(future?`<button type="button" class="secondary" disabled>発売前のため登録不可</button>`:`<button type="button" id="detailRegisterBook" data-register-action="1" data-data-operation="1">＋ 蔵書に登録</button>`))}<a href="${amazonUrl(d)}" target="_blank" rel="noopener">Amazonで探す</a>${d.publisher?`<a href="https://www.google.com/search?q=${encodeURIComponent(d.publisher+" "+d.title)}" target="_blank" rel="noopener">出版社を探す</a>`:""}<button type="button" id="detailRelated">関連書籍を検索</button><button type="button" onclick='addCalendarExtra(${JSON.stringify(d).replace(/</g,"\u003c")},"related")'>関連図書としてカレンダー追加</button><button type="button" onclick='addCalendarExtra(${JSON.stringify(d).replace(/</g,"\u003c")},"recommended")'>おすすめとしてカレンダー追加</button></div><div><h3>紹介</h3><p>${esc(desc).replace(/\n/g,"<br>")}</p></div><div id="detailRelatedBox" class="detail-related"></div>`;
  detailOverlay.style.display="flex";
  $("detailRegisterBook")?.addEventListener("click",async()=>{if(registrationBusy)return;if(await window.addBook(d))openBookDetail(d)});
  $("detailRemoveBook")?.addEventListener("click",async()=>{if(await removeBookFromCalendar(d.isbn,null))openBookDetail(d)});
