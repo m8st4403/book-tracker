@@ -126,3 +126,7 @@ UIの見た目はブラウザE2Eで別途検査する。新機能を追加する
 - Individual registration, checked-ISBN registration, and bulk registration are all single-flight/ISBN-locked.
 - Result-card thumbnails remain fixed at 68×96 CSS px regardless of status badges.
 - Existing-series repair accepts explicit `vol.N` titles only when the trusted series name is an exact prefix; variant titles remain separate.
+
+
+### v4.13.37
+- Home/Library shared statistics renderer and visual geometry consistency.

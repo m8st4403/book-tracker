@@ -188,6 +188,35 @@ async function main(){
     const repairUi=await evalJS(`(()=>{const b=document.getElementById('seriesRepairBtn'),old=b?.textContent;setLongOperationUi(b,true,'シリーズ再整理中…');const ok=b?.disabled===true&&b?.textContent==='シリーズ再整理中…'&&b?.dataset.busy==='1';setLongOperationUi(b,false);return ok&&b?.textContent===old})()`);
     check('E2E-REPAIR-003 repair action exposes busy state',repairUi===true,'button becomes disabled and shows progress text');
 
+    const sharedStatsUi=await evalJS(`(()=>{
+      const nav=id=>document.querySelector('#bottomNav button[data-s="'+id+'"]')?.click();
+      const props=['paddingTop','paddingRight','paddingBottom','paddingLeft','borderRadius','borderTopWidth','borderRightWidth','borderBottomWidth','borderLeftWidth','boxShadow'];
+      const styleSig=el=>{const c=getComputedStyle(el);return props.map(k=>c[k]).join('|')};
+      const geometrySig=el=>{const r=el.getBoundingClientRect();return [Math.round(r.width*10)/10,Math.round(r.height*10)/10].join('x')};
+      const labels=e=>[...e.querySelectorAll('.statbox .library-stat-label')].map(x=>x.textContent.trim());
+      nav('home');
+      const home=document.getElementById('homeStats');
+      const homeBoxes=[...(home?.querySelectorAll('.statbox')||[])];
+      const homeGrid=getComputedStyle(home||document.body);
+      const homeStyle=homeBoxes.map(styleSig),homeGeometry=homeBoxes.map(geometrySig);
+      const homeGridSig=[homeGrid.gridTemplateColumns,homeGrid.gap,homeGrid.marginTop].join('|');
+      nav('library');
+      const lib=document.getElementById('libraryStats');
+      lib?.classList.remove('is-compact');
+      const libBoxes=[...(lib?.querySelectorAll('.statbox')||[])];
+      const libGrid=getComputedStyle(lib||document.body);
+      const libStyle=libBoxes.map(styleSig),libGeometry=libBoxes.map(geometrySig);
+      const libGridSig=[libGrid.gridTemplateColumns,libGrid.gap,libGrid.marginTop].join('|');
+      const sameStyles=homeBoxes.length===5&&libBoxes.length===5&&homeStyle.join('||')===libStyle.join('||');
+      const sameGeometry=homeBoxes.length===5&&libBoxes.length===5&&homeGeometry.join('|')===libGeometry.join('|');
+      const sameGrid=!!home&&!!lib&&homeGridSig===libGridSig;
+      const sameStructure=homeBoxes.length===5&&libBoxes.length===5&&homeBoxes.every((b,i)=>b.children.length===libBoxes[i].children.length&&[...b.children].map(x=>x.tagName+':'+x.className).join('|')===[...libBoxes[i].children].map(x=>x.tagName+':'+x.className).join('|'));
+      const sameLabels=homeBoxes.length===5&&libBoxes.length===5&&labels(home).join('|')===labels(lib).join('|');
+      const sharedRenderer=typeof renderStatBoxes==='function'&&renderHome.toString().includes('renderStatBoxes')&&renderLibrary.toString().includes('renderStatBoxes');
+      return {sameStyles,sameGeometry,sameGrid,sameStructure,sameLabels,sharedRenderer,homeCount:homeBoxes.length,libraryCount:libBoxes.length,homeGrid:homeGridSig,libraryGrid:libGridSig};
+    })()`);
+    check('E2E-UI-001 home/library statistics panels are unified',sharedStatsUi?.sameStyles===true&&sharedStatsUi?.sameGeometry===true&&sharedStatsUi?.sameGrid===true&&sharedStatsUi?.sameStructure===true&&sharedStatsUi?.sameLabels===true&&sharedStatsUi?.sharedRenderer===true,JSON.stringify(sharedStatsUi));
+
     const overflowExpression = `(()=>{
       const visible=e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);return r.width>0&&r.height>0&&s.display!=='none'&&s.visibility!=='hidden'};
       const ignore=e=>{const s=getComputedStyle(e); return e.matches('html,body,script,style,textarea,[contenteditable="true"]') || s.overflowX==='auto'||s.overflowX==='scroll'||s.overflowY==='auto'||s.overflowY==='scroll';};

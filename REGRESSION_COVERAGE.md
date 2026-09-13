@@ -245,3 +245,12 @@ Chromiumを使ったUI回帰では390×844で小・中・大フォントをレ�
 - データ操作中の検索・別データ操作を開始できないこと
 - 動的生成される蔵書削除／登録操作も排他制御対象であること
 - 全蔵書並び順で「指定順 → 作品名 → 巻数 → 登録順」のタイブレークを適用すること
+
+
+## v4.13.37 ホーム／蔵書統計パネル共通化
+- ホームと蔵書の5項目統計パネルが同一レンダラーを使用すること。
+- 実DOMで5枚・2列・共通class・padding・border-radius・font-size等の表示契約を確認すること。
+- 蔵書通常表示の補足文言もホームと同じ構造であること。
+
+### v4.13.37 実DOM検証
+- Home/Library statistics: 5 panels, shared renderer, shared markup, shared geometry and major computed styles.
