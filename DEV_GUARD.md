@@ -144,3 +144,16 @@ npm test
 
 ## v4.13.35
 - シリーズ再整理のサンプル除外、正式series.id優先、データ操作ロック、処理中表示、Resolverキャッシュ、並行登録をE2E/logicで検査する。
+
+
+## v4.13.38
+- ホーム／蔵書の統計5枚を共通レンダラーで生成し、実DOMのcomputed styleと構造を比較する。
+
+### v4.13.38 外部ガード
+- `E2E-UI-001` でホーム／蔵書の統計パネル5枚について共通レンダラー、DOM構造、寸法、主要computed styleを比較する。
+
+
+### v4.13.39 compact statistics label visibility
+- 蔵書統計の縮小横一列表示では、5つの名称（蔵書冊数／蔵書総額／購入予定／積読／お気に入り）を必ず表示する。
+- `.statbox > .muted` のような高いCSS優先度の包括セレクタで名称を隠さない。
+- 実ブラウザの `getComputedStyle` と実寸（width/height）で5名称の表示状態を検証する。

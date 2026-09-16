@@ -126,3 +126,21 @@ UIの見た目はブラウザE2Eで別途検査する。新機能を追加する
 - Individual registration, checked-ISBN registration, and bulk registration are all single-flight/ISBN-locked.
 - Result-card thumbnails remain fixed at 68×96 CSS px regardless of status badges.
 - Existing-series repair accepts explicit `vol.N` titles only when the trusted series name is an exact prefix; variant titles remain separate.
+
+
+### v4.13.38
+- Home/Library shared statistics renderer and visual geometry consistency.
+
+
+### v4.13.39 compact statistics label visibility
+- 蔵書統計の縮小横一列表示では、5つの名称（蔵書冊数／蔵書総額／購入予定／積読／お気に入り）を必ず表示する。
+- `.statbox > .muted` のような高いCSS優先度の包括セレクタで名称を隠さない。
+- 実ブラウザの `getComputedStyle` と実寸（width/height）で5名称の表示状態を検証する。
+
+
+## Phase 6 — 自動フェイルオーバー
+- Provider障害時に次候補へ移行する。
+- 検索経路も同じpriorityでfailoverする。
+- timeoutを障害として扱う。
+- 連続障害Providerはtemporary cooldownへ入り、その間skipする。
+- 復帰後に再試行可能なランタイム状態を維持する。
