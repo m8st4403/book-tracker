@@ -142,17 +142,17 @@ Chromiumを使ったUI回帰では390×844で小・中・大フォントをレ�
 | API-002 | 項目別優先順位 | API全体ではなくfield単位で候補を選択 | 仕様確定・未実装 |
 | API-003 | Capability | 必要Capabilityを持たないProviderを候補から除外 | 仕様確定・未実装 |
 | API-004 | Schema検証 | HTTP 200でもschema不一致なら失敗扱い | 仕様確定・未実装 |
-| API-005 | 必須Field検証 | 必須値欠損なら次候補へフェイルオーバー | 実装済み v4.13.42 |
+| API-005 | 必須Field検証 | 必須値欠損なら次候補へフェイルオーバー | 仕様確定・未実装 |
 | API-006 | 値・意味検証 | ISBN、日付、価格、税区分等を検証 | 仕様確定・未実装 |
 | API-007 | 信頼度 | EvidenceからVERIFIED/HIGH/MEDIUM/LOW/UNKNOWNを判定 | 仕様確定・未実装 |
 | API-008 | Critical閾値 | series.id/name/volume/listPrice/taxIncludedは低信頼値を自動確定しない | 仕様確定・未実装 |
 | API-009 | 複数Provider矛盾 | Critical項目の不一致を単純多数決で確定しない | 仕様確定・未実装 |
-| API-010 | 自動Failover | timeout/HTTP/schema/field/confidence失敗で次候補へ移行 | 実装済み v4.13.42 |
+| API-010 | 自動Failover | timeout/HTTP/schema/field/confidence失敗で次候補へ移行 | 仕様確定・未実装 |
 | API-011 | 新API | 未知APIのコード自動取得・実行を行わない | 仕様確定・未実装 |
 | API-012 | Remote Config | Adapter実装済みProviderを後から有効化/無効化/順位変更 | 仕様確定・未実装 |
 | API-013 | 価格固定 | 登録時の定価（税込）を保存し、後日のAPI価格変更で蔵書総額を変更しない | 実装済み v4.13.27+ |
-| API-014 | Cache | API停止時に既存キャッシュを利用できるが古いCritical値を新規確定しない | 一部実装（ISBN session cache）・Critical再確定ルールは継続課題 |
-| API-015 | Contract Test | Providerごとに到達性・schema・主要field・意味を検証 | Adapter契約＋Failover外部テスト実装済み v4.13.42 |
+| API-014 | Cache | API停止時に既存キャッシュを利用できるが古いCritical値を新規確定しない | 仕様確定・未実装 |
+| API-015 | Contract Test | Providerごとに到達性・schema・主要field・意味を検証 | 仕様確定・未実装 |
 
 > v4.13.27時点ではGoogle Books/openBDの主要呼出しをAdapter経由へ移行した。楽天Books/NDLの実Adapterと複数Providerの実フェイルオーバーは後続段階。定価（税込）の正式保存はv4.13.27で実装済み、購入総額・未確定価格の拡張はv4.13.28で実装済み。
 
@@ -260,21 +260,3 @@ Chromiumを使ったUI回帰では390×844で小・中・大フォントをレ�
 - 蔵書統計の縮小横一列表示では、5つの名称（蔵書冊数／蔵書総額／購入予定／積読／お気に入り）を必ず表示する。
 - `.statbox > .muted` のような高いCSS優先度の包括セレクタで名称を隠さない。
 - 実ブラウザの `getComputedStyle` と実寸（width/height）で5名称の表示状態を検証する。
-
-
-### v4.13.44
-
-- ルール／検証体系監査・永続化安定化
-
-### v4.13.42
-- Phase 5: 楽天Books / NDL Search Adapterの実装を完了。
-- Phase 6: ISBN/検索の自動フェイルオーバー、timeout、Provider temporary cooldownを外部Release Gateで検証。
-
-## v4.13.44 検証体系監査
-
-| 仕様 | 回帰確認 | 方法 |
-|---|---|---|
-| 重要状態の保存 | books/meta/calendarExtras/purchaseGroups/settingsを実reloadで確認 | Browser E2E |
-| バックアップ契約 | schemaVersion/appVersion/許可storageキー | E2E |
-| 購入総額保存失敗 | storage書込み失敗時にmemory状態をrollback | failure injection E2E |
-| バージョン整合 | package.json / APP_VERSION / DEV_GUARD_VERSION | static |

@@ -1,4 +1,4 @@
-# Book Tracker — Roadmap Test Matrix v4.13.40
+# Book Tracker — Roadmap Test Matrix v4.13.30
 
 この文書は「将来実装する機能を、実装した後に慌ててテスト追加する」状態を防ぐための先行テスト契約です。
 ロードマップは v4.9.2 の分析資料を基準にし、現時点で未実装の項目は `PLANNED` として管理します。PLANNED は現行版の合格条件にせず、実装開始時に `CURRENT` へ昇格してリリースゲートへ入れます。
@@ -88,15 +88,3 @@
 3. 実装着手時に必ず `PLANNED → CURRENT` へ移し、ロジック・統合・E2E・UI品質のリリースゲートへ追加する。
 4. 機能追加で既存機能に影響する場合、追加機能のテストだけでなく依存する既存テストを再実行する。
 5. 「UIに表示された」だけでは機能完了とせず、保存→再読込→関連画面→バックアップ/復元まで確認する。
-
-
-## API Adapter追加：実装開始条件
-楽天Books / NDL Search Adapterは公式仕様を確認して実装する。楽天BooksはapplicationIdとaccessKeyが必要。NDL SearchはSRU/OpenSearch/OpenURLを提供し、営利利用や継続利用では申請・条件確認が必要な場合がある。認証情報・許諾が未設定の場合、Adapterは既定で無効とする。
-
-
-## Phase 5A：楽天Books / NDL Search Adapter（CURRENT）
-- Adapter実装・正規化契約テスト
-- 認証情報/利用許諾未設定時は既定OFF
-- 楽天Booksの販売価格と定価を混同しない
-- NDLのseriesTitle / volume / ISBNを共通形式へ変換
-- 実API利用時は公式条件を確認してから有効化

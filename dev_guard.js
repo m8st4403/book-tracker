@@ -22,15 +22,7 @@ function check(name, ok, detail='') { (ok ? pass : fail)(name, detail); }
 const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
 const dupIds = [...new Set(ids.filter((id,i)=>ids.indexOf(id)!==i))];
 check('STATIC-001 unique DOM ids', dupIds.length===0, dupIds.join(', '));
-check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.44["']/.test(html) || /APP_VERSION\s*=\s*["']4\.13\.44["']/.test(html), 'version marker present');
-const packagePath=path.join(path.dirname(target),'package.json');
-let packageVersion='';
-try{packageVersion=JSON.parse(fs.readFileSync(packagePath,'utf8')).version||''}catch(e){}
-const appVersionMatch=html.match(/const APP_VERSION=\"([^\"]+)\"/);
-const guardVersionMatch=html.match(/const DEV_GUARD_VERSION=\"([^\"]+)\"/);
-check('STATIC-018 version sources are consistent', !!packageVersion&&appVersionMatch?.[1]===packageVersion&&guardVersionMatch?.[1]===packageVersion, `package=${packageVersion} app=${appVersionMatch?.[1]||''} guard=${guardVersionMatch?.[1]||''}`);
-check('STATIC-019 persistence/backup gap audit exists', fs.existsSync(path.join(path.dirname(target),'RULE_GAP_AUDIT_v4_13_44.md'))&&fs.existsSync(path.join(path.dirname(target),'NEXT_IMPLEMENTATION_PRIORITY_v4_13_44.md')), 'persistence/backup/priority contracts');
-check('STATIC-020 backup schema validation contract', /Number\(d\.schemaVersion\)!==3/.test(html), 'backup schemaVersion validation');
+check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.35["']/.test(html) || /APP_VERSION\s*=\s*["']4\.13\.35["']/.test(html), 'version marker present');
 check('STATIC-003 required six tabs', ['home','add','library','search','calendar','settings'].every(id=>new RegExp(`id=["']${id}["']`).test(html)), 'home/add/library/search/calendar/settings');
 check('STATIC-004 price filter exists', /id=["']filterPrice["']/.test(html), 'library price filter');
 check('STATIC-005 canonical registration routes exist', /window\.addBook\s*=/.test(html) && /window\.bulkAdd\s*=/.test(html), 'addBook/bulkAdd');
@@ -39,12 +31,6 @@ check('STATIC-010 search generation contract', /searchGenerations/.test(html) &&
 check('STATIC-011 data operation lock contract', /dataOperationBusy/.test(html) && /setDataOperationUiBusy/.test(html) && /data-data-operation/.test(html), 'registration and series repair share a data-operation lock');
 check('STATIC-012 series repair excludes demo records', /isDemoRecord\(b\)/.test(html) && /通常の蔵書/.test(html), 'demo/sample records are excluded from repair');
 check('STATIC-013 resolver session cache contract', /resolverCache/.test(fs.readFileSync(path.join(path.dirname(target),'api_management.js'),'utf8')), 'ISBN resolver results are cached per session');
-check('STATIC-014 rule/test ledger exists', fs.existsSync(path.join(path.dirname(target),'RULE_LEDGER_v4_13_40.md')) && fs.existsSync(path.join(path.dirname(target),'RULE_TEST_MATRIX_v4_13_40.md')), 'rule ledger and verification matrix');
-check('STATIC-015 UI display contract exists', /scrollWidth<=el\.clientWidth/.test(fs.readFileSync(path.join(path.dirname(target),'dev_guard.js'),'utf8')) && /E2E-UI-002 compact library statistics keep labels visible/.test(fs.readFileSync(path.join(path.dirname(target),'dev_guard.js'),'utf8')), 'visible/readable/clipping contract');
-check('STATIC-016 sort tie-break contract exists', /REG-002B/.test(fs.readFileSync(target,'utf8')), 'all sort modes use deterministic tie-breaks');
-check('STATIC-017 operation catalog exists', fs.existsSync(path.join(path.dirname(target),'OPERATION_CATALOG_v4_13_40.md')), 'data mutation operation catalog');
-
-
 check('STATIC-006 roadmap guard docs exist', fs.existsSync(path.join(path.dirname(target),'ROADMAP_TEST_MATRIX.md')), 'roadmap test matrix');
 check('STATIC-007 release gate docs exist', fs.existsSync(path.join(path.dirname(target),'RELEASE_TEST_GATE.md')), 'release gate');
 check('STATIC-008 package test script exists', fs.existsSync(path.join(path.dirname(target),'package.json')), 'package.json');
@@ -104,8 +90,8 @@ async function main(){
     // local JS dependency is inlined only for the browser harness because this sandbox blocks loopback navigation.
     const apiPath=path.join(path.dirname(target),'api_management.js');
     const apiCode=fs.readFileSync(apiPath,'utf8').replace(/<\/script/gi,'<\\/script');
-    const makeBrowserHtml=(seed={})=>{const seeded=JSON.stringify(seed);const shim=`<script>(function(){const initial=${seeded};const s=new Map(Object.entries(initial));window.__guardStorage={get length(){return s.size},key(i){return [...s.keys()][i]??null},getItem(k){return s.has(String(k))?s.get(String(k)):null},setItem(k,v){s.set(String(k),String(v))},removeItem(k){s.delete(String(k))},clear(){s.clear()}}})();<\/script>`;return shim+html.replaceAll('localStorage','__guardStorage').replace('<script src="./api_management.js"></script>',`<script>${apiCode}</script>`)};
-    const browserHtml=makeBrowserHtml();
+    const storageShim=`<script>(function(){const s=new Map();window.__guardStorage={get length(){return s.size},key(i){return [...s.keys()][i]??null},getItem(k){return s.has(String(k))?s.get(String(k)):null},setItem(k,v){s.set(String(k),String(v))},removeItem(k){s.delete(String(k))},clear(){s.clear()}}})();<\/script>`;
+    const browserHtml=storageShim+html.replaceAll('localStorage','__guardStorage').replace('<script src="./api_management.js"></script>',`<script>${apiCode}</script>`);
     await cdp.send('Page.setDocumentContent',{frameId:(await cdp.send('Page.getFrameTree')).frameTree.frame.id,html:browserHtml}); await wait(1200);
 
     const loadState=await evalJS('({url:location.href,ready:document.readyState,title:document.title,storage:(()=>{try{__guardStorage.setItem("__guard","1");__guardStorage.removeItem("__guard");return true}catch(e){return false}})()})');
@@ -127,81 +113,6 @@ async function main(){
       const missing=await evalJS(`(()=>${JSON.stringify(selectors)}.filter(x=>x==='theme-choice'||x==='font-choice'? !document.querySelector('.'+x):!document.getElementById(x)))()`);
       check(`CONTRACT-${tab}-001 required controls`,missing.length===0,missing.join(', '));
     }
-    const apiAdapterContracts=await evalJS(`(()=>{try{
-      const api=window.bookTrackerApiManagement;
-      const rak=api?.normalizeRakuten?.({itemCode:'9784088720715',title:'レベルE 1巻',subTitle:'',seriesName:'レベルE',author:'冨樫義博',publisherName:'集英社',salesDate:'1996年01月',itemPrice:550,listPrice:0,largeImageUrl:'https://example.invalid/a.jpg'});
-      const xml="<?xml version='1.0'?><searchRetrieveResponse xmlns='http://www.loc.gov/zing/srw/' xmlns:dcterms='http://purl.org/dc/terms/' xmlns:dcndl='http://ndl.go.jp/dcndl/terms/' xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'><records><record><recordData><dcterms:title>レベルE</dcterms:title><dcndl:seriesTitle><rdf:Description><rdf:value>レベルE</rdf:value></rdf:Description></dcndl:seriesTitle><dcndl:volume>3</dcndl:volume><dcterms:creator>冨樫義博</dcterms:creator><dcterms:publisher>集英社</dcterms:publisher><dcterms:issued>1996</dcterms:issued><dcterms:identifier rdf:resource='http://iss.ndl.go.jp/isbn/9784088720739'/></recordData></record></records></searchRetrieveResponse>";
-      const ndl=api?.normalizeNDLFixture?.(xml,'9784088720739')?.[0];
-      return {adapterMethods:typeof api?.adapters?.rakuten?.isbn==='function'&&typeof api?.adapters?.rakuten?.search==='function'&&typeof api?.adapters?.ndl?.isbn==='function'&&typeof api?.adapters?.ndl?.search==='function',defaultOff:api?.providers?.rakuten?.enabled===false&&api?.providers?.ndl?.enabled===false,rakuten:rak?.source==='rakuten'&&rak?.series?.name==='レベルE'&&rak?.series?.volumeNumber===1&&rak?.priceMeta?.listPrice===null&&rak?.priceMeta?.salePrice===550,ndl:ndl?.source==='ndl'&&ndl?.series?.name==='レベルE'&&ndl?.series?.volumeNumber===3&&canonicalIsbn(ndl?.isbn)==='9784088720739'};
-    }catch(e){return {error:String(e?.message||e)}}})()`);
-    check('E2E-API-006B Rakuten/NDL adapters are installed safely',apiAdapterContracts?.adapterMethods===true&&apiAdapterContracts?.defaultOff===true,JSON.stringify(apiAdapterContracts));
-    check('E2E-API-006C Rakuten normalization separates sale price from list price',apiAdapterContracts?.rakuten===true,JSON.stringify(apiAdapterContracts));
-    check('E2E-API-006D NDL normalization maps series/volume/ISBN',apiAdapterContracts?.ndl===true,JSON.stringify(apiAdapterContracts));
-    // Phase 5/6: real resolver/search routing is tested with deterministic adapter doubles.
-    const failoverSmoke=await evalJS(`(async()=>{try{
-      const api=window.bookTrackerApiManagement, old={google:api.adapters.googleBooks.isbn,rak:api.adapters.rakuten.isbn,searchG:api.adapters.googleBooks.search,searchR:api.adapters.rakuten.search};
-      const saved={g:api.providers.googleBooks.enabled,r:api.providers.rakuten.enabled,threshold:api.runtimePolicy.failureThreshold,cooldown:api.runtimePolicy.cooldownMs,timeout:api.runtimePolicy.requestTimeoutMs};
-      api.providers.googleBooks.enabled=true;api.providers.rakuten.enabled=true;api.runtimePolicy.failureThreshold=1;api.runtimePolicy.cooldownMs=60000;api.runtimePolicy.requestTimeoutMs=50;
-      let gCalls=0,rCalls=0,sgCalls=0,srCalls=0;
-      api.adapters.googleBooks.isbn=async()=>{gCalls++;throw Error('synthetic Google outage')};
-      api.adapters.rakuten.isbn=async isbn=>{rCalls++;return [{isbn,title:'楽天フォールバック本',author:'A',publisher:'P',date:'2026-01-01',source:'rakuten',series:null,priceMeta:{listPrice:null,salePrice:500,taxIncluded:true},fieldEvidence:{title:api.evidenceFor('title','楽天フォールバック本',{identifierMatched:true,countryMatched:true})}}]};
-      const one=await api.resolveIsbn('9784088720715',{full:true});
-      const firstFallback=one?.resolution?.attempts?.some(x=>x.provider==='googleBooks'&&x.ok===false)&&one?.resolution?.attempts?.some(x=>x.provider==='rakuten'&&x.ok===true);
-      const gh=api.providerHealth.get('googleBooks');gh.failures=0;gh.temporarilyDisabledUntil=0;
-      api.adapters.googleBooks.search=async()=>{sgCalls++;throw Error('synthetic Google search outage')};
-      api.adapters.rakuten.search=async()=>{srCalls++;return [{isbn:'9784088720715',title:'検索フォールバック',author:'A',source:'rakuten'}]};
-      const sr=await api.search('検索フォールバック',5);
-      const searchFallback=sr?.results?.[0]?.title==='検索フォールバック'&&sr?.attempts?.some(x=>x.provider==='googleBooks'&&x.ok===false)&&sr?.attempts?.some(x=>x.provider==='rakuten'&&x.ok===true);
-      gh.failures=0;gh.temporarilyDisabledUntil=0;
-      api.adapters.googleBooks.search=async()=>{sgCalls++;await new Promise(r=>setTimeout(r,100));return [{isbn:'9784088720999',title:'タイムアウト元',author:'A',source:'googleBooks'}]};
-      api.adapters.rakuten.search=async()=>{srCalls++;return [{isbn:'9784088720998',title:'タイムアウト後フォールバック',author:'A',source:'rakuten'}]};
-      const st=await api.search('タイムアウト後フォールバック',5);
-      const timeoutFallback=st?.results?.[0]?.title==='タイムアウト後フォールバック'&&st?.attempts?.some(x=>x.provider==='googleBooks'&&x.ok===false&&String(x.error||'').includes('timeout'))&&st?.attempts?.some(x=>x.provider==='rakuten'&&x.ok===true);
-      const before=gCalls;const two=await api.resolveIsbn('9784088720722',{full:true}).catch(()=>null);const cooldownSkip=gCalls===before&&two?.resolution?.attempts?.some(x=>x.provider==='googleBooks'&&x.skipped===true);
-      api.adapters.googleBooks.isbn=old.google;api.adapters.rakuten.isbn=old.rak;api.adapters.googleBooks.search=old.searchG;api.adapters.rakuten.search=old.searchR;
-      api.providers.googleBooks.enabled=saved.g;api.providers.rakuten.enabled=saved.r;api.runtimePolicy.failureThreshold=saved.threshold;api.runtimePolicy.cooldownMs=saved.cooldown;api.runtimePolicy.requestTimeoutMs=saved.timeout;
-      return {firstFallback,searchFallback,timeoutFallback,cooldownSkip,gCalls,rCalls,sgCalls,srCalls};
-    }catch(e){return {error:String(e?.message||e)}}})()`);
-    check('E2E-API-006E ISBN自動フェイルオーバー',failoverSmoke?.firstFallback===true,JSON.stringify(failoverSmoke));
-    check('E2E-API-006F 検索自動フェイルオーバー',failoverSmoke?.searchFallback===true,JSON.stringify(failoverSmoke));
-    check('E2E-API-006G 障害Provider一時クールダウン',failoverSmoke?.cooldownSkip===true,JSON.stringify(failoverSmoke));
-    check('E2E-API-006H timeout時の自動フェイルオーバー',failoverSmoke?.timeoutFallback===true,JSON.stringify(failoverSmoke));
-
-    // Phase 7: bounded/config-aware resolver cache and critical-field non-downgrade contracts.
-    const phase7Cache=await evalJS(`(async()=>{try{
-      const api=window.bookTrackerApiManagement, old={isbn:api.adapters.googleBooks.isbn};
-      api.clearResolverCache();
-      for(const h of api.providerHealth.values()){h.failures=0;h.temporarilyDisabledUntil=0;h.lastError='';}
-      api.providers.googleBooks.enabled=true;
-      api.runtimePolicy.requestTimeoutMs=500;
-      let calls=0;
-      api.adapters.googleBooks.isbn=async isbn=>{calls++;return [{isbn,title:'Cache Test '+calls,author:'A',publisher:'P',source:'googleBooks',fieldEvidence:{title:api.evidenceFor('title','Cache Test '+calls,{identifierMatched:true,countryMatched:true})}}]};
-      const a=await api.resolveIsbn('9784088720990',{full:true});
-      const b=await api.resolveIsbn('9784088720990',{full:true});
-      const cacheHit=calls===1&&a.title===b.title;
-      const oldEnabled={g:api.providers.googleBooks.enabled,r:api.providers.rakuten.enabled,n:api.providers.ndl.enabled,o:api.providers.openBD.enabled};
-      api.providers.googleBooks.enabled=false;api.providers.rakuten.enabled=false;api.providers.ndl.enabled=false;api.providers.openBD.enabled=false;
-      const invalidated=api.cacheInfo().size===1 && (await api.resolveIsbn('9784088720990',{full:true}).catch(()=>null))===null;
-      api.providers.googleBooks.enabled=oldEnabled.g;api.providers.rakuten.enabled=oldEnabled.r;api.providers.ndl.enabled=oldEnabled.n;api.providers.openBD.enabled=oldEnabled.o;
-      api.adapters.googleBooks.isbn=old.isbn;
-      api.clearResolverCache();
-      return {cacheHit,invalidated,cacheInfo:api.cacheInfo()};
-    }catch(e){return {error:String(e?.message||e)}}})()`);
-    check('E2E-API-007A resolver cache is bounded and config-aware',phase7Cache?.cacheHit===true&&phase7Cache?.invalidated===true,JSON.stringify(phase7Cache));
-
-    const phase7Critical=await evalJS(`(()=>{try{
-      const bad={resolution:{accepted:{series:false,listPrice:false}},series:{id:'BAD',name:'別作品',volumeNumber:9},priceMeta:{listPrice:100,taxIncluded:false},title:'API title'};
-      const base={isbn:'9784088720715',title:'既存タイトル',series:{id:'GOOD',name:'レベルE',volumeNumber:1},price:{listPrice:550,status:'confirmed',currency:'JPY',taxIncluded:true,source:'manual',confidence:'HIGH'}};
-      const merged=mergeRegistrationBook(base,bad);
-      const seriesKept=merged.series?.id==='GOOD'&&merged.series?.name==='レベルE'&&merged.series?.volumeNumber===1;
-      const priceKept=merged.price?.listPrice===550&&merged.price?.status==='confirmed'&&merged.price?.taxIncluded===true;
-      return {seriesKept,priceKept};
-    }catch(e){return {error:String(e?.message||e)}}})()`);
-    check('LOGIC-API-007B critical fields are never downgraded by rejected resolver data',phase7Critical?.seriesKept===true&&phase7Critical?.priceKept===true,JSON.stringify(phase7Critical));
-
-    const providerContracts=await evalJS(`(()=>{const api=window.bookTrackerApiManagement;return Object.entries(api.adapters).every(([name,a])=>{if(!a||typeof a.isbn!=='function')return false;if(api.providers[name]?.capabilities?.titleSearch&&typeof a.search!=='function')return false;return true})})()`);
-    check('STATIC-API-007C enabled Adapter capability contract',providerContracts===true,'ISBN adapter and titleSearch capability must match implementation');
-
     const fnContracts={
       home:['renderHome'], add:['ensureTrailingIsbnRow','isbnLookup'], library:['renderLibrary','resetLibraryFilters','updateBookMeta','setPurchaseStatus'],
       search:['searchGoogle','findSimilarWorks'], calendar:['renderCalendar','showDay','allEvents','addCalendarExtra','checkReleaseNotifications'], settings:['loadSettingsUI','saveSettings','createBackupData']
@@ -313,7 +224,7 @@ async function main(){
       if(!lib)return {ok:false,reason:'libraryStats missing'};
       lib.classList.add('is-compact');
       const labels=[...lib.querySelectorAll('.library-stat-label')];
-      const visible=labels.length===5&&labels.every(el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();const noClip=el.scrollWidth<=el.clientWidth+1&&el.scrollHeight<=el.clientHeight+1;const range=document.createRange();range.selectNodeContents(el);const rr=range.getBoundingClientRect();const fullyInside=rr.left>=r.left-1&&rr.right<=r.right+1&&rr.top>=r.top-1&&rr.bottom<=r.bottom+1;return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0&&noClip&&fullyInside;});
+      const visible=labels.length===5&&labels.every(el=>{const s=getComputedStyle(el);const r=el.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0;});
       const text=labels.map(x=>x.textContent.trim());
       lib.classList.remove('is-compact');
       return {ok:visible,visible,text,display:labels.map(x=>getComputedStyle(x).display)};
@@ -342,15 +253,6 @@ async function main(){
       const clipped=await evalJS(`(()=>{const out=[];for(const e of document.querySelectorAll('body *')){const r=e.getBoundingClientRect(),s=getComputedStyle(e);if(r.width<=0||r.height<=0||s.display==='none'||s.visibility==='hidden')continue;if(e.matches('script,style,input,textarea,select,option,html,body'))continue;const t=(e.textContent||'').trim();if(!t)continue;if((s.textOverflow==='ellipsis'||s.whiteSpace==='nowrap')&&e.scrollWidth>e.clientWidth+1)out.push({id:e.id,cls:e.className,text:t.slice(0,100),scrollWidth:e.scrollWidth,clientWidth:e.clientWidth});}return out;})()`);
       check(`E2E-TAB-${id}-004 no unintended text clipping`,clipped.length===0,JSON.stringify(clipped.slice(0,8)));
     }
-
-    // E2E-UI-MATRIX: representative iPhone widths.
-    for(const width of [375,390,414]){
-      await cdp.send('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:true});
-      await wait(80);
-      const matrix=await evalJS(`(()=>{const els=[...document.querySelectorAll('body *')].filter(e=>{const s=getComputedStyle(e),r=e.getBoundingClientRect();return r.width>0&&r.height>0&&s.display!=='none'&&s.visibility!=='hidden'&&!e.matches('script,style,input,textarea,select,option,html,body')});const overflow=els.filter(e=>e.scrollWidth>e.clientWidth+1).map(e=>({id:e.id,cls:String(e.className),text:(e.textContent||'').trim().slice(0,60),sw:e.scrollWidth,cw:e.clientWidth}));return {width:innerWidth,overflow};})()`);
-      check(`E2E-UI-MATRIX-${width} no unexpected content overflow`,matrix?.overflow?.length===0,JSON.stringify(matrix?.overflow?.slice(0,8)));
-    }
-    await cdp.send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
 
     // Cross-feature smoke tests: exercise representative state transitions on every tab.
     const smoke=await evalJS(`(()=>{
@@ -392,9 +294,6 @@ async function main(){
     // App-internal guard remains available, but external guard is authoritative.
     const internalGuard=await evalJS(`typeof window.runBookTrackerSpecGuard==='function'`);
     check('E2E-GUARD-001 internal guard exported',internalGuard,'optional developer UI guard');
-    const atomicitySmoke=await evalJS(`(()=>{const before=JSON.parse(JSON.stringify(purchaseGroups));const oldPersist=persistPurchaseGroups;persistPurchaseGroups=()=>false;const ok=setPurchaseGroupForBooks(['9784000000001'],1234,'atomicity-test');persistPurchaseGroups=oldPersist;return {rejected:ok===false,unchanged:JSON.stringify(purchaseGroups)===JSON.stringify(before)}})()`);
-    check('E2E-PERSIST-002 purchase-group write failure rolls back memory state',atomicitySmoke?.rejected===true&&atomicitySmoke?.unchanged===true,JSON.stringify(atomicitySmoke));
-
     // Screenshot smoke at the final state. This catches catastrophic blank pages in addition to geometry tests.
     const shot=await cdp.send('Page.captureScreenshot',{format:'png'});
     check('E2E-SCREEN-001 screenshot captured',!!shot.data && shot.data.length>1000,'390x844 rendered screenshot');

@@ -276,7 +276,7 @@ Google Booksでは表示用 `bookDisplayNumber` と実際の順序を表す `ord
 
 ### 12.5 定価（税込）
 
-1. openBD等の日本向け定価情報を、税区分まで検証できたもの
+1. 楽天Books / openBDの日本向け定価情報を、税区分まで検証できたもの
 2. Google Books `listPrice`（日本向け・紙/電子・税区分等の条件を検証できた場合のみ）
 3. NDL（価格情報があり、定価（税込）として意味を確定できる場合のみ）
 
@@ -498,11 +498,8 @@ Providerごとに以下をテストする。
 - Google Books Volumes API: https://developers.google.com/books/docs/v1/reference/volumes
 - Google Books VolumeSeriesInfo: https://developers.google.com/resources/api-libraries/documentation/books/v1/cpp/latest/classgoogle__books__api_1_1Volumeseriesinfo.html
 - 楽天Books Book Search API: https://webservice.rakuten.co.jp/documentation/books-book-search
-  - 楽天Booksの `listPrice` は仕様上2013年以降常に0のため定価には使用しない。`itemPrice` は販売価格として別管理する。
-  - applicationId / accessKey が必要。認証情報はソースへ埋め込まず、実行環境から注入する。
 - openBD 書誌API仕様: https://openbd.jp/spec/
 - NDL Search API仕様: https://ndlsearch.ndl.go.jp/help/api/specifications
-  - NDL SearchはSRU/OpenSearch/OpenURLを提供。営利利用・継続利用では利用申請等の条件確認が必要な場合があるため、既定ではAdapterを無効化する。
 - NDL Search API利用条件: https://ndlsearch.ndl.go.jp/help/api
 
 Google Booksはシリーズの表示番号と実際の順序を分けて提供しており、`orderNumber`を実際の順序判定に使用する。Google Booksの`listPrice`はSuggested retail price、`retailPrice`は実際の販売価格として定義されるため、定価（税込）の判定では両者を混同しない。楽天Booksは`seriesName`、`isbn`、`salesDate`等を提供する。openBDはONIXのCollection/TitleDetailとPrice等を提供する。NDL Searchはシリーズタイトル等を含む書誌検索・APIを提供する。
@@ -621,70 +618,3 @@ purchaseGroups: {
 - 選択した複数冊に購入総額を登録すると1つの購入グループとして保存する。
 - 同じ本を別の購入グループへ登録した場合は、その本の旧グループから外す。
 - 蔵書から本を削除した場合、購入グループからもその本を除き、空になったグループは削除する。
-
-
-## v4.13.41 Phase 5 Adapter追加
-楽天Books / NDL SearchのAdapterを実装した。楽天Booksは認証情報がない限り無効、NDL Searchも利用条件確認が済むまで無効。両者とも共通BookRecordへ正規化し、critical項目は既存Evidence/Confidence判定を通す。
-
-
-## Phase 5 — Rakuten Books / NDL Search Adapter追加（v4.13.41〜v4.13.42）
-- Rakuten Books Adapter と NDL Search Adapter を実装した。
-- 認証情報・利用条件が未設定のProviderは既定OFFとする。
-- Rakuten `itemPrice` は販売価格として保持し、正式な定価には使用しない。
-- NDLはSRUを入口とし、DC-NDL系のseriesTitle / volume / ISBN等を共通形式へ正規化する。
-
-## Phase 6 — 自動フェイルオーバーの実運用化（v4.13.42）
-### 6.1 Provider選択
-ISBN照会・検索とも、固定された `priority.search` を起点に、enabled / capability を満たすProviderだけを順番に試行する。
-
-### 6.2 フェイルオーバー
-Providerの通信失敗、HTTP/解析エラー、timeout、結果なしの場合は次候補へ進む。結果が得られても、Critical項目の採用は既存のEvidence / Confidence規則で別途判定する。
-
-### 6.3 一時障害
-Provider単位の実行時ヘルスを保持する。連続失敗が閾値に達したProviderは短時間のcooldownへ入り、その間は候補から一時的に除外する。cooldown終了後は自動的に再試行可能とする。
-
-初期実装値：
-- 連続失敗閾値: 2回
-- cooldown: 30秒
-- Provider request timeout: 12秒
-
-これらはコード実行を伴わない固定ランタイムポリシーであり、既存のRemote Config安全方針とは独立している。
-
-### 6.4 監査
-`resolution.attempts` にProviderごとの成功・失敗・skip理由を残し、どの候補を経由したか追跡可能とする。
-
-### 6.5 検証
-外部Release Gateで以下を確認する。
-- ISBN照会でGoogle Books障害→楽天Booksへの自動移行
-- 検索でGoogle Books障害→楽天Booksへの自動移行
-- timeout→次Providerへの移行
-- 連続障害Providerのtemporary cooldown
-- 既存Providerが復帰可能な状態を維持
-
-
-## Phase 7 — Resolver Cache / Critical Field Protection / Provider Contract運用化 (v4.13.43)
-### 7.1 Resolver session cache
-- ISBN解決結果はセッション内で再利用する。
-- キャッシュTTLは10分、最大200件とする。
-- Providerのenabled状態またはpriorityが変化した場合、旧キャッシュは使用しない。
-- 明示的に `clearResolverCache()` で破棄できる。
-- キャッシュは深いコピーを返し、呼び出し側の変更で保存値を汚染しない。
-
-### 7.2 Critical field non-downgrade
-- `seriesId / seriesName / volumeNumber / listPrice / taxIncluded` はHIGH以上を採用条件とする。
-- Resolverが不十分な値を返した場合、既存の確定済み蔵書データを上書きしない。
-- 定価は税込確認済みの値だけを正式な定価として反映する。
-- シリーズ情報も `seriesAcceptable()` を通過した場合だけ既存情報を更新する。
-
-### 7.3 Provider contract
-- Adapter実装とProvider capabilityの組み合わせをRelease Gateで検査する。
-- `isbnSearch:true` のProviderは `adapters.<provider>.isbn()` を持つ。
-- `titleSearch:true` のProviderは `adapters.<provider>.search()` を持つ。
-- これにより設定だけ先に有効化され、実装されていないAdapterへ到達する状態を配布前に検出する。
-
-### 7.4 検証
-外部Release Gateで以下を確認する。
-- 同一ISBNの2回目照会がセッションキャッシュを利用する
-- Provider設定変更後に旧キャッシュを利用しない
-- 拒否されたCritical情報が既存の確定値を上書きしない
-- capabilityとAdapter実装の契約が一致する

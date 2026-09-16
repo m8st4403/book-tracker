@@ -18,12 +18,9 @@ function runMutation(name,mutateIndex=source,mutateApi=apiSource){
 }
 const uiMutation=source.replace('</body>','<div id="mutationOverflow" style="position:fixed;left:0;top:0;width:1000px;height:20px">mutation</div></body>');
 const apiMutation=apiSource.replace(' && (field!=="listPrice" || e.taxIncludedConfirmed)','');
-const atomicMutation=source.replace(' if(persistPurchaseGroups())return true;\n purchaseGroups=before;\n return false;', ' return persistPurchaseGroups();');
-
 const cases=[
   ['UI generic overflow',()=>runMutation('UI generic overflow',uiMutation)],
-  ['API trust',()=>runMutation('API trust',source,apiMutation)],
-  ['Purchase-group atomicity',()=>runMutation('Purchase-group atomicity',atomicMutation)]
+  ['API trust',()=>runMutation('API trust',source,apiMutation)]
 ];
 let ok=true;
 for(const [name,fn] of cases){const r=fn();console.log(`${r.caught?'PASS':'FAIL'} | MUTATION-${name} | intentional defect ${r.caught?'detected':'NOT detected'}`);if(!r.caught){ok=false;console.log(r.output)}}
