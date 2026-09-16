@@ -84,6 +84,8 @@
   function recordProviderFailure(name,error){const h=health(name);h.failures+=1;h.lastFailureAt=Date.now();h.lastError=String(error?.message||error||"Provider error");if(h.failures>=runtimePolicy.failureThreshold)h.temporarilyDisabledUntil=Date.now()+runtimePolicy.cooldownMs}
   async function withTimeout(promise,ms){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error("Provider timeout")),ms)})])}finally{clearTimeout(timer)}}
   function cloneCached(v){try{return JSON.parse(JSON.stringify(v))}catch(_){return v}}
+  function metricApiStart(provider){try{globalThis.bookTrackerRegistrationMetrics?.beginApi(provider)}catch(_){}}
+  function metricApiEnd(provider,ok){try{globalThis.bookTrackerRegistrationMetrics?.endApi(provider,ok)}catch(_){}}
   const adapters={
     googleBooks:{
       async isbn(isbn){
@@ -323,7 +325,7 @@
     for(const name of names){
       if(providerTemporarilyDisabled(name)){attempts.push({provider:name,ok:false,skipped:true,reason:"temporary provider cooldown"});continue;}
       try{
-        const got=await withTimeout(adapters[name].search(q,limit),runtimePolicy.requestTimeoutMs);
+        metricApiStart(name); let got; try{got=await withTimeout(adapters[name].search(q,limit),runtimePolicy.requestTimeoutMs);metricApiEnd(name,true)}catch(e){metricApiEnd(name,false);throw e}
         if(Array.isArray(got)&&got.length){rows.push(...got.map(r=>({...r,source:r.source||name})));attempts.push({provider:name,ok:true,count:got.length});recordProviderSuccess(name);}
         else{attempts.push({provider:name,ok:false,reason:"no results"});recordProviderSuccess(name);}
       }catch(e){recordProviderFailure(name,e);attempts.push({provider:name,ok:false,error:String(e?.message||e),temporaryCooldown:providerTemporarilyDisabled(name)});}
@@ -345,7 +347,7 @@
     for(const name of names){
       if(providerTemporarilyDisabled(name)) { attempts.push({provider:name,ok:false,skipped:true,reason:"temporary provider cooldown"}); continue; }
       try{
-        const got=await withTimeout(adapters[name].isbn(isbn),runtimePolicy.requestTimeoutMs);
+        metricApiStart(name); let got; try{got=await withTimeout(adapters[name].isbn(isbn),runtimePolicy.requestTimeoutMs);metricApiEnd(name,true)}catch(e){metricApiEnd(name,false);throw e}
         const exact=got.filter(r=>canonicalIsbn(r?.isbn)===ctx.isbn);
         const usable=exact.length?exact:got;
         if(usable.length){
@@ -394,7 +396,7 @@
   function seriesAcceptable(s){return !!s&&!!s.name&&rank(s.confidence.seriesName)>=rank("HIGH")&&(s.volumeNumber==null||rank(s.confidence.volumeNumber)>=rank("HIGH"))}
   async function runField(field,ctx={}){
     const list=priority[field]||[];const attempts=[];
-    for(const name of list){if(name==="titleParser")continue;const ad=adapters[name];if(!providerEnabled(name)||!hasCapability(name,ctx.capability||field)||!ad)continue;if(providerTemporarilyDisabled(name)){attempts.push({provider:name,skipped:true,reason:"temporary provider cooldown"});continue;}try{const rows=ctx.isbn&&ad.isbn?await withTimeout(ad.isbn(ctx.isbn),runtimePolicy.requestTimeoutMs):[];for(const row of rows){const c=candidate(field,row,ctx);if(!c){attempts.push({provider:name,confidence:"UNKNOWN",accepted:false,reason:"required field unavailable"});continue}const result={value:c.value,confidence:c.confidence,evidence:c.evidence};attempts.push({provider:name,confidence:c.confidence,accepted:acceptable(field,result)});if(acceptable(field,result)){recordProviderSuccess(name);return {value:c.value,confidence:c.confidence,provider:name,evidence:c.evidence,attempts}}}}catch(e){recordProviderFailure(name,e);attempts.push({provider:name,ok:false,error:String(e?.message||e),temporaryCooldown:providerTemporarilyDisabled(name)})}}
+    for(const name of list){if(name==="titleParser")continue;const ad=adapters[name];if(!providerEnabled(name)||!hasCapability(name,ctx.capability||field)||!ad)continue;if(providerTemporarilyDisabled(name)){attempts.push({provider:name,skipped:true,reason:"temporary provider cooldown"});continue;}try{metricApiStart(name); let rows=[]; try{rows=ctx.isbn&&ad.isbn?await withTimeout(ad.isbn(ctx.isbn),runtimePolicy.requestTimeoutMs):[];metricApiEnd(name,true)}catch(e){metricApiEnd(name,false);throw e}for(const row of rows){const c=candidate(field,row,ctx);if(!c){attempts.push({provider:name,confidence:"UNKNOWN",accepted:false,reason:"required field unavailable"});continue}const result={value:c.value,confidence:c.confidence,evidence:c.evidence};attempts.push({provider:name,confidence:c.confidence,accepted:acceptable(field,result)});if(acceptable(field,result)){recordProviderSuccess(name);return {value:c.value,confidence:c.confidence,provider:name,evidence:c.evidence,attempts}}}}catch(e){recordProviderFailure(name,e);attempts.push({provider:name,ok:false,error:String(e?.message||e),temporaryCooldown:providerTemporarilyDisabled(name)})}}
     return {value:null,confidence:"UNKNOWN",provider:null,evidence:null,attempts};
   }
   function config(){return {version:VERSION,runtimePolicy:JSON.parse(JSON.stringify(runtimePolicy)),providerHealth:JSON.parse(JSON.stringify(Object.fromEntries(providerHealth))),providers:JSON.parse(JSON.stringify(providers)),priority:JSON.parse(JSON.stringify(priority)),thresholds:JSON.parse(JSON.stringify(thresholds))}}
