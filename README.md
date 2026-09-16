@@ -1,17 +1,10 @@
-**v4.13.46**
-
-- P1: カレンダー・設定・ICS・発売通知の検証強化
-- 設定保存失敗時のメモリ／UIロールバック
-- カレンダー追加失敗時のロールバック
-- ICSを発売日ベースのVALUE=DATE、値エスケープ、安定UIDへ統一
-
 # Book Tracker
 
 iPhone向けの書籍管理アプリのプロトタイプです。
 
 ## 現在のバージョン
 
-**v4.13.45**
+**v4.13.44**
 
 v4.13.36では、全タブのデータ変更操作を共通排他制御し、検索中も登録・削除などのデータ変更を開始できないようにしました。また蔵書の並び順は、選択した並び順を最優先キーとし、同値時は「作品名 → 巻数 → 登録順」で統一しました。
 
@@ -212,7 +205,7 @@ Registration/search hardening and performance refinement: fixed result thumbnail
 `OPERATION_CATALOG_v4_13_40.md` をデータ変更操作の正本とし、UI入口と関数入口の二重ロックで排他制御する。
 
 
-## v4.13.45 — Phase 7 API management operational stabilization
+## v4.13.44 — Phase 7 API management operational stabilization
 - Rakuten Books / NDL Search adapters are part of the installed Provider layer.
 - ISBN resolution now follows the configured `priority.search` Provider order instead of a hard-coded Provider list.
 - Search requests use the same Provider failover path and return normalized results.
@@ -226,17 +219,6 @@ Registration/search hardening and performance refinement: fixed result thumbnail
 - Critical field non-downgrade: 確定済みシリーズ・定価を低信頼結果で上書きしない
 - Provider capability と Adapter実装の契約をRelease Gateで検査
 
-## v4.13.45 — ルール／検証体系監査・永続化安定化
+## v4.13.44 — ルール／検証体系監査・永続化安定化
 
 本バージョンでは、次期機能の優先順位付けと並行して、既存ルールに対する検証フローの抜け漏れを監査しました。特に保存→reload、バックアップ契約、複数storage更新時の失敗ロールバック、バージョン整合をCURRENTの検証契約へ追加しました。
-
-
-## v4.13.45 — P0 永続化・バックアップ検証実運用化
-
-- 保存→起動読込の全永続領域検証
-- バックアップ export/import ラウンドトリップ
-- schemaVersion / 許可キー検証
-- バックアップ復元失敗時のatomic rollback
-- バージョン整合のRelease Gate化
-- 詳細な検証契約：`PERSISTENCE_TEST_CONTRACT_v4_13_45.md`
-- Release Gate：152/152 PASS、Mutation Test 3/3 PASS

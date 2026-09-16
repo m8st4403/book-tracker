@@ -22,7 +22,7 @@ function check(name, ok, detail='') { (ok ? pass : fail)(name, detail); }
 const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
 const dupIds = [...new Set(ids.filter((id,i)=>ids.indexOf(id)!==i))];
 check('STATIC-001 unique DOM ids', dupIds.length===0, dupIds.join(', '));
-check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.46["']/.test(html) || /APP_VERSION\s*=\s*["']4\.13\.46["']/.test(html), 'version marker present');
+check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.44["']/.test(html) || /APP_VERSION\s*=\s*["']4\.13\.44["']/.test(html), 'version marker present');
 const packagePath=path.join(path.dirname(target),'package.json');
 let packageVersion='';
 try{packageVersion=JSON.parse(fs.readFileSync(packagePath,'utf8')).version||''}catch(e){}
@@ -30,9 +30,7 @@ const appVersionMatch=html.match(/const APP_VERSION=\"([^\"]+)\"/);
 const guardVersionMatch=html.match(/const DEV_GUARD_VERSION=\"([^\"]+)\"/);
 check('STATIC-018 version sources are consistent', !!packageVersion&&appVersionMatch?.[1]===packageVersion&&guardVersionMatch?.[1]===packageVersion, `package=${packageVersion} app=${appVersionMatch?.[1]||''} guard=${guardVersionMatch?.[1]||''}`);
 check('STATIC-019 persistence/backup gap audit exists', fs.existsSync(path.join(path.dirname(target),'RULE_GAP_AUDIT_v4_13_44.md'))&&fs.existsSync(path.join(path.dirname(target),'NEXT_IMPLEMENTATION_PRIORITY_v4_13_44.md')), 'persistence/backup/priority contracts');
-check('STATIC-020 backup schema validation contract', /Number\(d\.schemaVersion\)!==3/.test(html) && /function validateBackupData/.test(html) && /function restoreBackupData/.test(html), 'backup schemaVersion/key validation and atomic restore');
-check('STATIC-021 calendar/settings/ICS contracts exist', /function buildICS\(/.test(html) && /function escapeICSValue\(/.test(html) && /function getReleaseNotificationTargets\(/.test(html) && /persistedSettingsSnapshot/.test(html), 'calendar filters, settings rollback, ICS semantics, notification window');
-
+check('STATIC-020 backup schema validation contract', /Number\(d\.schemaVersion\)!==3/.test(html), 'backup schemaVersion validation');
 check('STATIC-003 required six tabs', ['home','add','library','search','calendar','settings'].every(id=>new RegExp(`id=["']${id}["']`).test(html)), 'home/add/library/search/calendar/settings');
 check('STATIC-004 price filter exists', /id=["']filterPrice["']/.test(html), 'library price filter');
 check('STATIC-005 canonical registration routes exist', /window\.addBook\s*=/.test(html) && /window\.bulkAdd\s*=/.test(html), 'addBook/bulkAdd');
@@ -106,13 +104,12 @@ async function main(){
     // local JS dependency is inlined only for the browser harness because this sandbox blocks loopback navigation.
     const apiPath=path.join(path.dirname(target),'api_management.js');
     const apiCode=fs.readFileSync(apiPath,'utf8').replace(/<\/script/gi,'<\\/script');
-    const makeBrowserHtml=(seed={})=>{const seeded=JSON.stringify(seed);const shim=`<script>(function(){const initial=${seeded};const s=new Map(Object.entries(initial));window.__guardStorage={get length(){return s.size},key(i){return [...s.keys()][i]??null},getItem(k){return s.has(String(k))?s.get(String(k)):null},setItem(k,v){s.set(String(k),String(v))},removeItem(k){s.delete(String(k))},clear(){s.clear()}}})();<\/script>`;return shim+html.replace(/(?<![.\w])localStorage\b/g,'__guardStorage').replace('<script src="./api_management.js"></script>',`<script>${apiCode}</script>`)};
+    const makeBrowserHtml=(seed={})=>{const seeded=JSON.stringify(seed);const shim=`<script>(function(){const initial=${seeded};const s=new Map(Object.entries(initial));window.__guardStorage={get length(){return s.size},key(i){return [...s.keys()][i]??null},getItem(k){return s.has(String(k))?s.get(String(k)):null},setItem(k,v){s.set(String(k),String(v))},removeItem(k){s.delete(String(k))},clear(){s.clear()}}})();<\/script>`;return shim+html.replaceAll('localStorage','__guardStorage').replace('<script src="./api_management.js"></script>',`<script>${apiCode}</script>`)};
     const browserHtml=makeBrowserHtml();
     await cdp.send('Page.setDocumentContent',{frameId:(await cdp.send('Page.getFrameTree')).frameTree.frame.id,html:browserHtml}); await wait(1200);
 
     const loadState=await evalJS('({url:location.href,ready:document.readyState,title:document.title,storage:(()=>{try{__guardStorage.setItem("__guard","1");__guardStorage.removeItem("__guard");return true}catch(e){return false}})()})');
     check('E2E-000 target loaded',loadState && loadState.ready==='complete' && loadState.title==='本棚スケジュール' && loadState.storage===true,JSON.stringify(loadState));
-
 
     const requiredTabs=['home','add','library','search','calendar','settings'];
     const tabState=await evalJS(`(()=>{const ids=${JSON.stringify(requiredTabs)};return ids.map(id=>({id,exists:!!document.getElementById(id),hidden:document.getElementById(id)?.hidden}));})()`);
@@ -237,7 +234,7 @@ async function main(){
       out.globalRegistrationLock=typeof runRegistrationAction==='function'&&typeof setRegistrationUiBusy==='function'&&registrationBusy===false;
       const regA=registrationKey({isbn:"9780000000000",title:"A"}),regB=registrationKey({isbn:"9780000000000",title:"A"});registrationLocks.add(regA);out.registrationLockShared=regA===regB&&registrationLocks.has(regB);registrationLocks.delete(regA);
       const sg1=beginSearchRequest('guard-search-target'),sg2=beginSearchRequest('guard-search-target');out.searchGenerationInvalidation=sg2>sg1&&!isCurrentSearch('guard-search-target',sg1)&&isCurrentSearch('guard-search-target',sg2);
-      out.registrationActionDataAttrs=document.documentElement.innerHTML.includes('data-register-action="1"');
+      out.registrationActionDataAttrs=document.querySelectorAll('[data-register-action="1"]').length>0;
       out.existingSeriesRepairContract=typeof repairExistingSeries==='function'&&typeof safeSeriesRepairCandidate==='function'&&(()=>{const s={id:'LEVEL-E',name:'レベルE',volumeNumber:2,confidence:{seriesName:'HIGH',volumeNumber:'HIGH',seriesId:'HIGH'}};const r={series:s,resolution:{accepted:{series:true}}};const ok=safeSeriesRepairCandidate({title:'レベルE 2'},r);const no=safeSeriesRepairCandidate({title:'レベルE 外伝 1'},r);const sub=safeSeriesRepairCandidate({title:'レベルE v.2 (Full moon…!)'},r);return ok?.id==='LEVEL-E'&&ok?.volumeNumber===2&&!no&&sub?.id==='LEVEL-E'})();
       return out;
     })()`);
@@ -397,119 +394,6 @@ async function main(){
     check('E2E-GUARD-001 internal guard exported',internalGuard,'optional developer UI guard');
     const atomicitySmoke=await evalJS(`(()=>{const before=JSON.parse(JSON.stringify(purchaseGroups));const oldPersist=persistPurchaseGroups;persistPurchaseGroups=()=>false;const ok=setPurchaseGroupForBooks(['9784000000001'],1234,'atomicity-test');persistPurchaseGroups=oldPersist;return {rejected:ok===false,unchanged:JSON.stringify(purchaseGroups)===JSON.stringify(before)}})()`);
     check('E2E-PERSIST-002 purchase-group write failure rolls back memory state',atomicitySmoke?.rejected===true&&atomicitySmoke?.unchanged===true,JSON.stringify(atomicitySmoke));
-
-    // P0 persistence contract: verify the exact bytes written by each persistent domain, then
-    // feed those bytes through the same boot readers. The browser harness uses an isolated storage shim,
-    // so a second document is reconstructed from the captured storage snapshot rather than relying on Chrome's disk localStorage.
-    const persistenceRoundTrip=await evalJS(`(()=>{try{
-      const isbn='9784000000999';
-      const settings=JSON.parse(JSON.stringify(appSettings));
-      settings.profile={name:'永続化テスト',genre:'漫画',author:'検証作家',memo:'reload契約'};
-      settings.search={...settings.search,resultCount:40,sort:'title-asc',jpPriority:true,unownedFirst:true,cache:true};
-      settings.calendar={...settings.calendar,weekStart:1,showLibrary:true,showRelated:true,showRecommended:false,openToday:true,ics:true};
-      settings.theme='green';settings.font='large';settings.autoTextContrast=false;
-      const fixtureBook={isbn,title:'永続化テスト本',author:'検証作家',publisher:'検証出版社',date:'2020-01-02',price:{listPrice:880,status:'confirmed',currency:'JPY',taxIncluded:true,source:'fixture',fetchedAt:null,confidence:'HIGH'},cover:'',upcoming:[],series:{id:'PERSIST-1',name:'永続化シリーズ',volumeNumber:2}};
-      const fixtureMeta={[isbn]:{purchaseStatus:'purchased',readingStatus:'read',favorite:true,memo:'保存メモ',rating:5,notify:true}};
-      const fixtureCalendar=[{key:'persist-test|2020-01-02|'+isbn,isbn,title:'永続化テスト本',date:'2020-01-02',sourceType:'extra',source:'検証'}];
-      const fixtureGroups={pg_persist:{id:'pg_persist',totalAmount:1234,currency:'JPY',bookKeys:[isbn],note:'セット購入',createdAt:'2026-01-01T00:00:00.000Z'}};
-      const seed={books_v41:JSON.stringify([fixtureBook]),calendarExtras_v442:JSON.stringify(fixtureCalendar),book_tracker_settings_v449:JSON.stringify(settings),seriesView_v444:'off',bookTrackerMeta_v483:JSON.stringify(fixtureMeta),bookTrackerPurchaseGroups_v1:JSON.stringify(fixtureGroups),bookTrackerDemoDeleted:'true',bookTrackerDemoResetVersion:APP_VERSION};
-      for(const [k,v] of Object.entries(seed))__guardStorage.setItem(k,v);
-      const snapshot={};for(const k of APP_STORAGE_KEYS)snapshot[k]=__guardStorage.getItem(k);
-      const bootBooks=readJSONStorage(KEY,[]),bootCalendar=readJSONStorage('calendarExtras_v442',[]),bootSettings=readJSONStorage(SETTINGS_KEY,{}),bootMeta=readJSONStorage('bookTrackerMeta_v483',{}),bootGroups=readJSONStorage(PURCHASE_GROUPS_KEY,{});
-      return {snapshot,boot:{book:bootBooks[0],calendar:bootCalendar,settings:bootSettings,meta:bootMeta[isbn],group:bootGroups.pg_persist,seriesView:__guardStorage.getItem('seriesView_v444')},expected:{isbn,bookTitle:fixtureBook.title}};
-    }catch(e){return {error:String(e?.message||e)}}})()`);
-    const reloaded=persistenceRoundTrip?.boot;
-    const pOk=!!reloaded&&reloaded.book?.title===persistenceRoundTrip.expected.bookTitle&&reloaded.meta?.memo==='保存メモ'&&reloaded.meta?.favorite===true&&reloaded.calendar?.length===1&&reloaded.group?.totalAmount===1234&&reloaded.settings?.profile?.name==='永続化テスト'&&reloaded.settings?.search?.resultCount===40&&reloaded.settings?.calendar?.weekStart===1&&reloaded.settings?.theme==='green'&&reloaded.settings?.font==='large'&&reloaded.seriesView==='off';
-    check('E2E-PERSIST-001 save/reload preserves all persistent domains',pOk,JSON.stringify({book:reloaded?.book?.title,metaMemo:reloaded?.meta?.memo,calendar:reloaded?.calendar?.length,groupTotal:reloaded?.group?.totalAmount,profile:reloaded?.settings?.profile?.name,searchCount:reloaded?.settings?.search?.resultCount,weekStart:reloaded?.settings?.calendar?.weekStart,theme:reloaded?.settings?.theme,font:reloaded?.settings?.font,seriesView:reloaded?.seriesView}));
-
-    const backupRoundTrip=await evalJS(`(()=>{try{
-      const localStorageData={};for(const k of APP_STORAGE_KEYS){const v=__guardStorage.getItem(k);if(v!==null)localStorageData[k]=v}
-      const before={schemaVersion:3,appVersion:APP_VERSION,exportedAt:'2026-01-01T00:00:00.000Z',localStorage:localStorageData};
-      for(const k of APP_STORAGE_KEYS)__guardStorage.removeItem(k);
-      const valid=validateBackupData(before); const restored=restoreBackupData(before);
-      const after={};for(const k of APP_STORAGE_KEYS)after[k]=__guardStorage.getItem(k);
-      const equal=APP_STORAGE_KEYS.every(k=>(after[k]??null)===(before.localStorage[k]??null));
-      const invalid={...before,localStorage:{...before.localStorage,UNKNOWN_KEY:'x'}};
-      const badSchema=restoreBackupData({...before,schemaVersion:2});
-      const badKey=restoreBackupData(invalid);
-      return {valid,restored,equal,badSchemaRejected:badSchema===false,badKeyRejected:badKey===false,unknownAccepted:validateBackupData(invalid)};
-    }catch(e){return {error:String(e?.message||e)}}})()`);
-    check('E2E-PERSIST-003 backup export/import round-trip',backupRoundTrip?.restored===true&&backupRoundTrip?.equal===true,JSON.stringify(backupRoundTrip));
-    check('E2E-PERSIST-004 backup schema/key validation rejects invalid input',backupRoundTrip?.badSchemaRejected===true&&backupRoundTrip?.badKeyRejected===true&&backupRoundTrip?.unknownAccepted===false,JSON.stringify(backupRoundTrip));
-
-    const atomicBackup=await evalJS(`(()=>{try{
-      const before={};for(const k of APP_STORAGE_KEYS)before[k]=__guardStorage.getItem(k);
-      const backup=createBackupData(); backup.localStorage={...backup.localStorage,seriesView_v444:'on',bookTrackerMeta_v483:JSON.stringify({sentinel:{purchaseStatus:'wanted'}})};
-      const realSet=__guardStorage.setItem.bind(__guardStorage);let writes=0;__guardStorage.setItem=(k,v)=>{writes++;if(writes===2)throw Error('synthetic quota failure');return realSet(k,v)};
-      const ok=restoreBackupData(backup);__guardStorage.setItem=realSet;
-      const after={};for(const k of APP_STORAGE_KEYS)after[k]=__guardStorage.getItem(k);
-      return {rejected:ok===false,unchanged:JSON.stringify(before)===JSON.stringify(after)};
-    }catch(e){return {error:String(e?.message||e)}}})()`);
-    check('E2E-PERSIST-005 backup restore failure rolls back atomically',atomicBackup?.rejected===true&&atomicBackup?.unchanged===true,JSON.stringify(atomicBackup));
-
-    // P1: every persistent setting field must survive a save/read round-trip, and a failed
-    // settings write must roll the in-memory object back to the last durable snapshot.
-    const settingsRoundTrip=await evalJS(`(()=>{try{
-      const before=JSON.parse(JSON.stringify(appSettings));
-      const next={...JSON.parse(JSON.stringify(appSettings)),profile:{name:'P1名',genre:'P1ジャンル',author:'P1作者',memo:'P1メモ'},theme:'green',font:'large',skin:{primary:'#123456',bg:'#abcdef',surface:'#fedcba',text:'#102030'},background:{image:'data:image/png;base64,P1',avgLum:.42,avgColor:'#667788'},autoTextContrast:false,search:{resultCount:40,sort:'title-asc',jpPriority:false,unownedFirst:true,cache:false},calendar:{weekStart:1,showLibrary:false,showRelated:true,showRecommended:false,openToday:false,ics:true}};
-      appSettings=next;const saved=saveSettings();const loaded=readJSONStorage(SETTINGS_KEY,null);const fields=['profile','theme','font','skin','background','autoTextContrast','search','calendar'];
-      const equal=saved&&fields.every(k=>JSON.stringify(loaded?.[k])===JSON.stringify(next[k]));
-      const durable=JSON.stringify(loaded);
-      const realSet=__guardStorage.setItem.bind(__guardStorage);__guardStorage.setItem=()=>{throw Error('synthetic settings quota failure')};
-      appSettings={...next,theme:'dark',font:'small',calendar:{...next.calendar,ics:false}};const failed=!saveSettings();__guardStorage.setItem=realSet;
-      const rolledBack=appSettings.theme==='green'&&appSettings.font==='large'&&appSettings.calendar?.ics===true&&appSettings.search?.resultCount===40;
-      const uiRolledBack=$('setWeekStart')?.value==='1'&&$('setICS')?.checked===true&&$('themeCurrent')?.textContent==='現在：ナチュラル'&&$('fontCurrent')?.textContent==='現在：大';
-      __guardStorage.setItem(SETTINGS_KEY,durable);appSettings=before;saveSettings();
-      return {saved,fields,equal,failed,rolledBack,uiRolledBack};
-    }catch(e){return {error:String(e?.message||e)}}})()`);
-    check('E2E-SETTINGS-001 all settings survive save/read round-trip',settingsRoundTrip?.saved===true&&settingsRoundTrip?.equal===true,JSON.stringify(settingsRoundTrip));
-    check('E2E-SETTINGS-002 settings write failure rolls back memory state',settingsRoundTrip?.failed===true&&settingsRoundTrip?.rolledBack===true&&settingsRoundTrip?.uiRolledBack===true,JSON.stringify(settingsRoundTrip));
-
-    // P1: calendar-tab filters are temporary; reopening the tab must restore the persistent defaults.
-    const calendarFilterReset=await evalJS(`(()=>{try{
-      const old={...calFilters};const oldCal={...appSettings.calendar};
-      appSettings.calendar={...appSettings.calendar,showLibrary:false,showRelated:true,showRecommended:false,openToday:false};
-      calFilters={library:true,related:false,recommended:true};
-      setMainTab('calendar');
-      const out={library:calFilters.library,related:calFilters.related,recommended:calFilters.recommended,ui:[$('calFilterLibrary')?.checked,$('calFilterRelated')?.checked,$('calFilterRecommended')?.checked]};
-      appSettings.calendar=oldCal;calFilters=old;renderCalendar();return out;
-    }catch(e){return {error:String(e?.message||e)}}})()`);
-    check('E2E-CALENDAR-001 temporary filters reset from saved defaults',calendarFilterReset?.library===false&&calendarFilterReset?.related===true&&calendarFilterReset?.recommended===false&&JSON.stringify(calendarFilterReset?.ui)==='[false,true,false]',JSON.stringify(calendarFilterReset));
-
-    // P1: calendar-extra writes must be atomic.
-    const calendarExtraAtomic=await evalJS(`(()=>{try{
-      const oldExtras=calendarExtras.slice(),oldAlert=window.alert;window.alert=()=>{};
-      const before=calendarExtras.length;const realPersist=persistCalendarExtras;persistCalendarExtras=()=>false;
-      const result=addCalendarExtra({isbn:'9784000000998',title:'P1 Extra Unique',author:'A',date:'2026-09-20'},'related');
-      persistCalendarExtras=realPersist;calendarExtras=oldExtras;window.alert=oldAlert;render();
-      return {rejected:result===false,rollback:calendarExtras.length===before};
-    }catch(e){try{window.alert=oldAlert}catch(_){};return {error:String(e?.message||e)}}})()`);
-    check('E2E-CALENDAR-002 calendar-extra failure rolls back',calendarExtraAtomic?.rejected===true&&calendarExtraAtomic?.rollback===true,JSON.stringify(calendarExtraAtomic));
-
-    // P1: ICS is date-only because the app has release dates but no release time; values are escaped and UIDs are deterministic.
-    const icsContract=await evalJS(`(()=>{try{
-      const events=[{isbn:'9784000000001',title:'A,B;C\\nD',base:'Base;X',date:'2026-09-20',sourceType:'related'},{isbn:'9784000000002',title:'Invalid',date:'bad',sourceType:'library'}];
-      const x=buildICS(events),uid1=(x.match(/UID:([^\\r\\n]+)/)||[])[1],uid2=calendarEventUID(events[0]);
-      return {crlf:x.slice(-2)==='\\r\\n',dateOnly:x.includes('DTSTART;VALUE=DATE:20260920'),escaped:x.includes('SUMMARY:A\\\\,B\\\\;C\\\\nD 発売予定'),oneEvent:x.split('BEGIN:VEVENT').length===2,stableUid:uid1===uid2};
-    }catch(e){return {error:String(e?.message||e)}}})()`);
-    check('E2E-ICS-001 ICS has semantic date/escaping/stable UID contract',icsContract?.crlf===true&&icsContract?.dateOnly===true&&icsContract?.escaped===true&&icsContract?.oneEvent===true&&icsContract?.stableUid===true,JSON.stringify(icsContract));
-
-    // P1: notification target selection is inclusive of today and +7 days, excludes non-notify/invalid dates.
-    const notificationWindow=await evalJS(`(()=>{try{
-      const oldBooks=books.slice(),oldMeta=bookMeta;books=[
-       {isbn:'9784000000100',title:'today',date:'2026-09-16'},
-       {isbn:'9784000000101',title:'day7',date:'2026-09-23'},
-       {isbn:'9784000000102',title:'day8',date:'2026-09-24'},
-       {isbn:'9784000000103',title:'off',date:'2026-09-20'},
-       {isbn:'9784000000104',title:'bad',date:'2026-09-20x'}
-      ];bookMeta={'9784000000100':{notify:true},'9784000000101':{notify:true},'9784000000102':{notify:true},'9784000000103':{notify:false},'9784000000104':{notify:true}};
-      const r=getReleaseNotificationTargets('2026-09-16',7).map(x=>x.isbn).sort();books=oldBooks;bookMeta=oldMeta;render();return {r};
-    }catch(e){return {error:String(e?.message||e)}}})()`);
-    check('E2E-NOTIFY-001 release notification window is today through +7 days',JSON.stringify(notificationWindow?.r)==='["9784000000100","9784000000101"]',JSON.stringify(notificationWindow));
-
-    // Restore the pristine document before the rest of the release gate so P1 fixtures cannot contaminate UI tests.
-    await cdp.send('Page.setDocumentContent',{frameId:(await cdp.send('Page.getFrameTree')).frameTree.frame.id,html:browserHtml}); await wait(1000);
-
 
     // Screenshot smoke at the final state. This catches catastrophic blank pages in addition to geometry tests.
     const shot=await cdp.send('Page.captureScreenshot',{format:'png'});

@@ -71,10 +71,3 @@
 ## v4.13.32 追加ゲート
 
 既存蔵書シリーズ再整理は、series以外のデータを変更しないこと、外伝等を自動統合しないこと、二重実行しないことを満たさない限りリリース不可。
-
-## v4.13.46 — P1 calendar/settings/ICS/notification gate
-
-- E2E-SETTINGS-001/002: all persistent settings round-trip and failed writes roll back both memory and UI.
-- E2E-CALENDAR-001/002: temporary calendar filters re-sync from saved defaults; calendar-extra write failure rolls back.
-- E2E-ICS-001: release-date ICS uses VALUE=DATE, escaped text values, stable deterministic UIDs, and excludes invalid dates.
-- E2E-NOTIFY-001: notification target window is inclusive from today through seven days later; disabled/invalid dates are excluded.
