@@ -643,7 +643,7 @@ let calendarExtras=readJSONStorage("calendarExtras_v442",[]);if(!Array.isArray(c
 const DEMO_ENABLED=true;
 // Prototype/dev builds: a deleted sample set stays deleted within this build, but a new build/version starts with samples again.
 // Production/App Store builds set DEMO_ENABLED=false, so this logic is never exposed to end users.
-const APP_VERSION="4.13.50";
+const APP_VERSION="4.13.47";
 const DEMO_DELETED_KEY="bookTrackerDemoDeleted";
 const DEMO_RESET_VERSION_KEY="bookTrackerDemoResetVersion";
 const DEMO_TITLES=["サンプル本棚：前月の便り","サンプル本棚：月夜の標本","サンプルシリーズ：星の余白 1巻","サンプルシリーズ：星の余白 2巻","サンプル本棚：翌月の灯り"];
@@ -1170,7 +1170,7 @@ async function registerCheckedIsbnRows(){
   let added=[],seen=new Set(books.map(bookResultKey)),lockedKeys=[];
   try{
    const candidates=targets.filter(b=>{const key=bookResultKey(b),rkey=registrationKey(b);if(!key||!rkey||seen.has(key)||registrationLocks.has(rkey)||isFutureDate(b.date))return false;registrationLocks.add(rkey);lockedKeys.push(rkey);return true});
-   const preparedList=metrics?await window.bookTrackerRegistrationMetrics.measureProcessing(metrics,()=>prepareRegistrationBatch(candidates)):await prepareRegistrationBatch(candidates);
+   const pt=performance.now(); const preparedList=await prepareRegistrationBatch(candidates); if(metrics)metrics.processingMs+=(performance.now()-pt);
    candidates.forEach((b,i)=>{const prepared=preparedList[i];if(!prepared)return;seen.add(bookResultKey(b));const x=cacheBookCover({...prepared,demo:!!prepared?.demo});delete x._rowEl;delete x._rowEls;delete x._register;added.push(x);setPurchaseStatus(x.isbn,"purchased")});
    if(added.length){const oldBooks=books.slice(),oldExtras=calendarExtras.slice(),oldMeta=JSON.parse(JSON.stringify(bookMeta));books.push(...added);const demoAdded=new Set(added.filter(b=>b.demo).map(b=>canonicalIsbn(b.isbn)));if(demoAdded.size)calendarExtras=calendarExtras.filter(e=>!(isDemoExtra(e)&&demoAdded.has(canonicalIsbn(e.isbn))));const st=performance.now();const saveFailed=!saveMeta()||!await saveBooksSafely()||!persistCalendarExtras();if(metrics)metrics.saveMs+=(performance.now()-st);if(saveFailed){books=oldBooks;calendarExtras=oldExtras;bookMeta=oldMeta;saveMeta();persistBooks();persistCalendarExtras();return}}
    const rt=performance.now();render();if(window.addResultsData)renderIsbnResults(window.addResultsData);if(metrics)metrics.renderMs+=(performance.now()-rt);window.bookTrackerRegistrationMetrics?.finish(metrics,true);alert(added.length+"冊を登録しました（重複・発売前は除外）");
@@ -1838,13 +1838,13 @@ try{loadSettingsUI();updateSettingLabels()}catch(e){console.error("loadSettingsU
 
 <style id="registration-metrics-css">.registration-metric{border:1px solid var(--border);border-radius:10px;padding:9px;margin-top:7px;background:color-mix(in srgb,var(--surface) 92%,var(--primary) 8%)}.registration-metric .metric-op{font-weight:800;color:var(--app-text);margin-bottom:5px}.registration-metric .metric-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 10px;font-size:12px}.registration-metric .metric-api{margin-top:5px;font-size:11px}.registration-metric .metric-api-row{display:flex;justify-content:space-between;gap:8px}.registration-metric .metric-time{font-variant-numeric:tabular-nums}.registration-metric .metric-ok{font-weight:700}.registration-metric .metric-error{font-weight:700}</style>
 <script id="v41347-registration-metrics">
-/* v4.13.49: registration performance measurement. Session-only; operation label is mandatory. */
+/* v4.13.47: registration performance measurement. Session-only; operation label is mandatory. */
 (function(){
  const state={records:[],active:null};
  const escHtml=v=>String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;");
  function now(){return performance.now()}
  function start(operation){
-  const token={operation:String(operation||"不明な登録操作"),started:now(),apiMs:0,apiCalls:0,apiByProvider:{},processingMs:0,saveMs:0,renderMs:0,apiStarted:0,apiProviderStarted:null,apiActiveCount:0,apiWallStarted:0,apiWallMs:0,apiStarts:{}};
+  const token={operation:String(operation||"不明な登録操作"),started:now(),apiMs:0,apiCalls:0,apiByProvider:{},processingMs:0,saveMs:0,renderMs:0,apiStarted:0,apiProviderStarted:null};
   state.active=token; return token;
  }
  function finish(token,ok=true,error=""){
@@ -1852,11 +1852,10 @@ try{loadSettingsUI();updateSettingLabels()}catch(e){console.error("loadSettingsU
   state.records.unshift(token);state.records=state.records.slice(0,10);if(state.active===token)state.active=null;render();
  }
  function markPhase(token,name,fn){const t=now();try{return fn()}finally{token[name]=(token[name]||0)+(now()-t)}}
- async function measureProcessing(token,fn){const t=now(),apiBefore=Number(token?.apiWallMs)||0;try{return await fn()}finally{const elapsed=now()-t,apiDelta=Math.max(0,(Number(token?.apiWallMs)||0)-apiBefore);token.processingMs+=(Math.max(0,elapsed-apiDelta));}}
- function beginApi(provider){const t=state.active;if(!t)return;const p=String(provider||"unknown"),started=now();t.apiCalls++;(t.apiStarts[p]||(t.apiStarts[p]=[])).push(started);if(t.apiActiveCount===0)t.apiWallStarted=started;t.apiActiveCount++;t.apiStarted=started;t.apiProviderStarted=p;}
- function endApi(provider,ok=true){const t=state.active;if(!t||t.apiActiveCount<=0)return;const p=String(provider||t.apiProviderStarted||"unknown"),starts=t.apiStarts[p]||[];const started=starts.length?starts.shift():null;const ended=now();if(started==null)return;const ms=Math.max(0,ended-started);t.apiMs+=ms;t.apiByProvider[p]=(t.apiByProvider[p]||0)+ms;t.apiActiveCount=Math.max(0,t.apiActiveCount-1);if(t.apiActiveCount===0&&t.apiWallStarted){t.apiWallMs+=Math.max(0,ended-t.apiWallStarted);t.apiWallStarted=0;}t.apiStarted=0;t.apiProviderStarted=null;}
+ function beginApi(provider){const t=state.active;if(!t)return; t.apiCalls++;t.apiStarted=now();t.apiProviderStarted=String(provider||"unknown");}
+ function endApi(provider,ok=true){const t=state.active;if(!t||!t.apiStarted)return;const ms=now()-t.apiStarted,p=String(provider||t.apiProviderStarted||"unknown");t.apiMs+=ms;t.apiByProvider[p]=(t.apiByProvider[p]||0)+ms;t.apiStarted=0;t.apiProviderStarted=null;}
  function render(){const box=document.getElementById("registrationMetricsList"),status=document.getElementById("registrationMetricsStatus");if(!box||!status)return;status.textContent=state.records.length?`直近${state.records.length}件（新しい順）。登録操作の内容は各項目の先頭に表示されています。`:"まだ計測データはありません。";box.innerHTML=state.records.map((r,i)=>`<div class="registration-metric"><div class="metric-op">${i+1}. ${escHtml(r.operation)}</div><div class="metric-grid"><div>登録全体：<b class="metric-time">${Math.round(r.totalMs)} ms</b></div><div>API通信：<b class="metric-time">${Math.round(r.apiMs)} ms</b></div><div>API回数：<b>${r.apiCalls}</b></div><div>データ処理：<b class="metric-time">${Math.round(r.processingMs)} ms</b></div><div>保存：<b class="metric-time">${Math.round(r.saveMs)} ms</b></div><div>画面更新：<b class="metric-time">${Math.round(r.renderMs)} ms</b></div></div><div class="metric-api">Provider別：${Object.keys(r.apiByProvider).length?Object.entries(r.apiByProvider).map(([p,m])=>`<span class="metric-api-row"><span>${escHtml(p)}</span><b class="metric-time">${Math.round(m)} ms</b></span>`).join(""):"API通信なし"}</div><div class="${r.ok?"metric-ok":"metric-error"}" style="margin-top:5px">${r.ok?"完了":"失敗"}${r.error?"："+escHtml(r.error):""}</div></div>`).join("")}
- window.bookTrackerRegistrationMetrics={start,finish,markPhase,measureProcessing,beginApi,endApi,render,clear(){state.records=[];render()}};
+ window.bookTrackerRegistrationMetrics={start,finish,markPhase,beginApi,endApi,render,clear(){state.records=[];render()}};
  document.getElementById("clearRegistrationMetrics")?.addEventListener("click",()=>window.bookTrackerRegistrationMetrics.clear());
 })();
 </script>
@@ -1870,19 +1869,19 @@ async function prepareRegistrationBatch(items){
  return results;
 }
 window.addBook=async (b,options={})=>{
- const metrics=options.metrics;
- if(registrationBusy){return false}
+ const metrics=options.metrics||window.bookTrackerRegistrationMetrics?.start(b?.demo?"サンプルデータ：1冊登録":"蔵書：1冊登録");
+ if(registrationBusy){window.bookTrackerRegistrationMetrics?.finish(metrics,false,"登録処理中");return false}
  return runRegistrationAction(async()=>{
   const rkey=registrationKey(b);if(!rkey||registrationLocks.has(rkey)){alert("この本は現在登録処理中、または登録済みです。");return false}
   if(books.some(x=>bookResultKey(x)===rkey)){render();if(window.addResultsData)renderResults("addResults",window.addResultsData);alert("すでに登録されています");return false}
   registrationLocks.add(rkey);try{
    if(isFutureDate(b?.date)){alert("発売前の書籍は、発売日になるまで蔵書登録できません。");return false}
-   const prepared=metrics?await window.bookTrackerRegistrationMetrics.measureProcessing(metrics,()=>prepareRegistrationBook(b,{interactive:true})):await prepareRegistrationBook(b,{interactive:true}); if(!prepared){alert("蔵書登録を中止しました。");return false}
+   const pt=performance.now(); const prepared=await prepareRegistrationBook(b,{interactive:true}); if(metrics)metrics.processingMs+=(performance.now()-pt); if(!prepared){window.bookTrackerRegistrationMetrics?.finish(metrics,false,"登録を中止しました");alert("蔵書登録を中止しました。");return false}
    b=prepared;if(books.some(x=>bookResultKey(x)===bookResultKey(b))){render();if(window.addResultsData)renderResults("addResults",window.addResultsData);alert("すでに登録されています");return false}
    const oldBooks=books.slice(),oldExtras=calendarExtras.slice(),oldMeta=JSON.parse(JSON.stringify(bookMeta));const x=await cacheBookCover({...b,demo:!!b?.demo});delete x._rowEl;delete x._rowEls;delete x._register;books.push(x);
    if(x.demo)calendarExtras=calendarExtras.filter(e=>!(isDemoExtra(e)&&canonicalIsbn(e.isbn)===canonicalIsbn(x.isbn)));setPurchaseStatus(x.isbn,"purchased");
-   const st=performance.now(); const saveOk=!saveMeta()||!await saveBooksSafely()||!persistCalendarExtras(); if(metrics)metrics.saveMs+=(performance.now()-st); if(saveOk){books=oldBooks;calendarExtras=oldExtras;bookMeta=oldMeta;saveMeta();persistBooks();persistCalendarExtras();return false}
-   const rt=performance.now();render();if(window.addResultsData){if(addResultsMode==="isbn")renderIsbnResults(window.addResultsData);else renderResults("addResults",window.addResultsData)}if(metrics)metrics.renderMs+=(performance.now()-rt);alert("登録しました（購入状態：購入済み）");return true;
+   const st=performance.now(); const saveOk=!saveMeta()||!await saveBooksSafely()||!persistCalendarExtras(); if(metrics)metrics.saveMs+=(performance.now()-st); if(saveOk){books=oldBooks;calendarExtras=oldExtras;bookMeta=oldMeta;saveMeta();persistBooks();persistCalendarExtras();window.bookTrackerRegistrationMetrics?.finish(metrics,false,"保存に失敗しました");return false}
+   const rt=performance.now();render();if(window.addResultsData){if(addResultsMode==="isbn")renderIsbnResults(window.addResultsData);else renderResults("addResults",window.addResultsData)}if(metrics)metrics.renderMs+=(performance.now()-rt);window.bookTrackerRegistrationMetrics?.finish(metrics,true);alert("登録しました（購入状態：購入済み）");return true;
   }finally{registrationLocks.delete(rkey)}
  });
 };
@@ -1890,7 +1889,7 @@ window.addAllFound=()=>{if(registrationBusy||dataOperationBusy)return false;cons
  const arr=dedupeBookResults(window.addResultsData||[]),seen=new Set(books.map(bookResultKey)),added=[],lockedKeys=[];
  try{
    const candidates=arr.filter(b=>{const key=bookResultKey(b),rkey=registrationKey(b);if(!key||!rkey||seen.has(key)||registrationLocks.has(rkey)||isFutureDate(b.date))return false;registrationLocks.add(rkey);lockedKeys.push(rkey);return true});
-   const preparedList=metrics?await window.bookTrackerRegistrationMetrics.measureProcessing(metrics,()=>prepareRegistrationBatch(candidates)):await prepareRegistrationBatch(candidates);
+   const pt=performance.now(); const preparedList=await prepareRegistrationBatch(candidates); if(metrics)metrics.processingMs+=(performance.now()-pt);
    candidates.forEach((b,i)=>{const prepared=preparedList[i];if(!prepared)return;seen.add(bookResultKey(b));const x=cacheBookCover({...prepared,demo:!!prepared?.demo});delete x._rowEl;delete x._rowEls;delete x._register;added.push(x);setPurchaseStatus(x.isbn,"purchased")});
   if(added.length){const oldBooks=books.slice(),oldExtras=calendarExtras.slice(),oldMeta=JSON.parse(JSON.stringify(bookMeta));books.push(...added);const demoAdded=new Set(added.filter(b=>b.demo).map(b=>canonicalIsbn(b.isbn)));if(demoAdded.size)calendarExtras=calendarExtras.filter(e=>!(isDemoExtra(e)&&demoAdded.has(canonicalIsbn(e.isbn))));const st=performance.now();const saveFailed=!saveMeta()||!await saveBooksSafely()||!persistCalendarExtras();if(metrics)metrics.saveMs+=(performance.now()-st);if(saveFailed){books=oldBooks;calendarExtras=oldExtras;bookMeta=oldMeta;saveMeta();persistBooks();persistCalendarExtras();return}}
   const rt=performance.now();render();if(window.addResultsData){if(addResultsMode==="isbn")renderIsbnResults(window.addResultsData);else renderResults("addResults",window.addResultsData)}if(metrics)metrics.renderMs+=(performance.now()-rt);window.bookTrackerRegistrationMetrics?.finish(metrics,true);alert(added.length+"冊を登録しました（重複・発売前は除外）");return true;
@@ -1899,7 +1898,7 @@ window.addAllFound=()=>{if(registrationBusy||dataOperationBusy)return false;cons
 window.bulkAdd=async(id,button)=>{const metrics=window.bookTrackerRegistrationMetrics?.start(`検索結果：選択した本を一括登録（${id}）`);const actionKey="register:bulk:"+id;if(isActionActive(actionKey)||registrationBusy||dataOperationBusy)return false;const el=button||null;activeActions.add(actionKey);dataOperationBusy=true;setDataOperationUiBusy(true);setRegistrationUiBusy(true);const lockedKeys=[];try{
  const arr=dedupeBookResults(window[id+"Data"]||[]),box=$(id);if(!box)return false;const idx=[...box.querySelectorAll(".selectBook:checked")].map(x=>+x.dataset.index);if(!idx.length){alert("登録する本を選択してください");return false}const seen=new Set(books.map(bookResultKey)),added=[];
  const candidates=idx.map(i=>arr[i]).filter(Boolean).filter(x=>{const key=bookResultKey(x),rkey=registrationKey(x);if(!key||!rkey||seen.has(key)||registrationLocks.has(rkey)||isFutureDate(x.date))return false;registrationLocks.add(rkey);lockedKeys.push(rkey);return true});
- const preparedList=metrics?await window.bookTrackerRegistrationMetrics.measureProcessing(metrics,()=>prepareRegistrationBatch(candidates)):await prepareRegistrationBatch(candidates);
+ const pt=performance.now(); const preparedList=await prepareRegistrationBatch(candidates); if(metrics)metrics.processingMs+=(performance.now()-pt);
  candidates.forEach((x,i)=>{const prepared=preparedList[i];if(!prepared)return;seen.add(bookResultKey(x));const b=cacheBookCover({...prepared,demo:!!prepared?.demo});delete b._rowEl;delete b._rowEls;delete b._register;added.push(b);setPurchaseStatus(b.isbn,"purchased")});
  if(added.length){const oldBooks=books.slice(),oldExtras=calendarExtras.slice(),oldMeta=JSON.parse(JSON.stringify(bookMeta));books.push(...added);const demoAdded=new Set(added.filter(b=>b.demo).map(b=>canonicalIsbn(b.isbn)));if(demoAdded.size)calendarExtras=calendarExtras.filter(e=>!(isDemoExtra(e)&&demoAdded.has(canonicalIsbn(e.isbn))));const st=performance.now();const saveFailed=!saveMeta()||!await saveBooksSafely()||!persistCalendarExtras();if(metrics)metrics.saveMs+=(performance.now()-st);if(saveFailed){books=oldBooks;calendarExtras=oldExtras;bookMeta=oldMeta;saveMeta();persistBooks();persistCalendarExtras();return false}}
  render();const current=dedupeBookResults(window[id+"Data"]||arr);window[id+"Data"]=current;if(id==="addResults"){if(addResultsMode==="isbn")renderIsbnResults(current);else renderResults(id,current)}else renderSelectableResults(id,current);window.bookTrackerRegistrationMetrics?.finish(metrics,true);alert(added.length+"冊を登録しました（重複・発売前は除外）");return true;
@@ -1912,7 +1911,7 @@ window.bulkAdd=async(id,button)=>{const metrics=window.bookTrackerRegistrationMe
 /* v4.10.0: Runtime specification guard + lightweight regression checks.
    Development build only. These checks intentionally fail loudly instead of silently masking regressions. */
 (function(){
- const DEV_GUARD_VERSION="4.13.50";
+ const DEV_GUARD_VERSION="4.13.47";
  const validPurchase=new Set(["wanted","reserved","purchased","none"]);
  function add(name,ok,detail){return {name,ok,detail:detail||""}}
  async function runSpecGuard(){
