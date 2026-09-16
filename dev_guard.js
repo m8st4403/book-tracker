@@ -22,7 +22,7 @@ function check(name, ok, detail='') { (ok ? pass : fail)(name, detail); }
 const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
 const dupIds = [...new Set(ids.filter((id,i)=>ids.indexOf(id)!==i))];
 check('STATIC-001 unique DOM ids', dupIds.length===0, dupIds.join(', '));
-check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.45["']/.test(html) || /APP_VERSION\s*=\s*["']4\.13\.45["']/.test(html), 'version marker present');
+check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.46["']/.test(html) || /APP_VERSION\s*=\s*["']4\.13\.46["']/.test(html), 'version marker present');
 const packagePath=path.join(path.dirname(target),'package.json');
 let packageVersion='';
 try{packageVersion=JSON.parse(fs.readFileSync(packagePath,'utf8')).version||''}catch(e){}
@@ -31,6 +31,8 @@ const guardVersionMatch=html.match(/const DEV_GUARD_VERSION=\"([^\"]+)\"/);
 check('STATIC-018 version sources are consistent', !!packageVersion&&appVersionMatch?.[1]===packageVersion&&guardVersionMatch?.[1]===packageVersion, `package=${packageVersion} app=${appVersionMatch?.[1]||''} guard=${guardVersionMatch?.[1]||''}`);
 check('STATIC-019 persistence/backup gap audit exists', fs.existsSync(path.join(path.dirname(target),'RULE_GAP_AUDIT_v4_13_44.md'))&&fs.existsSync(path.join(path.dirname(target),'NEXT_IMPLEMENTATION_PRIORITY_v4_13_44.md')), 'persistence/backup/priority contracts');
 check('STATIC-020 backup schema validation contract', /Number\(d\.schemaVersion\)!==3/.test(html) && /function validateBackupData/.test(html) && /function restoreBackupData/.test(html), 'backup schemaVersion/key validation and atomic restore');
+check('STATIC-021 calendar/settings/ICS contracts exist', /function buildICS\(/.test(html) && /function escapeICSValue\(/.test(html) && /function getReleaseNotificationTargets\(/.test(html) && /persistedSettingsSnapshot/.test(html), 'calendar filters, settings rollback, ICS semantics, notification window');
+
 check('STATIC-003 required six tabs', ['home','add','library','search','calendar','settings'].every(id=>new RegExp(`id=["']${id}["']`).test(html)), 'home/add/library/search/calendar/settings');
 check('STATIC-004 price filter exists', /id=["']filterPrice["']/.test(html), 'library price filter');
 check('STATIC-005 canonical registration routes exist', /window\.addBook\s*=/.test(html) && /window\.bulkAdd\s*=/.test(html), 'addBook/bulkAdd');
@@ -445,7 +447,67 @@ async function main(){
     }catch(e){return {error:String(e?.message||e)}}})()`);
     check('E2E-PERSIST-005 backup restore failure rolls back atomically',atomicBackup?.rejected===true&&atomicBackup?.unchanged===true,JSON.stringify(atomicBackup));
 
-    // Restore the pristine document before the rest of the release gate so P0 fixtures cannot contaminate UI tests.
+    // P1: every persistent setting field must survive a save/read round-trip, and a failed
+    // settings write must roll the in-memory object back to the last durable snapshot.
+    const settingsRoundTrip=await evalJS(`(()=>{try{
+      const before=JSON.parse(JSON.stringify(appSettings));
+      const next={...JSON.parse(JSON.stringify(appSettings)),profile:{name:'P1名',genre:'P1ジャンル',author:'P1作者',memo:'P1メモ'},theme:'green',font:'large',skin:{primary:'#123456',bg:'#abcdef',surface:'#fedcba',text:'#102030'},background:{image:'data:image/png;base64,P1',avgLum:.42,avgColor:'#667788'},autoTextContrast:false,search:{resultCount:40,sort:'title-asc',jpPriority:false,unownedFirst:true,cache:false},calendar:{weekStart:1,showLibrary:false,showRelated:true,showRecommended:false,openToday:false,ics:true}};
+      appSettings=next;const saved=saveSettings();const loaded=readJSONStorage(SETTINGS_KEY,null);const fields=['profile','theme','font','skin','background','autoTextContrast','search','calendar'];
+      const equal=saved&&fields.every(k=>JSON.stringify(loaded?.[k])===JSON.stringify(next[k]));
+      const durable=JSON.stringify(loaded);
+      const realSet=__guardStorage.setItem.bind(__guardStorage);__guardStorage.setItem=()=>{throw Error('synthetic settings quota failure')};
+      appSettings={...next,theme:'dark',font:'small',calendar:{...next.calendar,ics:false}};const failed=!saveSettings();__guardStorage.setItem=realSet;
+      const rolledBack=appSettings.theme==='green'&&appSettings.font==='large'&&appSettings.calendar?.ics===true&&appSettings.search?.resultCount===40;
+      const uiRolledBack=$('setWeekStart')?.value==='1'&&$('setICS')?.checked===true&&$('themeCurrent')?.textContent==='現在：ナチュラル'&&$('fontCurrent')?.textContent==='現在：大';
+      __guardStorage.setItem(SETTINGS_KEY,durable);appSettings=before;saveSettings();
+      return {saved,fields,equal,failed,rolledBack,uiRolledBack};
+    }catch(e){return {error:String(e?.message||e)}}})()`);
+    check('E2E-SETTINGS-001 all settings survive save/read round-trip',settingsRoundTrip?.saved===true&&settingsRoundTrip?.equal===true,JSON.stringify(settingsRoundTrip));
+    check('E2E-SETTINGS-002 settings write failure rolls back memory state',settingsRoundTrip?.failed===true&&settingsRoundTrip?.rolledBack===true&&settingsRoundTrip?.uiRolledBack===true,JSON.stringify(settingsRoundTrip));
+
+    // P1: calendar-tab filters are temporary; reopening the tab must restore the persistent defaults.
+    const calendarFilterReset=await evalJS(`(()=>{try{
+      const old={...calFilters};const oldCal={...appSettings.calendar};
+      appSettings.calendar={...appSettings.calendar,showLibrary:false,showRelated:true,showRecommended:false,openToday:false};
+      calFilters={library:true,related:false,recommended:true};
+      setMainTab('calendar');
+      const out={library:calFilters.library,related:calFilters.related,recommended:calFilters.recommended,ui:[$('calFilterLibrary')?.checked,$('calFilterRelated')?.checked,$('calFilterRecommended')?.checked]};
+      appSettings.calendar=oldCal;calFilters=old;renderCalendar();return out;
+    }catch(e){return {error:String(e?.message||e)}}})()`);
+    check('E2E-CALENDAR-001 temporary filters reset from saved defaults',calendarFilterReset?.library===false&&calendarFilterReset?.related===true&&calendarFilterReset?.recommended===false&&JSON.stringify(calendarFilterReset?.ui)==='[false,true,false]',JSON.stringify(calendarFilterReset));
+
+    // P1: calendar-extra writes must be atomic.
+    const calendarExtraAtomic=await evalJS(`(()=>{try{
+      const oldExtras=calendarExtras.slice(),oldAlert=window.alert;window.alert=()=>{};
+      const before=calendarExtras.length;const realPersist=persistCalendarExtras;persistCalendarExtras=()=>false;
+      const result=addCalendarExtra({isbn:'9784000000998',title:'P1 Extra Unique',author:'A',date:'2026-09-20'},'related');
+      persistCalendarExtras=realPersist;calendarExtras=oldExtras;window.alert=oldAlert;render();
+      return {rejected:result===false,rollback:calendarExtras.length===before};
+    }catch(e){try{window.alert=oldAlert}catch(_){};return {error:String(e?.message||e)}}})()`);
+    check('E2E-CALENDAR-002 calendar-extra failure rolls back',calendarExtraAtomic?.rejected===true&&calendarExtraAtomic?.rollback===true,JSON.stringify(calendarExtraAtomic));
+
+    // P1: ICS is date-only because the app has release dates but no release time; values are escaped and UIDs are deterministic.
+    const icsContract=await evalJS(`(()=>{try{
+      const events=[{isbn:'9784000000001',title:'A,B;C\\nD',base:'Base;X',date:'2026-09-20',sourceType:'related'},{isbn:'9784000000002',title:'Invalid',date:'bad',sourceType:'library'}];
+      const x=buildICS(events),uid1=(x.match(/UID:([^\\r\\n]+)/)||[])[1],uid2=calendarEventUID(events[0]);
+      return {crlf:x.slice(-2)==='\\r\\n',dateOnly:x.includes('DTSTART;VALUE=DATE:20260920'),escaped:x.includes('SUMMARY:A\\\\,B\\\\;C\\\\nD 発売予定'),oneEvent:x.split('BEGIN:VEVENT').length===2,stableUid:uid1===uid2};
+    }catch(e){return {error:String(e?.message||e)}}})()`);
+    check('E2E-ICS-001 ICS has semantic date/escaping/stable UID contract',icsContract?.crlf===true&&icsContract?.dateOnly===true&&icsContract?.escaped===true&&icsContract?.oneEvent===true&&icsContract?.stableUid===true,JSON.stringify(icsContract));
+
+    // P1: notification target selection is inclusive of today and +7 days, excludes non-notify/invalid dates.
+    const notificationWindow=await evalJS(`(()=>{try{
+      const oldBooks=books.slice(),oldMeta=bookMeta;books=[
+       {isbn:'9784000000100',title:'today',date:'2026-09-16'},
+       {isbn:'9784000000101',title:'day7',date:'2026-09-23'},
+       {isbn:'9784000000102',title:'day8',date:'2026-09-24'},
+       {isbn:'9784000000103',title:'off',date:'2026-09-20'},
+       {isbn:'9784000000104',title:'bad',date:'2026-09-20x'}
+      ];bookMeta={'9784000000100':{notify:true},'9784000000101':{notify:true},'9784000000102':{notify:true},'9784000000103':{notify:false},'9784000000104':{notify:true}};
+      const r=getReleaseNotificationTargets('2026-09-16',7).map(x=>x.isbn).sort();books=oldBooks;bookMeta=oldMeta;render();return {r};
+    }catch(e){return {error:String(e?.message||e)}}})()`);
+    check('E2E-NOTIFY-001 release notification window is today through +7 days',JSON.stringify(notificationWindow?.r)==='["9784000000100","9784000000101"]',JSON.stringify(notificationWindow));
+
+    // Restore the pristine document before the rest of the release gate so P1 fixtures cannot contaminate UI tests.
     await cdp.send('Page.setDocumentContent',{frameId:(await cdp.send('Page.getFrameTree')).frameTree.frame.id,html:browserHtml}); await wait(1000);
 
 
