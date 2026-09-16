@@ -22,7 +22,7 @@ function check(name, ok, detail='') { (ok ? pass : fail)(name, detail); }
 const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
 const dupIds = [...new Set(ids.filter((id,i)=>ids.indexOf(id)!==i))];
 check('STATIC-001 unique DOM ids', dupIds.length===0, dupIds.join(', '));
-check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.48["']/.test(html), 'version marker present');
+check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.49["']/.test(html), 'version marker present');
 const packagePath=path.join(path.dirname(target),'package.json');
 let packageVersion='';
 try{packageVersion=JSON.parse(fs.readFileSync(packagePath,'utf8')).version||''}catch(e){}
@@ -41,6 +41,7 @@ const addBookStart=html.indexOf('window.addBook=async');
 const addBookEnd=html.indexOf('window.addAllFound=',addBookStart);
 const addBookBody=addBookStart>=0&&addBookEnd>addBookStart?html.slice(addBookStart,addBookEnd):'';
 check('STATIC-023 addBook does not finish caller-owned metrics', addBookBody.length>0&&!/bookTrackerRegistrationMetrics\?\.finish/.test(addBookBody), 'single-book registration metrics are finalized by operation entry points');
+check('STATIC-024 processing excludes API measurement', /measureProcessing/.test(html) && !/metrics\.processingMs\+=/.test(html), 'data-processing timing excludes API communication timing');
 check('STATIC-009 global registration lock contract', /registrationBusy/.test(html) && /runRegistrationAction/.test(html) && /data-register-action/.test(html), 'individual/bulk/detail/calendar registration shares one lock');
 check('STATIC-010 search generation contract', /searchGenerations/.test(html) && /runSearchSingleFlight/.test(html) && /isCurrentSearch/.test(html), 'stale search responses cannot overwrite current results');
 check('STATIC-011 data operation lock contract', /dataOperationBusy/.test(html) && /setDataOperationUiBusy/.test(html) && /data-data-operation/.test(html), 'registration and series repair share a data-operation lock');
