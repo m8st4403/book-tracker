@@ -240,3 +240,7 @@ Registration/search hardening and performance refinement: fixed result thumbnail
 - バージョン整合のRelease Gate化
 - 詳細な検証契約：`PERSISTENCE_TEST_CONTRACT_v4_13_45.md`
 - Release Gate：152/152 PASS、Mutation Test 3/3 PASS
+
+
+## v4.13.51
+- 単冊登録の完了/失敗通知を計測 `finish()` 後に表示し、alert待ち時間を登録全体の計測から除外。
