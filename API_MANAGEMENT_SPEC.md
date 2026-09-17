@@ -635,7 +635,7 @@ purchaseGroups: {
 
 ## Phase 6 — 自動フェイルオーバーの実運用化（v4.13.42）
 ### 6.1 Provider選択
-ISBN照会・検索とも、固定された `priority.search` を起点に、enabled / capability を満たすProviderだけを順番に試行する。
+タイトル検索は `priority.search`、ISBN照会は `priority.isbnSearch` を起点に、enabled / capability を満たすProviderだけを順番に試行する。ISBN照会では日本向け書誌の補完候補としてopenBDを明示的に含める。
 
 ### 6.2 フェイルオーバー
 Providerの通信失敗、HTTP/解析エラー、timeout、結果なしの場合は次候補へ進む。結果が得られても、Critical項目の採用は既存のEvidence / Confidence規則で別途判定する。
@@ -655,7 +655,7 @@ Provider単位の実行時ヘルスを保持する。連続失敗が閾値に達
 
 ### 6.5 検証
 外部Release Gateで以下を確認する。
-- ISBN照会でGoogle Books障害→楽天Booksへの自動移行
+- ISBN照会でGoogle Books障害→次の有効なISBN Provider（既定ではopenBD）への自動移行
 - 検索でGoogle Books障害→楽天Booksへの自動移行
 - timeout→次Providerへの移行
 - 連続障害Providerのtemporary cooldown

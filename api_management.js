@@ -16,6 +16,8 @@
   };
   const priority={
     search:["googleBooks","rakuten","ndl"],
+    // ISBN照会は titleSearch の優先順位と分離する。openBD は ISBN照会を提供するため、Google Books障害時の次候補に含める。
+    isbnSearch:["googleBooks","openBD","rakuten","ndl"],
     seriesId:["googleBooks"],
     seriesName:["googleBooks","rakuten","openBD","ndl"],
     volumeNumber:["googleBooks","rakuten","ndl","openBD","titleParser"],
@@ -341,7 +343,7 @@
     const cacheKey=ctx.isbn+"|"+(opts.fast?"fast":"full");
     const cached=cacheGet(cacheKey);
     if(cached)return cached;
-    let names=(priority.search||[]).filter(n=>providerEnabled(n)&&hasCapability(n,"isbnSearch")&&adapters[n]?.isbn);
+    let names=(priority.isbnSearch||priority.search||[]).filter(n=>providerEnabled(n)&&hasCapability(n,"isbnSearch")&&adapters[n]?.isbn);
     const rows=[];
     const attempts=[];
     for(const name of names){

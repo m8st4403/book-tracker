@@ -22,7 +22,7 @@ function check(name, ok, detail='') { (ok ? pass : fail)(name, detail); }
 const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
 const dupIds = [...new Set(ids.filter((id,i)=>ids.indexOf(id)!==i))];
 check('STATIC-001 unique DOM ids', dupIds.length===0, dupIds.join(', '));
-check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.51["']/.test(html), 'version marker present');
+check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.52["']/.test(html), 'version marker present');
 const packagePath=path.join(path.dirname(target),'package.json');
 let packageVersion='';
 try{packageVersion=JSON.parse(fs.readFileSync(packagePath,'utf8')).version||''}catch(e){}
