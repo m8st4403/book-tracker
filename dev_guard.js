@@ -22,7 +22,7 @@ function check(name, ok, detail='') { (ok ? pass : fail)(name, detail); }
 const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
 const dupIds = [...new Set(ids.filter((id,i)=>ids.indexOf(id)!==i))];
 check('STATIC-001 unique DOM ids', dupIds.length===0, dupIds.join(', '));
-check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.52["']/.test(html), 'version marker present');
+check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.53["']/.test(html), 'version marker present');
 const packagePath=path.join(path.dirname(target),'package.json');
 let packageVersion='';
 try{packageVersion=JSON.parse(fs.readFileSync(packagePath,'utf8')).version||''}catch(e){}
@@ -483,6 +483,17 @@ async function main(){
       appSettings.calendar=oldCal;calFilters=old;renderCalendar();return out;
     }catch(e){return {error:String(e?.message||e)}}})()`);
     check('E2E-CALENDAR-001 temporary filters reset from saved defaults',calendarFilterReset?.library===false&&calendarFilterReset?.related===true&&calendarFilterReset?.recommended===false&&JSON.stringify(calendarFilterReset?.ui)==='[false,true,false]',JSON.stringify(calendarFilterReset));
+
+    // P1: calendar registration must carry existing series metadata forward and avoid an unnecessary ISBN re-query.
+    const calendarRegistrationMetadata=await evalJS(`(async()=>{try{
+      const oldResolve=window.bookTrackerApiManagement.resolveIsbn;let calls=0;
+      window.bookTrackerApiManagement.resolveIsbn=async()=>{calls++;throw Error('unexpected ISBN re-query')};
+      const b=calendarBookFromEvent({isbn:'demo-002',title:'サンプルシリーズ：星の余白 1巻',series:'サンプルシリーズ：星の余白'});
+      const prepared=await prepareRegistrationBook(b,{interactive:false});
+      window.bookTrackerApiManagement.resolveIsbn=oldResolve;
+      return {seriesName:b?.series?.name||'',volume:b?.series?.volumeNumber??null,preparedSeriesName:prepared?.series?.name||'',calls};
+    }catch(e){try{window.bookTrackerApiManagement.resolveIsbn=oldResolve}catch(_){};return {error:String(e?.message||e)}}})()`);
+    check('E2E-CALENDAR-003 existing series metadata is preserved and avoids ISBN re-query',calendarRegistrationMetadata?.seriesName==='サンプルシリーズ：星の余白'&&calendarRegistrationMetadata?.volume===1&&calendarRegistrationMetadata?.preparedSeriesName==='サンプルシリーズ：星の余白'&&calendarRegistrationMetadata?.calls===0,JSON.stringify(calendarRegistrationMetadata));
 
     // P1: calendar-extra writes must be atomic.
     const calendarExtraAtomic=await evalJS(`(()=>{try{
