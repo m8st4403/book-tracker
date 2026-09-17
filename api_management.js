@@ -86,8 +86,8 @@
   function recordProviderFailure(name,error){const h=health(name);h.failures+=1;h.lastFailureAt=Date.now();h.lastError=String(error?.message||error||"Provider error");if(h.failures>=runtimePolicy.failureThreshold)h.temporarilyDisabledUntil=Date.now()+runtimePolicy.cooldownMs}
   async function withTimeout(promise,ms){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error("Provider timeout")),ms)})])}finally{clearTimeout(timer)}}
   function cloneCached(v){try{return JSON.parse(JSON.stringify(v))}catch(_){return v}}
-  function metricApiStart(provider){try{if(globalThis.bookTrackerRegistrationMetrics?.active?.())globalThis.bookTrackerRegistrationMetrics.beginApi(provider);else globalThis.bookTrackerSearchMetrics?.beginApi(provider)}catch(_){}}
-  function metricApiEnd(provider,ok){try{if(globalThis.bookTrackerRegistrationMetrics?.active?.())globalThis.bookTrackerRegistrationMetrics.endApi(provider,ok);else globalThis.bookTrackerSearchMetrics?.endApi(provider,ok)}catch(_){}}
+  function metricApiStart(provider,explicit){try{if(explicit?.beginApi)explicit.beginApi(provider);else if(globalThis.bookTrackerRegistrationMetrics?.active?.())globalThis.bookTrackerRegistrationMetrics.beginApi(provider);else globalThis.bookTrackerSearchMetrics?.beginApi(provider)}catch(_){}}
+  function metricApiEnd(provider,ok,explicit){try{if(explicit?.endApi)explicit.endApi(provider,ok);else if(globalThis.bookTrackerRegistrationMetrics?.active?.())globalThis.bookTrackerRegistrationMetrics.endApi(provider,ok);else globalThis.bookTrackerSearchMetrics?.endApi(provider,ok)}catch(_){}}
   const adapters={
     googleBooks:{
       async isbn(isbn){
@@ -349,7 +349,7 @@
     for(const name of names){
       if(providerTemporarilyDisabled(name)) { attempts.push({provider:name,ok:false,skipped:true,reason:"temporary provider cooldown"}); continue; }
       try{
-        metricApiStart(name); let got; try{got=await withTimeout(adapters[name].isbn(isbn),runtimePolicy.requestTimeoutMs);metricApiEnd(name,true)}catch(e){metricApiEnd(name,false);throw e}
+        metricApiStart(name,opts.metrics); let got; try{got=await withTimeout(adapters[name].isbn(isbn),runtimePolicy.requestTimeoutMs);metricApiEnd(name,true,opts.metrics)}catch(e){metricApiEnd(name,false,opts.metrics);throw e}
         const exact=got.filter(r=>canonicalIsbn(r?.isbn)===ctx.isbn);
         const usable=exact.length?exact:got;
         if(usable.length){
