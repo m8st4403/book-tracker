@@ -22,7 +22,7 @@ function check(name, ok, detail='') { (ok ? pass : fail)(name, detail); }
 const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
 const dupIds = [...new Set(ids.filter((id,i)=>ids.indexOf(id)!==i))];
 check('STATIC-001 unique DOM ids', dupIds.length===0, dupIds.join(', '));
-check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.61["']/.test(html), 'version marker present');
+check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.62["']/.test(html), 'version marker present');
 const packagePath=path.join(path.dirname(target),'package.json');
 let packageVersion='';
 try{packageVersion=JSON.parse(fs.readFileSync(packagePath,'utf8')).version||''}catch(e){}
@@ -33,7 +33,8 @@ check('STATIC-019 persistence/backup gap audit exists', fs.existsSync(path.join(
 check('STATIC-020 backup schema validation contract', /Number\(d\.schemaVersion\)!==3/.test(html) && /function validateBackupData/.test(html) && /function restoreBackupData/.test(html), 'backup schemaVersion/key validation and atomic restore');
 check('STATIC-022 registration performance measurement contract', /bookTrackerRegistrationMetrics/.test(html) && /サンプルデータ：1冊登録/.test(html) && /検索結果：1冊登録/.test(html) && /検索結果：選択した本を一括登録/.test(html), 'operation label + timing metrics are explicit');
 check('STATIC-027 search performance measurement contract', /bookTrackerSearchMetrics/.test(html) && /検索処理の計測/.test(html) && /追加：ISBN検索/.test(html) && /検索全体：/.test(html) && /Provider別：/.test(html), 'search start-to-result timing and API/provider breakdown are explicit');
-check('STATIC-021 calendar/settings/ICS contracts exist', /function buildICS\(/.test(html) && /function escapeICSValue\(/.test(html) && /function getReleaseNotificationTargets\(/.test(html) && /persistedSettingsSnapshot/.test(html), 'calendar filters, settings rollback, ICS semantics, notification window');
+check('STATIC-022 search measurement operation labels are explicit', ['追加：作品＋巻数検索','書籍検索：キーワード検索','書籍検索：作家検索','書籍検索：作家新刊検索','類似作品検索：基礎作品検索','類似作品検索：候補検索','書籍詳細：関連書籍検索'].every(x=>html.includes(x)), 'all user-facing search flows have explicit measurement labels');
+    check('STATIC-021 calendar/settings/ICS contracts exist', /function buildICS\(/.test(html) && /function escapeICSValue\(/.test(html) && /function getReleaseNotificationTargets\(/.test(html) && /persistedSettingsSnapshot/.test(html), 'calendar filters, settings rollback, ICS semantics, notification window');
 
 check('STATIC-003 required six tabs', ['home','add','library','search','calendar','settings'].every(id=>new RegExp(`id=["']${id}["']`).test(html)), 'home/add/library/search/calendar/settings');
 check('STATIC-004 price filter exists', /id=["']filterPrice["']/.test(html), 'library price filter');
