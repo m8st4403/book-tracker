@@ -84,39 +84,47 @@
   function providerTemporarilyDisabled(name,now=Date.now()){return (health(name).temporarilyDisabledUntil||0)>now}
   function recordProviderSuccess(name){const h=health(name);h.failures=0;h.temporarilyDisabledUntil=0;h.lastSuccessAt=Date.now();h.lastError=""}
   function recordProviderFailure(name,error){const h=health(name);h.failures+=1;h.lastFailureAt=Date.now();h.lastError=String(error?.message||error||"Provider error");if(h.failures>=runtimePolicy.failureThreshold)h.temporarilyDisabledUntil=Date.now()+runtimePolicy.cooldownMs}
-  async function withTimeout(promise,ms){let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error("Provider timeout")),ms)})])}finally{clearTimeout(timer)}}
+  async function withTimeout(task,ms){
+    const controller=new AbortController(); let timer;
+    try{
+      return await Promise.race([
+        Promise.resolve().then(()=>task(controller.signal)),
+        new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error("Provider timeout"))},ms)})
+      ]);
+    }finally{clearTimeout(timer)}
+  }
   function cloneCached(v){try{return JSON.parse(JSON.stringify(v))}catch(_){return v}}
   function metricApiStart(provider,explicit){try{if(explicit?.beginApi)explicit.beginApi(provider);else if(globalThis.bookTrackerRegistrationMetrics?.active?.())globalThis.bookTrackerRegistrationMetrics.beginApi(provider);else globalThis.bookTrackerSearchMetrics?.beginApi(provider)}catch(_){}}
   function metricApiEnd(provider,ok,explicit){try{if(explicit?.endApi)explicit.endApi(provider,ok);else if(globalThis.bookTrackerRegistrationMetrics?.active?.())globalThis.bookTrackerRegistrationMetrics.endApi(provider,ok);else globalThis.bookTrackerSearchMetrics?.endApi(provider,ok)}catch(_){}}
   const adapters={
     googleBooks:{
-      async isbn(isbn){
+      async isbn(isbn,opts={}){
         const u="https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent("isbn:"+isbn)+"&maxResults=20&country=JP";
-        const d=await getJSON(u,{searchOnline:true});
+        const d=await getJSON(u,{searchOnline:true,signal:opts.signal});
         return (d.items||[]).map(v=>normalizeGoogle(v,isbn));
       },
-      async search(q,limit){
+      async search(q,limit,opts={}){
         const u="https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent(q)+"&maxResults="+Math.min(40,limit)+"&country=JP&langRestrict=ja";
-        const d=await getJSON(u,{searchOnline:true});
+        const d=await getJSON(u,{searchOnline:true,signal:opts.signal});
         return (d.items||[]).map(v=>normalizeGoogle(v));
       }
     },
     openBD:{
-      async isbn(isbn){
-        const d=await getJSON("https://api.openbd.jp/v1/get?isbn="+encodeURIComponent(isbn),{searchOnline:true});
+      async isbn(isbn,opts={}){
+        const d=await getJSON("https://api.openbd.jp/v1/get?isbn="+encodeURIComponent(isbn),{searchOnline:true,signal:opts.signal});
         const x=d?.[0];if(!x)return [];
         return [normalizeOpenBD(x,isbn)].filter(x=>x?.title);
       }
     },
     rakuten:{
-      async isbn(isbn){
+      async isbn(isbn,opts={}){
         const cfg=getRakutenConfig();
         if(!cfg) return [];
         const u=rakutenUrl({isbn,applicationId:cfg.applicationId,accessKey:cfg.accessKey,hits:10});
-        const d=await getJSON(u,{searchOnline:true,headers:{}});
+        const d=await getJSON(u,{searchOnline:true,headers:{},signal:opts.signal});
         return (d.items||[]).map(x=>normalizeRakuten(x)).filter(x=>x?.title);
       },
-      async search(q,limit=20){
+      async search(q,limit=20,opts={}){
         const cfg=getRakutenConfig();
         if(!cfg) return [];
         const p={applicationId:cfg.applicationId,accessKey:cfg.accessKey,hits:Math.min(30,limit)};
@@ -124,19 +132,19 @@
         if(/^inauthor:/i.test(qq))p.author=qq.replace(/^inauthor:/i,'').trim();
         else if(/^intitle:/i.test(qq))p.title=qq.replace(/^intitle:/i,'').trim();
         else p.title=qq;
-        const d=await getJSON(rakutenUrl(p),{searchOnline:true});
+        const d=await getJSON(rakutenUrl(p),{searchOnline:true,signal:opts.signal});
         return (d.items||[]).map(x=>normalizeRakuten(x)).filter(x=>x?.title);
       }
     },
     ndl:{
-      async isbn(isbn){
-        return searchNDL({isbn,limit:10});
+      async isbn(isbn,opts={}){
+        return searchNDL({isbn,limit:10,signal:opts.signal});
       },
-      async search(q,limit=20){
+      async search(q,limit=20,opts={}){
         const qq=String(q||'').trim();
-        if(/^inauthor:/i.test(qq))return searchNDL({creator:qq.replace(/^inauthor:/i,'').trim(),limit});
-        if(/^intitle:/i.test(qq))return searchNDL({title:qq.replace(/^intitle:/i,'').trim(),limit});
-        return searchNDL({anywhere:qq,limit});
+        if(/^inauthor:/i.test(qq))return searchNDL({creator:qq.replace(/^inauthor:/i,'').trim(),limit,signal:opts.signal});
+        if(/^intitle:/i.test(qq))return searchNDL({title:qq.replace(/^intitle:/i,'').trim(),limit,signal:opts.signal});
+        return searchNDL({anywhere:qq,limit,signal:opts.signal});
       }
     }
   };
@@ -152,11 +160,11 @@
     if(p.author)q.set("author",String(p.author));
     return "https://openapi.rakuten.co.jp/services/api/BooksBook/Search/20170404?"+q.toString();
   }
-  async function getText(url){
+  async function getText(url,opts={}){
     let err;
     for(let n=0;n<3;n++){
       try{
-        const r=await fetch(url,{cache:"no-store"});
+        const r=await fetch(url,{cache:"no-store",signal:opts.signal});
         if(r.ok)return await r.text();
         if(r.status===429||r.status===503){err=Error("HTTP "+r.status);await sleep(700*Math.pow(2,n));continue;}
         throw Error("HTTP "+r.status);
@@ -164,14 +172,14 @@
     }
     throw err||Error("通信エラー");
   }
-  async function searchNDL({isbn,title,creator,anywhere,limit=20}){
+  async function searchNDL({isbn,title,creator,anywhere,limit=20,signal}){
     const q=[];
     if(isbn)q.push('isbn="'+String(isbn).replace(/[-\s]/g,'')+'"');
     if(title)q.push('title="'+String(title).replace(/"/g,'')+'"');
     if(creator)q.push('creator="'+String(creator).replace(/"/g,'')+'"');
     if(anywhere)q.push('anywhere="'+String(anywhere).replace(/"/g,'')+'"');
     const url="https://ndlsearch.ndl.go.jp/api/sru?operation=searchRetrieve&version=1.2&maximumRecords="+Math.min(20,Math.max(1,limit))+"&query="+encodeURIComponent(q.join(" AND "));
-    const xml=await getText(url);
+    const xml=await getText(url,{signal});
     return normalizeNDLSru(xml,isbn||"");
   }
   function xmlText(node){return String(node?.textContent||"").trim();}
@@ -327,7 +335,7 @@
     for(const name of names){
       if(providerTemporarilyDisabled(name)){attempts.push({provider:name,ok:false,skipped:true,reason:"temporary provider cooldown"});continue;}
       try{
-        metricApiStart(name); let got; try{got=await withTimeout(adapters[name].search(q,limit),runtimePolicy.requestTimeoutMs);metricApiEnd(name,true)}catch(e){metricApiEnd(name,false);throw e}
+        metricApiStart(name); let got; try{got=await withTimeout(signal=>adapters[name].search(q,limit,{signal}),runtimePolicy.requestTimeoutMs);metricApiEnd(name,true)}catch(e){metricApiEnd(name,false);throw e}
         if(Array.isArray(got)&&got.length){rows.push(...got.map(r=>({...r,source:r.source||name})));attempts.push({provider:name,ok:true,count:got.length});recordProviderSuccess(name);}
         else{attempts.push({provider:name,ok:false,reason:"no results"});recordProviderSuccess(name);}
       }catch(e){recordProviderFailure(name,e);attempts.push({provider:name,ok:false,error:String(e?.message||e),temporaryCooldown:providerTemporarilyDisabled(name)});}
@@ -349,7 +357,7 @@
     for(const name of names){
       if(providerTemporarilyDisabled(name)) { attempts.push({provider:name,ok:false,skipped:true,reason:"temporary provider cooldown"}); continue; }
       try{
-        metricApiStart(name,opts.metrics); let got; try{got=await withTimeout(adapters[name].isbn(isbn),runtimePolicy.requestTimeoutMs);metricApiEnd(name,true,opts.metrics)}catch(e){metricApiEnd(name,false,opts.metrics);throw e}
+        metricApiStart(name,opts.metrics); let got; try{got=await withTimeout(signal=>adapters[name].isbn(isbn,{signal}),runtimePolicy.requestTimeoutMs);metricApiEnd(name,true,opts.metrics)}catch(e){metricApiEnd(name,false,opts.metrics);throw e}
         const exact=got.filter(r=>canonicalIsbn(r?.isbn)===ctx.isbn);
         const usable=exact.length?exact:got;
         if(usable.length){
@@ -398,7 +406,7 @@
   function seriesAcceptable(s){return !!s&&!!s.name&&rank(s.confidence.seriesName)>=rank("HIGH")&&(s.volumeNumber==null||rank(s.confidence.volumeNumber)>=rank("HIGH"))}
   async function runField(field,ctx={}){
     const list=priority[field]||[];const attempts=[];
-    for(const name of list){if(name==="titleParser")continue;const ad=adapters[name];if(!providerEnabled(name)||!hasCapability(name,ctx.capability||field)||!ad)continue;if(providerTemporarilyDisabled(name)){attempts.push({provider:name,skipped:true,reason:"temporary provider cooldown"});continue;}try{metricApiStart(name); let rows=[]; try{rows=ctx.isbn&&ad.isbn?await withTimeout(ad.isbn(ctx.isbn),runtimePolicy.requestTimeoutMs):[];metricApiEnd(name,true)}catch(e){metricApiEnd(name,false);throw e}for(const row of rows){const c=candidate(field,row,ctx);if(!c){attempts.push({provider:name,confidence:"UNKNOWN",accepted:false,reason:"required field unavailable"});continue}const result={value:c.value,confidence:c.confidence,evidence:c.evidence};attempts.push({provider:name,confidence:c.confidence,accepted:acceptable(field,result)});if(acceptable(field,result)){recordProviderSuccess(name);return {value:c.value,confidence:c.confidence,provider:name,evidence:c.evidence,attempts}}}}catch(e){recordProviderFailure(name,e);attempts.push({provider:name,ok:false,error:String(e?.message||e),temporaryCooldown:providerTemporarilyDisabled(name)})}}
+    for(const name of list){if(name==="titleParser")continue;const ad=adapters[name];if(!providerEnabled(name)||!hasCapability(name,ctx.capability||field)||!ad)continue;if(providerTemporarilyDisabled(name)){attempts.push({provider:name,skipped:true,reason:"temporary provider cooldown"});continue;}try{metricApiStart(name); let rows=[]; try{rows=ctx.isbn&&ad.isbn?await withTimeout(signal=>ad.isbn(ctx.isbn,{signal}),runtimePolicy.requestTimeoutMs):[];metricApiEnd(name,true)}catch(e){metricApiEnd(name,false);throw e}for(const row of rows){const c=candidate(field,row,ctx);if(!c){attempts.push({provider:name,confidence:"UNKNOWN",accepted:false,reason:"required field unavailable"});continue}const result={value:c.value,confidence:c.confidence,evidence:c.evidence};attempts.push({provider:name,confidence:c.confidence,accepted:acceptable(field,result)});if(acceptable(field,result)){recordProviderSuccess(name);return {value:c.value,confidence:c.confidence,provider:name,evidence:c.evidence,attempts}}}}catch(e){recordProviderFailure(name,e);attempts.push({provider:name,ok:false,error:String(e?.message||e),temporaryCooldown:providerTemporarilyDisabled(name)})}}
     return {value:null,confidence:"UNKNOWN",provider:null,evidence:null,attempts};
   }
   function config(){return {version:VERSION,runtimePolicy:JSON.parse(JSON.stringify(runtimePolicy)),providerHealth:JSON.parse(JSON.stringify(Object.fromEntries(providerHealth))),providers:JSON.parse(JSON.stringify(providers)),priority:JSON.parse(JSON.stringify(priority)),thresholds:JSON.parse(JSON.stringify(thresholds))}}

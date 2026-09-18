@@ -1,4 +1,4 @@
-**v4.13.56**
+**v4.13.57**
 
 - ISBN検索のAPI実測計測を修正
 - Google Books → openBD等のフェイルオーバー時にAPI通信時間・回数・Provider別時間を正確に記録
@@ -13,7 +13,7 @@ iPhone向けの書籍管理アプリのプロトタイプです。
 
 ## 現在のバージョン
 
-**v4.13.56**
+**v4.13.57**
 
 v4.13.36では、全タブのデータ変更操作を共通排他制御し、検索中も登録・削除などのデータ変更を開始できないようにしました。また蔵書の並び順は、選択した並び順を最優先キーとし、同値時は「作品名 → 巻数 → 登録順」で統一しました。
 
@@ -244,9 +244,9 @@ Registration/search hardening and performance refinement: fixed result thumbnail
 - Release Gate：152/152 PASS、Mutation Test 3/3 PASS
 
 
-## v4.13.56
+## v4.13.57
 
-ISBN検索のAPI実測計測を修正し、Provider別の通信時間とAPI回数を正確に表示します。あわせて、アプリ内部・設定タブ・README・package.json・開発ガードのバージョン情報を4.13.56へ統一します。
+ISBN検索のAPI実測計測を修正し、Provider別の通信時間とAPI回数を正確に表示します。あわせて、アプリ内部・設定タブ・README・package.json・開発ガードのバージョン情報を4.13.57へ統一します。
 
 ## v4.13.51
 - 単冊登録の完了/失敗通知を計測 `finish()` 後に表示し、alert待ち時間を登録全体の計測から除外。
