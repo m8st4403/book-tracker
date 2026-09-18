@@ -180,9 +180,9 @@
       try{
         const r=await fetch(url,{cache:"no-store",signal:opts.signal});
         if(r.ok)return await r.text();
-        if(r.status===429||r.status===503){err=Error("HTTP "+r.status);await sleep(700*Math.pow(2,n));continue;}
+        if(r.status===429||r.status===503){err=Error("HTTP "+r.status);if(opts.signal?.aborted)throw err;await sleep(700*Math.pow(2,n));continue;}
         throw Error("HTTP "+r.status);
-      }catch(e){err=e;if(n<2)await sleep(700*Math.pow(2,n));}
+      }catch(e){err=e;if(opts.signal?.aborted)throw e;if(n<2)await sleep(700*Math.pow(2,n));}
     }
     throw err||Error("通信エラー");
   }
@@ -349,7 +349,7 @@
     for(const name of names){
       if(providerTemporarilyDisabled(name)){attempts.push({provider:name,ok:false,skipped:true,reason:"temporary provider cooldown"});continue;}
       try{
-        metricApiStart(name); let got; try{got=await withTimeout(signal=>adapters[name].search(q,limit,{signal}),runtimePolicy.requestTimeoutMs);metricApiEnd(name,true)}catch(e){metricApiEnd(name,false);throw e}
+        metricApiStart(name); let got; try{got=await withTimeout(signal=>adapters[name].search(q,limit,{signal}),timeoutForProvider(name));metricApiEnd(name,true)}catch(e){metricApiEnd(name,false);throw e}
         if(Array.isArray(got)&&got.length){rows.push(...got.map(r=>({...r,source:r.source||name})));attempts.push({provider:name,ok:true,count:got.length});recordProviderSuccess(name);}
         else{attempts.push({provider:name,ok:false,reason:"no results"});recordProviderSuccess(name);}
       }catch(e){recordProviderFailure(name,e);attempts.push({provider:name,ok:false,error:String(e?.message||e),temporaryCooldown:providerTemporarilyDisabled(name)});}
