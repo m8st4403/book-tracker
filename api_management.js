@@ -355,7 +355,15 @@
       }catch(e){recordProviderFailure(name,e);attempts.push({provider:name,ok:false,error:String(e?.message||e),temporaryCooldown:providerTemporarilyDisabled(name)});}
       if(rows.length)break;
     }
-    if(!rows.length)throw Error("書籍検索に利用できるAPIから結果を取得できませんでした。");
+    if(!rows.length){
+      const skipped=attempts.filter(x=>x.skipped&&x.reason==="temporary provider cooldown");
+      const failed=attempts.filter(x=>!x.skipped&&x.ok===false);
+      const e=Error(skipped.length&&failed.length===0
+        ?"書籍検索に利用できるAPIが一時停止中です。しばらく待ってから再検索してください。"
+        :"書籍検索に利用できるAPIから結果を取得できませんでした。");
+      e.attempts=attempts;
+      throw e;
+    }
     const seen=new Set(),out=[];
     for(const r of rows){const k=canonicalIsbn(r?.isbn)||norm((r?.title||"")+"|"+(r?.author||""));if(seen.has(k))continue;seen.add(k);out.push(r);}
     return {results:out.slice(0,Math.max(1,limit)),attempts};
