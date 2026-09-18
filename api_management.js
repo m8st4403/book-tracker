@@ -370,8 +370,9 @@
     const attempts=[];
     for(const name of names){
       if(providerTemporarilyDisabled(name)) { attempts.push({provider:name,ok:false,skipped:true,reason:"temporary provider cooldown"}); continue; }
+      const timeoutMs=timeoutForProvider(name);
       try{
-        const timeoutMs=timeoutForProvider(name); metricApiStart(name,opts.metrics); let got; try{got=await withTimeout(signal=>adapters[name].isbn(isbn,{signal}),timeoutMs);metricApiEnd(name,true,opts.metrics)}catch(e){metricApiEnd(name,false,opts.metrics);throw e}
+        metricApiStart(name,opts.metrics); let got; try{got=await withTimeout(signal=>adapters[name].isbn(isbn,{signal}),timeoutMs);metricApiEnd(name,true,opts.metrics)}catch(e){metricApiEnd(name,false,opts.metrics);throw e}
         const exact=got.filter(r=>canonicalIsbn(r?.isbn)===ctx.isbn);
         const usable=exact.length?exact:got;
         if(usable.length){

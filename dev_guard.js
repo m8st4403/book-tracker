@@ -22,7 +22,7 @@ function check(name, ok, detail='') { (ok ? pass : fail)(name, detail); }
 const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
 const dupIds = [...new Set(ids.filter((id,i)=>ids.indexOf(id)!==i))];
 check('STATIC-001 unique DOM ids', dupIds.length===0, dupIds.join(', '));
-check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.59["']/.test(html), 'version marker present');
+check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.60["']/.test(html), 'version marker present');
 const packagePath=path.join(path.dirname(target),'package.json');
 let packageVersion='';
 try{packageVersion=JSON.parse(fs.readFileSync(packagePath,'utf8')).version||''}catch(e){}
@@ -178,7 +178,7 @@ async function main(){
     check('E2E-API-006F 検索自動フェイルオーバー',failoverSmoke?.searchFallback===true,JSON.stringify(failoverSmoke));
     check('E2E-API-006G 障害Provider一時クールダウン',failoverSmoke?.cooldownSkip===true,JSON.stringify(failoverSmoke));
     check('E2E-API-006H timeout時の自動フェイルオーバー',failoverSmoke?.timeoutFallback===true,JSON.stringify(failoverSmoke));
-    check('E2E-API-006I Provider別タイムアウト設定',api.runtimePolicy.providerTimeoutMs?.googleBooks===4000,JSON.stringify(api.runtimePolicy.providerTimeoutMs));
+    const providerTimeoutContract=await evalJS(`(()=>{const api=window.bookTrackerApiManagement;return {googleBooks:api.runtimePolicy.providerTimeoutMs?.googleBooks,defaultTimeout:api.runtimePolicy.requestTimeoutMs}})()`); check('E2E-API-006I Provider別タイムアウト設定',providerTimeoutContract?.googleBooks===4000,JSON.stringify(providerTimeoutContract));
 
     // Phase 7: bounded/config-aware resolver cache and critical-field non-downgrade contracts.
     const phase7Cache=await evalJS(`(async()=>{try{
