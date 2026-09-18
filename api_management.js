@@ -78,12 +78,26 @@
   function cacheInfo(){return {size:resolverCache.size,ttlMs:cachePolicy.ttlMs,maxEntries:cachePolicy.maxEntries};}
   // Phase 6: provider health is runtime state, not remote executable configuration.
   // A provider is temporarily skipped after repeated request failures, then retried after cooldown.
-  const runtimePolicy={failureThreshold:2,cooldownMs:30000,requestTimeoutMs:12000};
+  const runtimePolicy={
+    failureThreshold:2,
+    cooldownMs:30000,
+    requestTimeoutMs:12000,
+    // Providerごとの応答特性を踏まえた個別上限。未指定Providerは共通上限を使用する。
+    // Google Booksが応答しない環境で12秒待ち続けるケースを4秒で切り上げ、
+    // 次順位Provider（openBD等）へ速やかにフェイルオーバーする。
+    providerTimeoutMs:{googleBooks:4000}
+  };
   const providerHealth=new Map(Object.keys(providers).map(name=>[name,{failures:0,temporarilyDisabledUntil:0,lastFailureAt:0,lastSuccessAt:0,lastError:""}]));
   function health(name){if(!providerHealth.has(name))providerHealth.set(name,{failures:0,temporarilyDisabledUntil:0,lastFailureAt:0,lastSuccessAt:0,lastError:""});return providerHealth.get(name)}
   function providerTemporarilyDisabled(name,now=Date.now()){return (health(name).temporarilyDisabledUntil||0)>now}
   function recordProviderSuccess(name){const h=health(name);h.failures=0;h.temporarilyDisabledUntil=0;h.lastSuccessAt=Date.now();h.lastError=""}
   function recordProviderFailure(name,error){const h=health(name);h.failures+=1;h.lastFailureAt=Date.now();h.lastError=String(error?.message||error||"Provider error");if(h.failures>=runtimePolicy.failureThreshold)h.temporarilyDisabledUntil=Date.now()+runtimePolicy.cooldownMs}
+  function timeoutForProvider(name){
+    const globalMs=Number(runtimePolicy.requestTimeoutMs);
+    const specific=Number(runtimePolicy.providerTimeoutMs?.[name]);
+    const base=Number.isFinite(globalMs)&&globalMs>0?globalMs:12000;
+    return Number.isFinite(specific)&&specific>0?Math.min(base,specific):base;
+  }
   async function withTimeout(task,ms){
     const controller=new AbortController(); let timer;
     try{
@@ -357,18 +371,18 @@
     for(const name of names){
       if(providerTemporarilyDisabled(name)) { attempts.push({provider:name,ok:false,skipped:true,reason:"temporary provider cooldown"}); continue; }
       try{
-        metricApiStart(name,opts.metrics); let got; try{got=await withTimeout(signal=>adapters[name].isbn(isbn,{signal}),runtimePolicy.requestTimeoutMs);metricApiEnd(name,true,opts.metrics)}catch(e){metricApiEnd(name,false,opts.metrics);throw e}
+        const timeoutMs=timeoutForProvider(name); metricApiStart(name,opts.metrics); let got; try{got=await withTimeout(signal=>adapters[name].isbn(isbn,{signal}),timeoutMs);metricApiEnd(name,true,opts.metrics)}catch(e){metricApiEnd(name,false,opts.metrics);throw e}
         const exact=got.filter(r=>canonicalIsbn(r?.isbn)===ctx.isbn);
         const usable=exact.length?exact:got;
         if(usable.length){
-          rows.push(...usable.map(r=>({...r,source:r.source||name})));attempts.push({provider:name,ok:true,count:usable.length});recordProviderSuccess(name);
+          rows.push(...usable.map(r=>({...r,source:r.source||name})));attempts.push({provider:name,ok:true,count:usable.length,timeoutMs});recordProviderSuccess(name);
           if(opts.fast){
             const hasSeries=usable.some(r=>r?.series?.name&&((r?.series?.volumeNumber!=null)||r?.series?.id));
             if(hasSeries)break;
           }
         }
-        else { attempts.push({provider:name,ok:false,reason:"no matching record"}); recordProviderSuccess(name); }
-      }catch(e){recordProviderFailure(name,e);attempts.push({provider:name,ok:false,error:String(e?.message||e),temporaryCooldown:providerTemporarilyDisabled(name)})}
+        else { attempts.push({provider:name,ok:false,reason:"no matching record",timeoutMs}); recordProviderSuccess(name); }
+      }catch(e){recordProviderFailure(name,e);attempts.push({provider:name,ok:false,error:String(e?.message||e),timeoutMs,temporaryCooldown:providerTemporarilyDisabled(name)})}
     }
     if(!rows.length)throw Error("このISBNに一致する書誌情報が見つかりませんでした。");
     const fields=["isbn13","title","author","publisher","releaseDate","seriesId","seriesName","volumeNumber","listPrice","taxIncluded","cover","description","categories"];
@@ -406,7 +420,7 @@
   function seriesAcceptable(s){return !!s&&!!s.name&&rank(s.confidence.seriesName)>=rank("HIGH")&&(s.volumeNumber==null||rank(s.confidence.volumeNumber)>=rank("HIGH"))}
   async function runField(field,ctx={}){
     const list=priority[field]||[];const attempts=[];
-    for(const name of list){if(name==="titleParser")continue;const ad=adapters[name];if(!providerEnabled(name)||!hasCapability(name,ctx.capability||field)||!ad)continue;if(providerTemporarilyDisabled(name)){attempts.push({provider:name,skipped:true,reason:"temporary provider cooldown"});continue;}try{metricApiStart(name); let rows=[]; try{rows=ctx.isbn&&ad.isbn?await withTimeout(signal=>ad.isbn(ctx.isbn,{signal}),runtimePolicy.requestTimeoutMs):[];metricApiEnd(name,true)}catch(e){metricApiEnd(name,false);throw e}for(const row of rows){const c=candidate(field,row,ctx);if(!c){attempts.push({provider:name,confidence:"UNKNOWN",accepted:false,reason:"required field unavailable"});continue}const result={value:c.value,confidence:c.confidence,evidence:c.evidence};attempts.push({provider:name,confidence:c.confidence,accepted:acceptable(field,result)});if(acceptable(field,result)){recordProviderSuccess(name);return {value:c.value,confidence:c.confidence,provider:name,evidence:c.evidence,attempts}}}}catch(e){recordProviderFailure(name,e);attempts.push({provider:name,ok:false,error:String(e?.message||e),temporaryCooldown:providerTemporarilyDisabled(name)})}}
+    for(const name of list){if(name==="titleParser")continue;const ad=adapters[name];if(!providerEnabled(name)||!hasCapability(name,ctx.capability||field)||!ad)continue;if(providerTemporarilyDisabled(name)){attempts.push({provider:name,skipped:true,reason:"temporary provider cooldown"});continue;}try{const timeoutMs=timeoutForProvider(name); metricApiStart(name); let rows=[]; try{rows=ctx.isbn&&ad.isbn?await withTimeout(signal=>ad.isbn(ctx.isbn,{signal}),timeoutMs):[];metricApiEnd(name,true)}catch(e){metricApiEnd(name,false);throw e}for(const row of rows){const c=candidate(field,row,ctx);if(!c){attempts.push({provider:name,confidence:"UNKNOWN",accepted:false,reason:"required field unavailable"});continue}const result={value:c.value,confidence:c.confidence,evidence:c.evidence};attempts.push({provider:name,confidence:c.confidence,accepted:acceptable(field,result)});if(acceptable(field,result)){recordProviderSuccess(name);return {value:c.value,confidence:c.confidence,provider:name,evidence:c.evidence,attempts}}}}catch(e){recordProviderFailure(name,e);attempts.push({provider:name,ok:false,error:String(e?.message||e),timeoutMs,temporaryCooldown:providerTemporarilyDisabled(name)})}}
     return {value:null,confidence:"UNKNOWN",provider:null,evidence:null,attempts};
   }
   function config(){return {version:VERSION,runtimePolicy:JSON.parse(JSON.stringify(runtimePolicy)),providerHealth:JSON.parse(JSON.stringify(Object.fromEntries(providerHealth))),providers:JSON.parse(JSON.stringify(providers)),priority:JSON.parse(JSON.stringify(priority)),thresholds:JSON.parse(JSON.stringify(thresholds))}}

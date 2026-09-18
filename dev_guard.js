@@ -22,7 +22,7 @@ function check(name, ok, detail='') { (ok ? pass : fail)(name, detail); }
 const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
 const dupIds = [...new Set(ids.filter((id,i)=>ids.indexOf(id)!==i))];
 check('STATIC-001 unique DOM ids', dupIds.length===0, dupIds.join(', '));
-check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.58["']/.test(html), 'version marker present');
+check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.59["']/.test(html), 'version marker present');
 const packagePath=path.join(path.dirname(target),'package.json');
 let packageVersion='';
 try{packageVersion=JSON.parse(fs.readFileSync(packagePath,'utf8')).version||''}catch(e){}
@@ -152,7 +152,7 @@ async function main(){
     // Phase 5/6: real resolver/search routing is tested with deterministic adapter doubles.
     const failoverSmoke=await evalJS(`(async()=>{try{
       const api=window.bookTrackerApiManagement, old={google:api.adapters.googleBooks.isbn,rak:api.adapters.rakuten.isbn,searchG:api.adapters.googleBooks.search,searchR:api.adapters.rakuten.search};
-      const saved={g:api.providers.googleBooks.enabled,r:api.providers.rakuten.enabled,threshold:api.runtimePolicy.failureThreshold,cooldown:api.runtimePolicy.cooldownMs,timeout:api.runtimePolicy.requestTimeoutMs};
+      const saved={g:api.providers.googleBooks.enabled,r:api.providers.rakuten.enabled,threshold:api.runtimePolicy.failureThreshold,cooldown:api.runtimePolicy.cooldownMs,timeout:api.runtimePolicy.requestTimeoutMs,providerTimeouts:{...(api.runtimePolicy.providerTimeoutMs||{})}};
       api.providers.googleBooks.enabled=true;api.providers.rakuten.enabled=true;api.runtimePolicy.failureThreshold=1;api.runtimePolicy.cooldownMs=60000;api.runtimePolicy.requestTimeoutMs=50;
       let gCalls=0,rCalls=0,sgCalls=0,srCalls=0;
       api.adapters.googleBooks.isbn=async()=>{gCalls++;throw Error('synthetic Google outage')};
@@ -171,13 +171,14 @@ async function main(){
       const timeoutFallback=st?.results?.[0]?.title==='タイムアウト後フォールバック'&&st?.attempts?.some(x=>x.provider==='googleBooks'&&x.ok===false&&String(x.error||'').includes('timeout'))&&st?.attempts?.some(x=>x.provider==='rakuten'&&x.ok===true);
       const before=gCalls;const two=await api.resolveIsbn('9784088720722',{full:true}).catch(()=>null);const cooldownSkip=gCalls===before&&two?.resolution?.attempts?.some(x=>x.provider==='googleBooks'&&x.skipped===true);
       api.adapters.googleBooks.isbn=old.google;api.adapters.rakuten.isbn=old.rak;api.adapters.googleBooks.search=old.searchG;api.adapters.rakuten.search=old.searchR;
-      api.providers.googleBooks.enabled=saved.g;api.providers.rakuten.enabled=saved.r;api.runtimePolicy.failureThreshold=saved.threshold;api.runtimePolicy.cooldownMs=saved.cooldown;api.runtimePolicy.requestTimeoutMs=saved.timeout;
+      api.providers.googleBooks.enabled=saved.g;api.providers.rakuten.enabled=saved.r;api.runtimePolicy.failureThreshold=saved.threshold;api.runtimePolicy.cooldownMs=saved.cooldown;api.runtimePolicy.requestTimeoutMs=saved.timeout;api.runtimePolicy.providerTimeoutMs=saved.providerTimeouts;
       return {firstFallback,searchFallback,timeoutFallback,cooldownSkip,gCalls,rCalls,sgCalls,srCalls};
     }catch(e){return {error:String(e?.message||e)}}})()`);
     check('E2E-API-006E ISBN自動フェイルオーバー',failoverSmoke?.firstFallback===true,JSON.stringify(failoverSmoke));
     check('E2E-API-006F 検索自動フェイルオーバー',failoverSmoke?.searchFallback===true,JSON.stringify(failoverSmoke));
     check('E2E-API-006G 障害Provider一時クールダウン',failoverSmoke?.cooldownSkip===true,JSON.stringify(failoverSmoke));
     check('E2E-API-006H timeout時の自動フェイルオーバー',failoverSmoke?.timeoutFallback===true,JSON.stringify(failoverSmoke));
+    check('E2E-API-006I Provider別タイムアウト設定',api.runtimePolicy.providerTimeoutMs?.googleBooks===4000,JSON.stringify(api.runtimePolicy.providerTimeoutMs));
 
     // Phase 7: bounded/config-aware resolver cache and critical-field non-downgrade contracts.
     const phase7Cache=await evalJS(`(async()=>{try{
