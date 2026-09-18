@@ -22,7 +22,7 @@ function check(name, ok, detail='') { (ok ? pass : fail)(name, detail); }
 const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
 const dupIds = [...new Set(ids.filter((id,i)=>ids.indexOf(id)!==i))];
 check('STATIC-001 unique DOM ids', dupIds.length===0, dupIds.join(', '));
-check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.60["']/.test(html), 'version marker present');
+check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.61["']/.test(html), 'version marker present');
 const packagePath=path.join(path.dirname(target),'package.json');
 let packageVersion='';
 try{packageVersion=JSON.parse(fs.readFileSync(packagePath,'utf8')).version||''}catch(e){}
@@ -115,7 +115,7 @@ async function main(){
     // local JS dependency is inlined only for the browser harness because this sandbox blocks loopback navigation.
     const apiPath=path.join(path.dirname(target),'api_management.js');
     const apiCode=fs.readFileSync(apiPath,'utf8').replace(/<\/script/gi,'<\\/script');
-    const makeBrowserHtml=(seed={})=>{const seeded=JSON.stringify(seed);const shim=`<script>(function(){const initial=${seeded};const s=new Map(Object.entries(initial));window.__guardStorage={get length(){return s.size},key(i){return [...s.keys()][i]??null},getItem(k){return s.has(String(k))?s.get(String(k)):null},setItem(k,v){s.set(String(k),String(v))},removeItem(k){s.delete(String(k))},clear(){s.clear()}}})();<\/script>`;return shim+html.replace(/(?<![.\w])localStorage\b/g,'__guardStorage').replace('<script src="./api_management.js"></script>',`<script>${apiCode}</script>`)};
+    const makeBrowserHtml=(seed={})=>{const seeded=JSON.stringify(seed);const shim=`<script>(function(){const initial=${seeded};const s=new Map(Object.entries(initial));window.__guardStorage={get length(){return s.size},key(i){return [...s.keys()][i]??null},getItem(k){return s.has(String(k))?s.get(String(k)):null},setItem(k,v){s.set(String(k),String(v))},removeItem(k){s.delete(String(k))},clear(){s.clear()}}})();<\/script>`;return shim+html.replace(/(?<![.\w])localStorage\b/g,'__guardStorage').replace(/<script src=\"\.\/api_management\.js(?:\?[^\"]*)?\"><\/script>/,`<script>${apiCode}</script>`)};
     const browserHtml=makeBrowserHtml();
     await cdp.send('Page.setDocumentContent',{frameId:(await cdp.send('Page.getFrameTree')).frameTree.frame.id,html:browserHtml}); await wait(1200);
 
@@ -178,6 +178,22 @@ async function main(){
     check('E2E-API-006F 検索自動フェイルオーバー',failoverSmoke?.searchFallback===true,JSON.stringify(failoverSmoke));
     check('E2E-API-006G 障害Provider一時クールダウン',failoverSmoke?.cooldownSkip===true,JSON.stringify(failoverSmoke));
     check('E2E-API-006H timeout時の自動フェイルオーバー',failoverSmoke?.timeoutFallback===true,JSON.stringify(failoverSmoke));
+    const isbnTimeoutFallback=await evalJS(`(async()=>{try{
+      const api=window.bookTrackerApiManagement, oldG=api.adapters.googleBooks.isbn, oldO=api.adapters.openBD.isbn;
+      const saved={g:api.providers.googleBooks.enabled,o:api.providers.openBD.enabled,threshold:api.runtimePolicy.failureThreshold,cooldown:api.runtimePolicy.cooldownMs,timeout:api.runtimePolicy.requestTimeoutMs,providerTimeouts:{...(api.runtimePolicy.providerTimeoutMs||{})}};
+      api.clearResolverCache(); for(const h of api.providerHealth.values()){h.failures=0;h.temporarilyDisabledUntil=0;h.lastError='';}
+      api.providers.googleBooks.enabled=true;api.providers.openBD.enabled=true;api.runtimePolicy.failureThreshold=99;api.runtimePolicy.cooldownMs=1000;api.runtimePolicy.requestTimeoutMs=500;api.runtimePolicy.providerTimeoutMs={googleBooks:40};
+      let gCalls=0,oCalls=0;
+      api.adapters.googleBooks.isbn=async()=>{gCalls++;return await new Promise((resolve,reject)=>setTimeout(()=>resolve([]),200))};
+      api.adapters.openBD.isbn=async isbn=>{oCalls++;return [{isbn,title:'ISBN timeout fallback test',author:'A',publisher:'P',date:'2026-01-01',source:'openBD',series:null,priceMeta:{listPrice:null},fieldEvidence:{title:api.evidenceFor('title','ISBN timeout fallback test',{identifierMatched:true,countryMatched:true})}}]};
+      const r=await api.resolveIsbn('9784086191524',{full:true});
+      const attempts=r?.resolution?.attempts||[];
+      const g=attempts.find(x=>x.provider==='googleBooks'),o=attempts.find(x=>x.provider==='openBD');
+      const ok=gCalls===1&&oCalls===1&&g?.ok===false&&String(g?.error||'').toLowerCase().includes('timeout')&&g?.timeoutMs===40&&o?.ok===true&&r?.title==='ISBN timeout fallback test';
+      api.adapters.googleBooks.isbn=oldG;api.adapters.openBD.isbn=oldO;api.providers.googleBooks.enabled=saved.g;api.providers.openBD.enabled=saved.o;api.runtimePolicy.failureThreshold=saved.threshold;api.runtimePolicy.cooldownMs=saved.cooldown;api.runtimePolicy.requestTimeoutMs=saved.timeout;api.runtimePolicy.providerTimeoutMs=saved.providerTimeouts;api.clearResolverCache();
+      return {ok,gCalls,oCalls,google:g,openBD:o};
+    }catch(e){return {error:String(e?.message||e)}}})()`)
+    check('E2E-API-006J ISBN timeout -> openBD fallback',isbnTimeoutFallback?.ok===true,JSON.stringify(isbnTimeoutFallback));
     const providerTimeoutContract=await evalJS(`(()=>{const api=window.bookTrackerApiManagement;return {googleBooks:api.runtimePolicy.providerTimeoutMs?.googleBooks,defaultTimeout:api.runtimePolicy.requestTimeoutMs}})()`); check('E2E-API-006I Provider別タイムアウト設定',providerTimeoutContract?.googleBooks===4000,JSON.stringify(providerTimeoutContract));
 
     // Phase 7: bounded/config-aware resolver cache and critical-field non-downgrade contracts.
