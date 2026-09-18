@@ -1,6 +1,8 @@
-**v4.13.46**
+**v4.13.56**
 
-- P1: カレンダー・設定・ICS・発売通知の検証強化
+- ISBN検索のAPI実測計測を修正
+- Google Books → openBD等のフェイルオーバー時にAPI通信時間・回数・Provider別時間を正確に記録
+- APP_VERSION / DEV_GUARD_VERSION / package.json / README / 設定タブのバージョン情報を統一
 - 設定保存失敗時のメモリ／UIロールバック
 - カレンダー追加失敗時のロールバック
 - ICSを発売日ベースのVALUE=DATE、値エスケープ、安定UIDへ統一
@@ -11,7 +13,7 @@ iPhone向けの書籍管理アプリのプロトタイプです。
 
 ## 現在のバージョン
 
-**v4.13.45**
+**v4.13.56**
 
 v4.13.36では、全タブのデータ変更操作を共通排他制御し、検索中も登録・削除などのデータ変更を開始できないようにしました。また蔵書の並び順は、選択した並び順を最優先キーとし、同値時は「作品名 → 巻数 → 登録順」で統一しました。
 
@@ -241,6 +243,10 @@ Registration/search hardening and performance refinement: fixed result thumbnail
 - 詳細な検証契約：`PERSISTENCE_TEST_CONTRACT_v4_13_45.md`
 - Release Gate：152/152 PASS、Mutation Test 3/3 PASS
 
+
+## v4.13.56
+
+ISBN検索のAPI実測計測を修正し、Provider別の通信時間とAPI回数を正確に表示します。あわせて、アプリ内部・設定タブ・README・package.json・開発ガードのバージョン情報を4.13.56へ統一します。
 
 ## v4.13.51
 - 単冊登録の完了/失敗通知を計測 `finish()` 後に表示し、alert待ち時間を登録全体の計測から除外。
