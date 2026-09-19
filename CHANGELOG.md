@@ -1,12 +1,5 @@
 # v4.13.85
 
-- 実機v4.13.84でGoogle Booksへの1回目・2回目の両方がHTTP 429、かつRetry-After等の公開レート制限ヘッダーが返らないことを確認。
-- 429レスポンス本文から、Google側のエラーreason/messageだけを安全に抽出して計測する診断を追加。本文全体・URL・資格情報は保存しない。
-- APIキー不足、プロジェクト割当、クォータ制限などの原因を実機結果から切り分けられるようにした。
-- APP_VERSION / DEV_GUARD_VERSION / package.json / キャッシュバスターを4.13.85へ統一。
-
-# v4.13.84
-
 - 実機計測でHTTP 429後に2回目のHTTPステータスが記録されない事象を追加診断。
 - 429レスポンスのbodyを再試行前に明示的に解放し、WebKit系ブラウザで次のfetchが進まない可能性を対策。
 - `retry-extend-ok/failed`、`retry-response-body-cancel`、`retry-attempt-2`、`retry-aborted-before-fetch`を計測し、2回目通信が実際に開始されたかを判定可能にした。
