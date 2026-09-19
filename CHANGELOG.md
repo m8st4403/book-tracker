@@ -1,4 +1,9 @@
-# v4.13.85
+## v4.13.86
+- Google Books APIの `rateLimitExceeded` + `Queries per day` を日次クォータ超過として明示的に分類。短時間の429再試行を行わず、Providerを一時停止してフェイルオーバーへ進む。
+- 日次クォータ超過時はProvider状態を約24時間停止し、同じ端末からの無意味な再試行を抑制。
+- 検索計測に `daily-quota-exceeded` / `daily-quota-no-retry` を追加。
+
+# v4.13.86
 
 - 実機計測でHTTP 429後に2回目のHTTPステータスが記録されない事象を追加診断。
 - 429レスポンスのbodyを再試行前に明示的に解放し、WebKit系ブラウザで次のfetchが進まない可能性を対策。

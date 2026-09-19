@@ -82,6 +82,7 @@
   const runtimePolicy={
     failureThreshold:2,
     cooldownMs:30000,
+    dailyQuotaCooldownMs:24*60*60*1000,
     requestTimeoutMs:12000,
     // Providerごとの応答特性を踏まえた個別上限。未指定Providerは共通上限を使用する。
     // Google Booksが応答しない環境で12秒待ち続けるケースを4秒で切り上げ、
@@ -92,7 +93,7 @@
   function health(name){if(!providerHealth.has(name))providerHealth.set(name,{failures:0,temporarilyDisabledUntil:0,lastFailureAt:0,lastSuccessAt:0,lastError:""});return providerHealth.get(name)}
   function providerTemporarilyDisabled(name,now=Date.now()){return (health(name).temporarilyDisabledUntil||0)>now}
   function recordProviderSuccess(name){const h=health(name);h.failures=0;h.temporarilyDisabledUntil=0;h.lastSuccessAt=Date.now();h.lastError=""}
-  function recordProviderFailure(name,error){const h=health(name);h.failures+=1;h.lastFailureAt=Date.now();h.lastError=String(error?.message||error||"Provider error");if(h.failures>=runtimePolicy.failureThreshold)h.temporarilyDisabledUntil=Date.now()+runtimePolicy.cooldownMs}
+  function recordProviderFailure(name,error){const h=health(name);h.failures+=1;h.lastFailureAt=Date.now();h.lastError=String(error?.message||error||"Provider error");const cooldown=Number(error?.providerCooldownMs);if(Number.isFinite(cooldown)&&cooldown>0){h.temporarilyDisabledUntil=Date.now()+cooldown;return}if(h.failures>=runtimePolicy.failureThreshold)h.temporarilyDisabledUntil=Date.now()+runtimePolicy.cooldownMs}
   function timeoutForProvider(name){
     const globalMs=Number(runtimePolicy.requestTimeoutMs);
     const specific=Number(runtimePolicy.providerTimeoutMs?.[name]);
