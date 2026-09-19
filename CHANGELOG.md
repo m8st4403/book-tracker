@@ -1,3 +1,9 @@
+# v4.13.82
+
+- 実機計測でHTTP 429後に2回目のHTTPステータスが記録されない事象を追加診断。
+- 429レスポンスのbodyを再試行前に明示的に解放し、WebKit系ブラウザで次のfetchが進まない可能性を対策。
+- `retry-extend-ok/failed`、`retry-response-body-cancel`、`retry-attempt-2`、`retry-aborted-before-fetch`を計測し、2回目通信が実際に開始されたかを判定可能にした。
+
 # v4.13.81
 
 - HTTP 429後の専用再試行が通信エラー時に通常の内部再試行へ戻らないよう修正。
