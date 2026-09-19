@@ -100,13 +100,34 @@
     return Number.isFinite(specific)&&specific>0?Math.min(base,specific):base;
   }
   async function withTimeout(task,ms){
-    const controller=new AbortController(); let timer;
+    const controller=new AbortController(); let timer; let deadline=Date.now()+ms; let expired=false;
+    const arm=(delay)=>{
+      if(timer)clearTimeout(timer);
+      deadline=Date.now()+Math.max(0,delay);
+      timer=setTimeout(()=>{expired=true;controller.abort();},Math.max(0,delay));
+    };
+    const extend=(extraMs)=>{
+      if(expired)return;
+      const extra=Number(extraMs);
+      if(!Number.isFinite(extra)||extra<=0)return;
+      const remaining=Math.max(0,deadline-Date.now());
+      arm(remaining+extra);
+    };
+    const timeoutPromise=new Promise((_,reject)=>{
+      const poll=()=>{
+        if(expired){reject(Error("Provider timeout"));return;}
+        const remaining=Math.max(0,deadline-Date.now());
+        if(remaining<=0){expired=true;controller.abort();reject(Error("Provider timeout"));return;}
+        timer=setTimeout(()=>{expired=true;controller.abort();reject(Error("Provider timeout"))},remaining);
+      };
+      timer=setTimeout(()=>{expired=true;controller.abort();reject(Error("Provider timeout"))},ms);
+    });
     try{
       return await Promise.race([
-        Promise.resolve().then(()=>task(controller.signal)),
-        new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error("Provider timeout"))},ms)})
+        Promise.resolve().then(()=>task(controller.signal,extend)),
+        timeoutPromise
       ]);
-    }finally{clearTimeout(timer)}
+    }finally{if(timer)clearTimeout(timer)}
   }
   function cloneCached(v){try{return JSON.parse(JSON.stringify(v))}catch(_){return v}}
   function metricApiStart(provider,explicit){try{if(explicit?.beginApi)explicit.beginApi(provider);else if(globalThis.bookTrackerRegistrationMetrics?.active?.())globalThis.bookTrackerRegistrationMetrics.beginApi(provider);else globalThis.bookTrackerSearchMetrics?.beginApi(provider)}catch(_){}}
@@ -390,7 +411,7 @@
       if(!providerEnabled(name)){attempts.push({provider:name,ok:false,skipped:true,reason:"provider disabled",detail:name==="ndl"?"NDL direct-browser adapter is disabled until a browser-safe transport is available":"provider disabled"});continue;}
       if(providerTemporarilyDisabled(name)){attempts.push({provider:name,ok:false,skipped:true,reason:"temporary provider cooldown"});continue;}
       try{
-        metricApiStart(name); if(metrics)metrics.activeProvider=name; let got; try{got=await withTimeout(signal=>adapters[name].search(q,limit,{signal,metrics}),timeoutForProvider(name));metricApiEnd(name,true)}catch(e){metricApiEnd(name,false);throw e}finally{if(metrics)metrics.activeProvider=null}
+        metricApiStart(name); if(metrics)metrics.activeProvider=name; let got; try{got=await withTimeout((signal,extend)=>adapters[name].search(q,limit,{signal,metrics,onRetry:extend}),timeoutForProvider(name));metricApiEnd(name,true)}catch(e){metricApiEnd(name,false);throw e}finally{if(metrics)metrics.activeProvider=null}
         if(Array.isArray(got)&&got.length){rows.push(...got.map(r=>({...r,source:r.source||name})));attempts.push({provider:name,ok:true,count:got.length});recordProviderSuccess(name);}
         else{attempts.push({provider:name,ok:false,reason:"no results"});recordProviderSuccess(name);}
       }catch(e){recordProviderFailure(name,e);attempts.push({provider:name,ok:false,error:String(e?.message||e),temporaryCooldown:providerTemporarilyDisabled(name)});}
@@ -424,7 +445,7 @@
       if(providerTemporarilyDisabled(name)) { attempts.push({provider:name,ok:false,skipped:true,reason:"temporary provider cooldown"}); continue; }
       let timeoutMs=timeoutForProvider(name);
       try{
-        metricApiStart(name,opts.metrics); let got; try{got=await withTimeout(signal=>adapters[name].isbn(isbn,{signal}),timeoutMs);metricApiEnd(name,true,opts.metrics)}catch(e){metricApiEnd(name,false,opts.metrics);throw e}
+        metricApiStart(name,opts.metrics); let got; try{got=await withTimeout((signal,extend)=>adapters[name].isbn(isbn,{signal,onRetry:extend}),timeoutMs);metricApiEnd(name,true,opts.metrics)}catch(e){metricApiEnd(name,false,opts.metrics);throw e}
         const exact=got.filter(r=>canonicalIsbn(r?.isbn)===ctx.isbn);
         const usable=exact.length?exact:got;
         if(usable.length){
