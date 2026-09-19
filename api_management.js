@@ -100,34 +100,39 @@
     return Number.isFinite(specific)&&specific>0?Math.min(base,specific):base;
   }
   async function withTimeout(task,ms){
-    const controller=new AbortController(); let timer; let deadline=Date.now()+ms; let expired=false;
+    const controller=new AbortController();
+    let timeoutTimer=null;
+    let deadline=Date.now()+ms;
+    let expired=false;
+    let rejectTimeout=null;
     const arm=(delay)=>{
-      if(timer)clearTimeout(timer);
-      deadline=Date.now()+Math.max(0,delay);
-      timer=setTimeout(()=>{expired=true;controller.abort();},Math.max(0,delay));
+      if(timeoutTimer)clearTimeout(timeoutTimer);
+      const d=Math.max(0,Number(delay)||0);
+      deadline=Date.now()+d;
+      timeoutTimer=setTimeout(()=>{
+        expired=true;
+        try{controller.abort()}catch(_){}
+        try{rejectTimeout?.(Error("Provider timeout"))}catch(_){}
+      },d);
     };
     const extend=(extraMs)=>{
-      if(expired)return;
+      if(expired)return false;
       const extra=Number(extraMs);
-      if(!Number.isFinite(extra)||extra<=0)return;
+      if(!Number.isFinite(extra)||extra<=0)return false;
       const remaining=Math.max(0,deadline-Date.now());
       arm(remaining+extra);
+      return true;
     };
     const timeoutPromise=new Promise((_,reject)=>{
-      const poll=()=>{
-        if(expired){reject(Error("Provider timeout"));return;}
-        const remaining=Math.max(0,deadline-Date.now());
-        if(remaining<=0){expired=true;controller.abort();reject(Error("Provider timeout"));return;}
-        timer=setTimeout(()=>{expired=true;controller.abort();reject(Error("Provider timeout"))},remaining);
-      };
-      timer=setTimeout(()=>{expired=true;controller.abort();reject(Error("Provider timeout"))},ms);
+      rejectTimeout=reject;
+      arm(ms);
     });
     try{
       return await Promise.race([
         Promise.resolve().then(()=>task(controller.signal,extend)),
         timeoutPromise
       ]);
-    }finally{if(timer)clearTimeout(timer)}
+    }finally{if(timeoutTimer)clearTimeout(timeoutTimer)}
   }
   function cloneCached(v){try{return JSON.parse(JSON.stringify(v))}catch(_){return v}}
   function metricApiStart(provider,explicit){try{if(explicit?.beginApi)explicit.beginApi(provider);else if(globalThis.bookTrackerRegistrationMetrics?.active?.())globalThis.bookTrackerRegistrationMetrics.beginApi(provider);else globalThis.bookTrackerSearchMetrics?.beginApi(provider)}catch(_){}}
