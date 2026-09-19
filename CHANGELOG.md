@@ -1,9 +1,12 @@
-# v4.13.78
+## v4.13.79
+- Google BooksのHTTP 429後の再試行失敗・Abortを明示計測し、429後に追加の内部再試行を重ねないよう修正。
+
+# v4.13.79
 
 - Google Books AdapterがHTTP 429再試行用の`onRetry`を`getJSON()`へ伝播していなかった実装漏れを修正。
 - 429後の再試行でProviderタイムアウトを追加延長する処理を実通信経路まで接続。
 - Release GuardにAdapter→getJSONの`onRetry`伝播チェックを追加。
-- APP_VERSION / DEV_GUARD_VERSION / package.json / README / 設定タブ / キャッシュバスターを4.13.78へ統一。
+- APP_VERSION / DEV_GUARD_VERSION / package.json / README / 設定タブ / キャッシュバスターを4.13.79へ統一。
 
 # v4.13.76
 
