@@ -12,6 +12,7 @@ if (!fs.existsSync(target)) {
   process.exit(2);
 }
 const html = fs.readFileSync(target, 'utf8');
+const api = fs.readFileSync(path.join(path.dirname(target), 'api_management.js'), 'utf8');
 
 const results = [];
 function pass(name, detail='') { results.push({name, ok:true, detail}); }
@@ -37,6 +38,7 @@ check('STATIC-030 Google Books response body is cancelled on provider timeout', 
 
 check('STATIC-031 Google Books response/json phases are explicit', html.includes('\"response\",0') && html.includes('\"json-start\",0') && html.includes('\"json\"'), 'response, json-start and json phases are separately recorded');
 check('STATIC-033 HTTP status/retry measurement is explicit', /HTTP \"\+String\(r\.status\)/.test(html) && /retry-after-429/.test(html), 'non-JSON HTTP failures and 429 retries are visible in Provider metrics');
+check('STATIC-034 429 retry extension reaches getJSON', /onRetry:opts\.onRetry/.test(api) && /onRetry:extend/.test(api) && /opts\.onRetry\?\.\(4000\+retryMs\)/.test(html), '429 retry can extend the Provider timeout and the callback is propagated from adapters');
 check('STATIC-032 Abort polling guard exists for WebKit body waits', html.includes('setInterval(()=>{if(opts.signal?.aborted)abortJsonReject()},25)'), 'AbortSignal state is polled as a WebKit-safe fallback');check('STATIC-029 settings version is derived from APP_VERSION', /id=\"appVersionText\"/.test(html) && /renderAppVersion\(\)/.test(html) && /firstChild\.nodeValue=/.test(html), 'Settings version display uses APP_VERSION as the source of truth');
 check('STATIC-027 search performance measurement contract', /bookTrackerSearchMetrics/.test(html) && /検索処理の計測/.test(html) && /追加：ISBN検索/.test(html) && /検索全体：/.test(html) && /Provider別：/.test(html), 'search start-to-result timing and API/provider breakdown are explicit');
 check('STATIC-022 search measurement operation labels are explicit', ['追加：作品＋巻数検索','書籍検索：キーワード検索','書籍検索：作家検索','書籍検索：作家新刊検索','類似作品検索：基礎作品検索','類似作品検索：候補検索','書籍詳細：関連書籍検索'].every(x=>html.includes(x)), 'all user-facing search flows have explicit measurement labels');

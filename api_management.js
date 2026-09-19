@@ -137,18 +137,18 @@
     googleBooks:{
       async isbn(isbn,opts={}){
         const u="https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent("isbn:"+isbn)+"&maxResults=20&country=JP";
-        const d=await getJSON(u,{searchOnline:true,signal:opts.signal,metrics:opts.metrics});
+        const d=await getJSON(u,{searchOnline:true,signal:opts.signal,metrics:opts.metrics,onRetry:opts.onRetry});
         return (d.items||[]).map(v=>normalizeGoogle(v,isbn));
       },
       async search(q,limit,opts={}){
         const u="https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent(q)+"&maxResults="+Math.min(40,limit)+"&country=JP&langRestrict=ja";
-        const d=await getJSON(u,{searchOnline:true,signal:opts.signal,metrics:opts.metrics});
+        const d=await getJSON(u,{searchOnline:true,signal:opts.signal,metrics:opts.metrics,onRetry:opts.onRetry});
         return (d.items||[]).map(v=>normalizeGoogle(v));
       }
     },
     openBD:{
       async isbn(isbn,opts={}){
-        const d=await getJSON("https://api.openbd.jp/v1/get?isbn="+encodeURIComponent(isbn),{searchOnline:true,signal:opts.signal,metrics:opts.metrics});
+        const d=await getJSON("https://api.openbd.jp/v1/get?isbn="+encodeURIComponent(isbn),{searchOnline:true,signal:opts.signal,metrics:opts.metrics,onRetry:opts.onRetry});
         const x=d?.[0];if(!x)return [];
         return [normalizeOpenBD(x,isbn)].filter(x=>x?.title);
       }
@@ -158,7 +158,7 @@
         const cfg=getRakutenConfig();
         if(!cfg) return [];
         const u=rakutenUrl({isbn,applicationId:cfg.applicationId,accessKey:cfg.accessKey,hits:10});
-        const d=await getJSON(u,{searchOnline:true,headers:{},signal:opts.signal,metrics:opts.metrics});
+        const d=await getJSON(u,{searchOnline:true,headers:{},signal:opts.signal,metrics:opts.metrics,onRetry:opts.onRetry});
         return (d.items||[]).map(x=>normalizeRakuten(x)).filter(x=>x?.title);
       },
       async search(q,limit=20,opts={}){
@@ -169,19 +169,19 @@
         if(/^inauthor:/i.test(qq))p.author=qq.replace(/^inauthor:/i,'').trim();
         else if(/^intitle:/i.test(qq))p.title=qq.replace(/^intitle:/i,'').trim();
         else p.title=qq;
-        const d=await getJSON(rakutenUrl(p),{searchOnline:true,signal:opts.signal});
+        const d=await getJSON(rakutenUrl(p),{searchOnline:true,signal:opts.signal,onRetry:opts.onRetry});
         return (d.items||[]).map(x=>normalizeRakuten(x)).filter(x=>x?.title);
       }
     },
     ndl:{
       async isbn(isbn,opts={}){
-        return searchNDL({isbn,limit:10,signal:opts.signal,metrics:opts.metrics});
+        return searchNDL({isbn,limit:10,signal:opts.signal,metrics:opts.metrics,onRetry:opts.onRetry});
       },
       async search(q,limit=20,opts={}){
         const qq=String(q||'').trim();
-        if(/^inauthor:/i.test(qq))return searchNDLOpenSearch({creator:qq.replace(/^inauthor:/i,'').trim(),limit,signal:opts.signal,metrics:opts.metrics});
-        if(/^intitle:/i.test(qq))return searchNDLOpenSearch({title:qq.replace(/^intitle:/i,'').trim(),limit,signal:opts.signal,metrics:opts.metrics});
-        return searchNDLOpenSearch({any:qq,limit,signal:opts.signal,metrics:opts.metrics});
+        if(/^inauthor:/i.test(qq))return searchNDLOpenSearch({creator:qq.replace(/^inauthor:/i,'').trim(),limit,signal:opts.signal,metrics:opts.metrics,onRetry:opts.onRetry});
+        if(/^intitle:/i.test(qq))return searchNDLOpenSearch({title:qq.replace(/^intitle:/i,'').trim(),limit,signal:opts.signal,metrics:opts.metrics,onRetry:opts.onRetry});
+        return searchNDLOpenSearch({any:qq,limit,signal:opts.signal,metrics:opts.metrics,onRetry:opts.onRetry});
       }
     }
   };
@@ -204,7 +204,7 @@
       try{
         const fetchStarted=performance.now();
         let r;
-        try{r=await fetch(url,{cache:"no-store",signal:opts.signal});}
+        try{r=await fetch(url,{cache:"no-store",signal:opts.signal,onRetry:opts.onRetry});}
         finally{metricApiPhase(metrics?.activeProvider||"ndl", "fetch", performance.now()-fetchStarted, metrics);}
         if(r.ok){const parseStarted=performance.now();try{return await r.text()}finally{metricApiPhase(metrics?.activeProvider||"ndl","body",performance.now()-parseStarted,metrics)}}
         if(r.status===429||r.status===503){err=Error("HTTP "+r.status);if(opts.signal?.aborted)throw err;await sleep(700*Math.pow(2,n));continue;}

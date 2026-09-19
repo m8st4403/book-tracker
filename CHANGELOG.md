@@ -1,4 +1,4 @@
-# v4.13.76
+# v4.13.77
 
 ## Google Books 429再試行時のProviderタイムアウト延長
 
@@ -6,7 +6,7 @@
 - HTTP 429発生時、再試行待ち時間に加えて4秒の追加Provider時間枠を確保。
 - `withTimeout` に再試行時のタイムアウト延長機構を追加し、初回4秒の期限をそのまま再試行へ持ち越さないよう修正。
 - 429の待機時間・再試行通信・再試行後のHTTPステータスを同一計測記録で確認可能に維持。
-- APP_VERSION / DEV_GUARD_VERSION / package.json / README / 設定タブ / キャッシュバスターを4.13.76へ統一。
+- APP_VERSION / DEV_GUARD_VERSION / package.json / README / 設定タブ / キャッシュバスターを4.13.77へ統一。
 
 # v4.13.75
 
