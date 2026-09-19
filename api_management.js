@@ -12,7 +12,8 @@
     googleBooks:{enabled:true,capabilities:{isbnSearch:true,titleSearch:true,bibliographicRecord:true,seriesId:true,seriesName:true,volumeNumber:true,listPrice:true,taxIncluded:false,releaseDate:true,cover:true,author:true,publisher:true,pages:true}},
     openBD:{enabled:true,capabilities:{isbnSearch:true,titleSearch:false,bibliographicRecord:true,seriesId:false,seriesName:true,volumeNumber:true,listPrice:true,taxIncluded:false,releaseDate:true,cover:true,author:true,publisher:true,pages:true}},
     rakuten:{enabled:false,capabilities:{isbnSearch:true,titleSearch:true,bibliographicRecord:true,seriesId:false,seriesName:true,volumeNumber:true,listPrice:false,taxIncluded:true,releaseDate:true,cover:true,author:true,publisher:true,pages:true}},
-    ndl:{enabled:true,capabilities:{isbnSearch:true,titleSearch:true,bibliographicRecord:true,seriesId:false,seriesName:true,volumeNumber:true,listPrice:true,taxIncluded:true,releaseDate:true,cover:false,author:true,publisher:true,pages:true}}
+    // NDL OpenSearch adapter is installed/testable, but disabled for direct browser use until its transport is verified.
+    ndl:{enabled:false,capabilities:{isbnSearch:true,titleSearch:true,bibliographicRecord:true,seriesId:false,seriesName:true,volumeNumber:true,listPrice:true,taxIncluded:true,releaseDate:true,cover:false,author:true,publisher:true,pages:true}}
   };
   const priority={
     search:["googleBooks","ndl","rakuten"],
@@ -53,7 +54,7 @@
     return rank(result.confidence)>=rank(thresholds[field]||"MEDIUM");
   }
   function providerEnabled(name){return !!providers[name]?.enabled}
-  function hasCapability(name,cap){return !!providers[name]?.enabled&&providers[name]?.capabilities?.[cap]===true}
+  function hasCapability(name,cap){return providers[name]?.capabilities?.[cap]===true}
 
   const resolverCache=new Map();
   // Phase 7: session cache is bounded and configuration-aware. A cached answer must
@@ -377,9 +378,10 @@
     return cands[0];
   }
   async function search(q,limit=20){
-    const names=(priority.search||[]).filter(n=>providerEnabled(n)&&hasCapability(n,"titleSearch")&&adapters[n]?.search);
+    const candidateNames=(priority.search||[]).filter(n=>hasCapability(n,"titleSearch")&&adapters[n]?.search);
     const attempts=[],rows=[];
-    for(const name of names){
+    for(const name of candidateNames){
+      if(!providerEnabled(name)){attempts.push({provider:name,ok:false,skipped:true,reason:"provider disabled",detail:name==="ndl"?"NDL direct-browser adapter is disabled until a browser-safe transport is available":"provider disabled"});continue;}
       if(providerTemporarilyDisabled(name)){attempts.push({provider:name,ok:false,skipped:true,reason:"temporary provider cooldown"});continue;}
       try{
         metricApiStart(name); let got; try{got=await withTimeout(signal=>adapters[name].search(q,limit,{signal}),timeoutForProvider(name));metricApiEnd(name,true)}catch(e){metricApiEnd(name,false);throw e}
@@ -389,11 +391,14 @@
       if(rows.length)break;
     }
     if(!rows.length){
-      const skipped=attempts.filter(x=>x.skipped&&x.reason==="temporary provider cooldown");
+      const skippedCooldown=attempts.filter(x=>x.skipped&&x.reason==="temporary provider cooldown");
+      const skippedDisabled=attempts.filter(x=>x.skipped&&x.reason==="provider disabled");
       const failed=attempts.filter(x=>!x.skipped&&x.ok===false);
-      const e=Error(skipped.length&&failed.length===0
+      const e=Error(skippedCooldown.length&&failed.length===0&&skippedDisabled.length===0
         ?"書籍検索に利用できるAPIが一時停止中です。しばらく待ってから再検索してください。"
-        :"書籍検索に利用できるAPIから結果を取得できませんでした。");
+        :failed.length===0&&skippedDisabled.length===attempts.length
+          ?"書籍検索に利用できるAPIがありません。設定または通信経路を確認してください。"
+          :"書籍検索に利用できるAPIから結果を取得できませんでした。");
       e.attempts=attempts;
       throw e;
     }
