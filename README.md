@@ -17,7 +17,7 @@ iPhone向けの書籍管理アプリのプロトタイプです。
 
 ## 現在のバージョン
 
-**v4.13.68**
+**v4.13.69**
 
 NDL SearchのOpenSearch Adapterは実装・fixtureテスト済みですが、iPhoneのブラウザからの直結通信を既定では無効化しています。Google Books障害時に未検証のNDL直結で追加待ち時間が発生しないようにし、将来バックエンド／プロキシ等の安全な通信経路を用意した時点で再有効化します。v4.13.68ではGoogle Books等のProvider内通信をfetch/body工程まで分解計測します。
 
