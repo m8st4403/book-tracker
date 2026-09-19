@@ -22,7 +22,7 @@ function check(name, ok, detail='') { (ok ? pass : fail)(name, detail); }
 const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
 const dupIds = [...new Set(ids.filter((id,i)=>ids.indexOf(id)!==i))];
 check('STATIC-001 unique DOM ids', dupIds.length===0, dupIds.join(', '));
-check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.65["']/.test(html), 'version marker present');
+check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.66["']/.test(html), 'version marker present');
 const packagePath=path.join(path.dirname(target),'package.json');
 let packageVersion='';
 try{packageVersion=JSON.parse(fs.readFileSync(packagePath,'utf8')).version||''}catch(e){}
@@ -150,6 +150,8 @@ async function main(){
     check('E2E-API-006B Rakuten/NDL adapters are installed safely',apiAdapterContracts?.adapterMethods===true&&apiAdapterContracts?.ndlSearchEnabled===true,JSON.stringify(apiAdapterContracts));
     check('E2E-API-006C Rakuten normalization separates sale price from list price',apiAdapterContracts?.rakuten===true,JSON.stringify(apiAdapterContracts));
     check('E2E-API-006D NDL normalization maps series/volume/ISBN',apiAdapterContracts?.ndl===true,JSON.stringify(apiAdapterContracts));
+    const ndlOpenSearchFixture=await evalJS(`(()=>{const api=window.bookTrackerApiManagement;const xml="<?xml version='1.0'?><rss xmlns:dc='http://purl.org/dc/elements/1.1/' xmlns:dcterms='http://purl.org/dc/terms/' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns:dcndl='http://ndl.go.jp/dcndl/terms/'><channel><item><title>レベルE</title><dc:title>レベルE</dc:title><dc:creator>冨樫義博</dc:creator><dc:publisher>集英社</dc:publisher><dcterms:issued>1996</dcterms:issued><dc:identifier xsi:type='dcndl:ISBN'>9784088720739</dc:identifier></item></channel></rss>";const rows=api.normalizeNDLOpenSearch?.(xml)||[];return {ok:rows.length===1&&rows[0].title==='レベルE'&&canonicalIsbn(rows[0].isbn)==='9784088720739',rows:rows.map(x=>({title:x.title,isbn:x.isbn,author:x.author}))};})()`);
+    check('E2E-API-006L NDL OpenSearch normalization',ndlOpenSearchFixture?.ok===true,JSON.stringify(ndlOpenSearchFixture));
     // Phase 5/6: real resolver/search routing is tested with deterministic adapter doubles.
     const failoverSmoke=await evalJS(`(async()=>{try{
       const api=window.bookTrackerApiManagement, old={google:api.adapters.googleBooks.isbn,rak:api.adapters.rakuten.isbn,searchG:api.adapters.googleBooks.search,searchR:api.adapters.rakuten.search};

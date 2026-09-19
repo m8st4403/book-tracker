@@ -156,9 +156,9 @@
       },
       async search(q,limit=20,opts={}){
         const qq=String(q||'').trim();
-        if(/^inauthor:/i.test(qq))return searchNDL({creator:qq.replace(/^inauthor:/i,'').trim(),limit,signal:opts.signal});
-        if(/^intitle:/i.test(qq))return searchNDL({title:qq.replace(/^intitle:/i,'').trim(),limit,signal:opts.signal});
-        return searchNDL({anywhere:qq,limit,signal:opts.signal});
+        if(/^inauthor:/i.test(qq))return searchNDLOpenSearch({creator:qq.replace(/^inauthor:/i,'').trim(),limit,signal:opts.signal});
+        if(/^intitle:/i.test(qq))return searchNDLOpenSearch({title:qq.replace(/^intitle:/i,'').trim(),limit,signal:opts.signal});
+        return searchNDLOpenSearch({any:qq,limit,signal:opts.signal});
       }
     }
   };
@@ -216,6 +216,39 @@
     if(doc.querySelector("parsererror"))throw Error("NDL Search XMLを解析できませんでした。");
     const records=[...doc.getElementsByTagNameNS("*","record")];
     return records.map(rec=>normalizeNDLRecord(rec,hint)).filter(x=>x?.title);
+  }
+  function normalizeNDLOpenSearch(xml){
+    const doc=new DOMParser().parseFromString(xml,"application/xml");
+    if(doc.querySelector("parsererror"))throw Error("NDL OpenSearch XMLを解析できませんでした。");
+    const items=[...doc.getElementsByTagNameNS("*","item")];
+    return items.map(item=>{
+      const text=(name)=>firstLocalText(item,name);
+      const all=(name)=>allLocal(item,name);
+      const title=text("dc:title")||text("title");
+      const creators=all("dc:creator");
+      const publisher=text("dc:publisher");
+      const issued=text("dcterms:issued");
+      const ids=[...item.getElementsByTagNameNS("*","identifier")].map(x=>({value:String(x.textContent||"").trim(),type:String(x.getAttribute("xsi:type")||x.getAttribute("type")||"")}));
+      const isbnId=ids.find(x=>/isbn/i.test(x.type))?.value||ids.map(x=>x.value).find(v=>/^97[89][0-9-]{10,17}$/.test(v))||"";
+      const isbn=canonicalIsbn(isbnId);
+      const link=text("link");
+      const description=text("description");
+      const seriesMatch=description.match(/シリーズ名[：:]\s*([^<\n]+)/);
+      const out={isbn:isbnId,title,subtitle:"",author:creators.join(", "),publisher,date:issued,cover:"",description, categories:[],source:"ndl",series:seriesMatch?{id:"",name:seriesMatch[1].trim(),volumeNumber:null,displayVolume:"",bookType:""}:null,priceMeta:null,identifiers:{ndlRecordId:link||""},fieldEvidence:{}};
+      if(isbn)out.isbn=isbn;
+      const match=!!isbn;
+      for(const [field,value] of [["isbn13",/^97[89]\d{10}$/.test(String(out.isbn))?out.isbn:null],["title",out.title],["author",out.author],["publisher",out.publisher],["releaseDate",out.date],["seriesName",out.series?.name]])if(value)out.fieldEvidence[field]=evidenceFor(field,value,{identifierMatched:match,countryMatched:true});
+      out.fieldEvidence._source={provider:"ndl",identifierMatched:match};
+      return out;
+    }).filter(x=>x.title);
+  }
+  async function searchNDLOpenSearch({title,creator,any,limit=20,signal}){
+    const p=new URLSearchParams({cnt:String(Math.min(20,Math.max(1,limit)))});
+    if(title)p.set("title",String(title));
+    if(creator)p.set("creator",String(creator));
+    if(any)p.set("any",String(any));
+    const xml=await getText("https://ndlsearch.ndl.go.jp/api/opensearch?"+p.toString(),{signal});
+    return normalizeNDLOpenSearch(xml);
   }
   function normalizeNDLRecord(rec,hint=""){
     const title=firstLocalText(rec,"title"),creator=allLocal(rec,"creator")[0]||"",publisher=allLocal(rec,"publisher")[0]||"",issued=firstLocalText(rec,"issued")||firstLocalText(rec,"date")||"";
@@ -433,5 +466,5 @@
     return {value:null,confidence:"UNKNOWN",provider:null,evidence:null,attempts};
   }
   function config(){return {version:VERSION,runtimePolicy:JSON.parse(JSON.stringify(runtimePolicy)),providerHealth:JSON.parse(JSON.stringify(Object.fromEntries(providerHealth))),providers:JSON.parse(JSON.stringify(providers)),priority:JSON.parse(JSON.stringify(priority)),thresholds:JSON.parse(JSON.stringify(thresholds))}}
-  window.bookTrackerApiManagement={VERSION,CONFIDENCE:CONF,CRITICAL_FIELDS:[...CRITICAL],providers,priority,thresholds,adapters,evidenceFor,acceptable,listPriceAccepted,runField,resolveIsbn,seriesAcceptable,mergeCandidates,config,normalizeRakuten,normalizeNDLFixture,providerHealth,runtimePolicy,providerTemporarilyDisabled,search,clearResolverCache,cacheInfo,cachePolicy};
+  window.bookTrackerApiManagement={VERSION,CONFIDENCE:CONF,CRITICAL_FIELDS:[...CRITICAL],providers,priority,thresholds,adapters,evidenceFor,acceptable,listPriceAccepted,runField,resolveIsbn,seriesAcceptable,mergeCandidates,config,normalizeRakuten,normalizeNDLFixture,normalizeNDLOpenSearch,providerHealth,runtimePolicy,providerTemporarilyDisabled,search,clearResolverCache,cacheInfo,cachePolicy};
 })();
