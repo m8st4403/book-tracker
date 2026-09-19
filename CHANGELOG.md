@@ -1,3 +1,8 @@
+## v4.13.87
+- Google Booksの `Queries per day` 日次クォータ超過時、検索失敗を汎用エラーにせず原因を明示するよう改善。
+- 検索attemptに `GOOGLE_BOOKS_DAILY_QUOTA_EXCEEDED` を保持し、Provider停止状態を追跡可能にした。
+- 日次クォータ超過の計測に `daily-quota-no-retry` を分類直後から記録し、短時間再試行を行っていないことを明示。
+
 ## v4.13.86
 - Google Books APIの `rateLimitExceeded` + `Queries per day` を日次クォータ超過として明示的に分類。短時間の429再試行を行わず、Providerを一時停止してフェイルオーバーへ進む。
 - 日次クォータ超過時はProvider状態を約24時間停止し、同じ端末からの無意味な再試行を抑制。

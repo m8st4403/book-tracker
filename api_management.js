@@ -420,18 +420,25 @@
         metricApiStart(name); if(metrics)metrics.activeProvider=name; let got; try{got=await withTimeout((signal,extend)=>adapters[name].search(q,limit,{signal,metrics,onRetry:extend}),timeoutForProvider(name));metricApiEnd(name,true)}catch(e){metricApiEnd(name,false);throw e}finally{if(metrics)metrics.activeProvider=null}
         if(Array.isArray(got)&&got.length){rows.push(...got.map(r=>({...r,source:r.source||name})));attempts.push({provider:name,ok:true,count:got.length});recordProviderSuccess(name);}
         else{attempts.push({provider:name,ok:false,reason:"no results"});recordProviderSuccess(name);}
-      }catch(e){recordProviderFailure(name,e);attempts.push({provider:name,ok:false,error:String(e?.message||e),temporaryCooldown:providerTemporarilyDisabled(name)});}
+      }catch(e){
+        recordProviderFailure(name,e);
+        attempts.push({provider:name,ok:false,error:String(e?.message||e),code:e?.code||null,temporaryCooldown:providerTemporarilyDisabled(name)});
+      }
       if(rows.length)break;
     }
     if(!rows.length){
       const skippedCooldown=attempts.filter(x=>x.skipped&&x.reason==="temporary provider cooldown");
       const skippedDisabled=attempts.filter(x=>x.skipped&&x.reason==="provider disabled");
       const failed=attempts.filter(x=>!x.skipped&&x.ok===false);
-      const e=Error(skippedCooldown.length&&failed.length===0&&skippedDisabled.length===0
-        ?"書籍検索に利用できるAPIが一時停止中です。しばらく待ってから再検索してください。"
-        :failed.length===0&&skippedDisabled.length===attempts.length
-          ?"書籍検索に利用できるAPIがありません。設定または通信経路を確認してください。"
-          :"書籍検索に利用できるAPIから結果を取得できませんでした。");
+      const dailyQuotaAttempt=attempts.find(x=>x.code==="GOOGLE_BOOKS_DAILY_QUOTA_EXCEEDED");
+      const e= dailyQuotaAttempt
+        ? Error("Google Books APIの日次クォータ（Queries per day）を超過しています。短時間の再試行では回復しないため、Google Booksを一時停止しました。別APIが有効になればフェイルオーバーします。")
+        : Error(skippedCooldown.length&&failed.length===0&&skippedDisabled.length===0
+          ?"書籍検索に利用できるAPIが一時停止中です。しばらく待ってから再検索してください。"
+          :failed.length===0&&skippedDisabled.length===attempts.length
+            ?"書籍検索に利用できるAPIがありません。設定または通信経路を確認してください。"
+            :"書籍検索に利用できるAPIから結果を取得できませんでした。");
+      if(dailyQuotaAttempt)e.code="GOOGLE_BOOKS_DAILY_QUOTA_EXCEEDED";
       e.attempts=attempts;
       throw e;
     }
