@@ -1,3 +1,12 @@
+
+# v4.13.72
+
+## Google Booksのjson工程をタイムアウト時に確定
+- Google Booksレスポンスの`json()`をAbortSignalと競争させ、Providerタイムアウト時に本文読み取りを即時終了できるよう修正。
+- `fetch`後に残っていた未計測の待ち時間を`json`工程として確定し、検索計測へ反映。
+- タイムアウト後に次のProviderへ移るまでの処理継続を防止。
+- `APP_VERSION` / `DEV_GUARD_VERSION` / package.json / README / 設定タブ / キャッシュバスターを4.13.72へ統一。
+
 # v4.13.71
 
 ## Google Books本文処理のタイムアウト対応と検索計測の確定表示
