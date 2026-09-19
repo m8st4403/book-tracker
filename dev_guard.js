@@ -22,7 +22,7 @@ function check(name, ok, detail='') { (ok ? pass : fail)(name, detail); }
 const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
 const dupIds = [...new Set(ids.filter((id,i)=>ids.indexOf(id)!==i))];
 check('STATIC-001 unique DOM ids', dupIds.length===0, dupIds.join(', '));
-check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.64["']/.test(html), 'version marker present');
+check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.65["']/.test(html), 'version marker present');
 const packagePath=path.join(path.dirname(target),'package.json');
 let packageVersion='';
 try{packageVersion=JSON.parse(fs.readFileSync(packagePath,'utf8')).version||''}catch(e){}
@@ -145,9 +145,9 @@ async function main(){
       const rak=api?.normalizeRakuten?.({itemCode:'9784088720715',title:'レベルE 1巻',subTitle:'',seriesName:'レベルE',author:'冨樫義博',publisherName:'集英社',salesDate:'1996年01月',itemPrice:550,listPrice:0,largeImageUrl:'https://example.invalid/a.jpg'});
       const xml="<?xml version='1.0'?><searchRetrieveResponse xmlns='http://www.loc.gov/zing/srw/' xmlns:dcterms='http://purl.org/dc/terms/' xmlns:dcndl='http://ndl.go.jp/dcndl/terms/' xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'><records><record><recordData><dcterms:title>レベルE</dcterms:title><dcndl:seriesTitle><rdf:Description><rdf:value>レベルE</rdf:value></rdf:Description></dcndl:seriesTitle><dcndl:volume>3</dcndl:volume><dcterms:creator>冨樫義博</dcterms:creator><dcterms:publisher>集英社</dcterms:publisher><dcterms:issued>1996</dcterms:issued><dcterms:identifier rdf:resource='http://iss.ndl.go.jp/isbn/9784088720739'/></recordData></record></records></searchRetrieveResponse>";
       const ndl=api?.normalizeNDLFixture?.(xml,'9784088720739')?.[0];
-      return {adapterMethods:typeof api?.adapters?.rakuten?.isbn==='function'&&typeof api?.adapters?.rakuten?.search==='function'&&typeof api?.adapters?.ndl?.isbn==='function'&&typeof api?.adapters?.ndl?.search==='function',defaultOff:api?.providers?.rakuten?.enabled===false&&api?.providers?.ndl?.enabled===false,rakuten:rak?.source==='rakuten'&&rak?.series?.name==='レベルE'&&rak?.series?.volumeNumber===1&&rak?.priceMeta?.listPrice===null&&rak?.priceMeta?.salePrice===550,ndl:ndl?.source==='ndl'&&ndl?.series?.name==='レベルE'&&ndl?.series?.volumeNumber===3&&canonicalIsbn(ndl?.isbn)==='9784088720739'};
+      return {adapterMethods:typeof api?.adapters?.rakuten?.isbn==='function'&&typeof api?.adapters?.rakuten?.search==='function'&&typeof api?.adapters?.ndl?.isbn==='function'&&typeof api?.adapters?.ndl?.search==='function',ndlSearchEnabled:api?.providers?.ndl?.enabled===true&&api?.providers?.ndl?.capabilities?.titleSearch===true,rakuten:rak?.source==='rakuten'&&rak?.series?.name==='レベルE'&&rak?.series?.volumeNumber===1&&rak?.priceMeta?.listPrice===null&&rak?.priceMeta?.salePrice===550,ndl:ndl?.source==='ndl'&&ndl?.series?.name==='レベルE'&&ndl?.series?.volumeNumber===3&&canonicalIsbn(ndl?.isbn)==='9784088720739'};
     }catch(e){return {error:String(e?.message||e)}}})()`);
-    check('E2E-API-006B Rakuten/NDL adapters are installed safely',apiAdapterContracts?.adapterMethods===true&&apiAdapterContracts?.defaultOff===true,JSON.stringify(apiAdapterContracts));
+    check('E2E-API-006B Rakuten/NDL adapters are installed safely',apiAdapterContracts?.adapterMethods===true&&apiAdapterContracts?.ndlSearchEnabled===true,JSON.stringify(apiAdapterContracts));
     check('E2E-API-006C Rakuten normalization separates sale price from list price',apiAdapterContracts?.rakuten===true,JSON.stringify(apiAdapterContracts));
     check('E2E-API-006D NDL normalization maps series/volume/ISBN',apiAdapterContracts?.ndl===true,JSON.stringify(apiAdapterContracts));
     // Phase 5/6: real resolver/search routing is tested with deterministic adapter doubles.
@@ -177,6 +177,8 @@ async function main(){
     }catch(e){return {error:String(e?.message||e)}}})()`);
     check('E2E-API-006E ISBN自動フェイルオーバー',failoverSmoke?.firstFallback===true,JSON.stringify(failoverSmoke));
     check('E2E-API-006F 検索自動フェイルオーバー',failoverSmoke?.searchFallback===true,JSON.stringify(failoverSmoke));
+    const ndlSearchFallback=await evalJS(`(async()=>{try{const api=window.bookTrackerApiManagement;const oldG=api.adapters.googleBooks.search,oldN=api.adapters.ndl.search;const saved={g:api.providers.googleBooks.enabled,n:api.providers.ndl.enabled,threshold:api.runtimePolicy.failureThreshold,cooldown:api.runtimePolicy.cooldownMs,timeout:api.runtimePolicy.requestTimeoutMs,pt:{...(api.runtimePolicy.providerTimeoutMs||{})}};api.clearResolverCache();for(const h of api.providerHealth.values()){h.failures=0;h.temporarilyDisabledUntil=0;h.lastError='';}api.providers.googleBooks.enabled=true;api.providers.ndl.enabled=true;api.runtimePolicy.failureThreshold=99;api.runtimePolicy.cooldownMs=1000;api.runtimePolicy.requestTimeoutMs=500;api.runtimePolicy.providerTimeoutMs={googleBooks:40,ndl:100};let gc=0,nc=0;api.adapters.googleBooks.search=async()=>{gc++;return await new Promise(r=>setTimeout(()=>r([]),200))};api.adapters.ndl.search=async()=>{nc++;return [{isbn:'9784088720739',title:'レベルE',author:'冨樫義博',source:'ndl'}]};const r=await api.search('レベルE',5);const g=r?.attempts?.find(x=>x.provider==='googleBooks'),n=r?.attempts?.find(x=>x.provider==='ndl');const ok=gc===1&&nc===1&&g?.ok===false&&String(g?.error||'').toLowerCase().includes('timeout')&&n?.ok===true&&r?.results?.[0]?.title==='レベルE';api.adapters.googleBooks.search=oldG;api.adapters.ndl.search=oldN;api.providers.googleBooks.enabled=saved.g;api.providers.ndl.enabled=saved.n;api.runtimePolicy.failureThreshold=saved.threshold;api.runtimePolicy.cooldownMs=saved.cooldown;api.runtimePolicy.requestTimeoutMs=saved.timeout;api.runtimePolicy.providerTimeoutMs=saved.pt;api.clearResolverCache();return {ok,gc,nc,google:g,ndl:n};}catch(e){return {error:String(e?.message||e)}}})()`);
+    check('E2E-API-006K 検索 timeout -> NDL fallback',ndlSearchFallback?.ok===true,JSON.stringify(ndlSearchFallback));
     check('E2E-API-006G 障害Provider一時クールダウン',failoverSmoke?.cooldownSkip===true,JSON.stringify(failoverSmoke));
     check('E2E-API-006H timeout時の自動フェイルオーバー',failoverSmoke?.timeoutFallback===true,JSON.stringify(failoverSmoke));
     const isbnTimeoutFallback=await evalJS(`(async()=>{try{
@@ -195,7 +197,7 @@ async function main(){
       return {ok,gCalls,oCalls,google:g,openBD:o};
     }catch(e){return {error:String(e?.message||e)}}})()`)
     check('E2E-API-006J ISBN timeout -> openBD fallback',isbnTimeoutFallback?.ok===true,JSON.stringify(isbnTimeoutFallback));
-    const providerTimeoutContract=await evalJS(`(()=>{const api=window.bookTrackerApiManagement;return {googleBooks:api.runtimePolicy.providerTimeoutMs?.googleBooks,defaultTimeout:api.runtimePolicy.requestTimeoutMs}})()`); check('E2E-API-006I Provider別タイムアウト設定',providerTimeoutContract?.googleBooks===4000,JSON.stringify(providerTimeoutContract));
+    const providerTimeoutContract=await evalJS(`(()=>{const api=window.bookTrackerApiManagement;return {googleBooks:api.runtimePolicy.providerTimeoutMs?.googleBooks,ndl:api.runtimePolicy.providerTimeoutMs?.ndl,defaultTimeout:api.runtimePolicy.requestTimeoutMs}})()`); check('E2E-API-006I Provider別タイムアウト設定',providerTimeoutContract?.googleBooks===4000&&providerTimeoutContract?.ndl===4000,JSON.stringify(providerTimeoutContract));
 
     // Phase 7: bounded/config-aware resolver cache and critical-field non-downgrade contracts.
     const phase7Cache=await evalJS(`(async()=>{try{

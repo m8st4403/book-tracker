@@ -12,10 +12,10 @@
     googleBooks:{enabled:true,capabilities:{isbnSearch:true,titleSearch:true,bibliographicRecord:true,seriesId:true,seriesName:true,volumeNumber:true,listPrice:true,taxIncluded:false,releaseDate:true,cover:true,author:true,publisher:true,pages:true}},
     openBD:{enabled:true,capabilities:{isbnSearch:true,titleSearch:false,bibliographicRecord:true,seriesId:false,seriesName:true,volumeNumber:true,listPrice:true,taxIncluded:false,releaseDate:true,cover:true,author:true,publisher:true,pages:true}},
     rakuten:{enabled:false,capabilities:{isbnSearch:true,titleSearch:true,bibliographicRecord:true,seriesId:false,seriesName:true,volumeNumber:true,listPrice:false,taxIncluded:true,releaseDate:true,cover:true,author:true,publisher:true,pages:true}},
-    ndl:{enabled:false,capabilities:{isbnSearch:true,titleSearch:true,bibliographicRecord:true,seriesId:false,seriesName:true,volumeNumber:true,listPrice:true,taxIncluded:true,releaseDate:true,cover:false,author:true,publisher:true,pages:true}}
+    ndl:{enabled:true,capabilities:{isbnSearch:true,titleSearch:true,bibliographicRecord:true,seriesId:false,seriesName:true,volumeNumber:true,listPrice:true,taxIncluded:true,releaseDate:true,cover:false,author:true,publisher:true,pages:true}}
   };
   const priority={
-    search:["googleBooks","rakuten","ndl"],
+    search:["googleBooks","ndl","rakuten"],
     // ISBN照会は titleSearch の優先順位と分離する。openBD は ISBN照会を提供するため、Google Books障害時の次候補に含める。
     isbnSearch:["googleBooks","openBD","rakuten","ndl"],
     seriesId:["googleBooks"],
@@ -85,7 +85,7 @@
     // Providerごとの応答特性を踏まえた個別上限。未指定Providerは共通上限を使用する。
     // Google Booksが応答しない環境で12秒待ち続けるケースを4秒で切り上げ、
     // 次順位Provider（openBD等）へ速やかにフェイルオーバーする。
-    providerTimeoutMs:{googleBooks:4000}
+    providerTimeoutMs:{googleBooks:4000,ndl:4000}
   };
   const providerHealth=new Map(Object.keys(providers).map(name=>[name,{failures:0,temporarilyDisabledUntil:0,lastFailureAt:0,lastSuccessAt:0,lastError:""}]));
   function health(name){if(!providerHealth.has(name))providerHealth.set(name,{failures:0,temporarilyDisabledUntil:0,lastFailureAt:0,lastSuccessAt:0,lastError:""});return providerHealth.get(name)}
