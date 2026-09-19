@@ -1,3 +1,14 @@
+# v4.13.71
+
+## Google Books本文処理のタイムアウト対応と検索計測の確定表示
+
+- Google Books検索で `fetch` 完了後の `Response.json()` が本文待ちになった場合も、Providerタイムアウト時にResponse bodyをキャンセルするよう修正。
+- Provider内工程の `json` 計測がタイムアウト後に確定した場合も、完了した検索記録へ再描画して表示できるよう修正。
+- これにより「Google Books 4003ms」のうち `fetch` 以外で消費した時間を実機計測で確認できる状態にする。
+- `APP_VERSION` / `DEV_GUARD_VERSION` / `package.json` / README / 設定タブ / キャッシュバスターを4.13.71へ統一。
+
+---
+
 # v4.13.63
 
 ## 書籍検索のタイムアウト・フェイルオーバー改善
