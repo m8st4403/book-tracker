@@ -169,7 +169,7 @@
         if(/^inauthor:/i.test(qq))p.author=qq.replace(/^inauthor:/i,'').trim();
         else if(/^intitle:/i.test(qq))p.title=qq.replace(/^intitle:/i,'').trim();
         else p.title=qq;
-        const d=await getJSON(rakutenUrl(p),{searchOnline:true,signal:opts.signal,onRetry:opts.onRetry});
+        const d=await getJSON(rakutenUrl(p),{searchOnline:true,signal:opts.signal});
         return (d.items||[]).map(x=>normalizeRakuten(x)).filter(x=>x?.title);
       }
     },
@@ -204,7 +204,7 @@
       try{
         const fetchStarted=performance.now();
         let r;
-        try{r=await fetch(url,{cache:"no-store",signal:opts.signal,onRetry:opts.onRetry});}
+        try{r=await fetch(url,{cache:"no-store",signal:opts.signal});}
         finally{metricApiPhase(metrics?.activeProvider||"ndl", "fetch", performance.now()-fetchStarted, metrics);}
         if(r.ok){const parseStarted=performance.now();try{return await r.text()}finally{metricApiPhase(metrics?.activeProvider||"ndl","body",performance.now()-parseStarted,metrics)}}
         if(r.status===429||r.status===503){err=Error("HTTP "+r.status);if(opts.signal?.aborted)throw err;await sleep(700*Math.pow(2,n));continue;}
