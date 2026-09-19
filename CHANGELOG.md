@@ -1,3 +1,11 @@
+# v4.13.75
+
+- 実機計測でGoogle BooksのHTTP 429（レート制限）を確認したため、429処理を再構成。
+- `Retry-After` を読み取り、Provider内の再試行待ちを最大1秒に制限。
+- 429再試行待ち時間を検索計測へ明示記録し、長い指数バックオフが4秒のProviderタイムアウトに隠れないよう修正。
+- 429は最大1回だけ再試行し、継続する場合は `HTTP 429` として終了。
+- Settings / README / package.json / cache bust / DEV_GUARD_VERSION を4.13.75へ統一。
+
 # v4.13.74
 
 - Google Books検索のProvider計測にHTTPステータスを追加。fetch後にJSON工程へ進まず停止している場合でも、HTTPステータス（例：HTTP 429）を実機計測で識別できるようにした。
