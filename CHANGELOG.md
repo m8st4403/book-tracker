@@ -1,11 +1,18 @@
-# v4.13.73
+# v4.13.74
+
+- Google Books検索のProvider計測にHTTPステータスを追加。fetch後にJSON工程へ進まず停止している場合でも、HTTPステータス（例：HTTP 429）を実機計測で識別できるようにした。
+- HTTP 429時のリトライ発生も `retry-after-429` として明示。
+- v4.13.73で追加したresponse/json工程計測とAbort監視を維持。
+- バージョン情報を4.13.74へ統一。
+
+# v4.13.74
 
 ## Google Booksの応答・JSON工程を明示計測しAbort監視を強化
 - `fetch` 完了後にHTTP応答到達を明示する `response` 工程を追加。
 - JSON処理開始を `json-start` として計測し、`fetch` 後のどこで待機しているかを切り分け可能にした。
 - `AbortSignal` のイベント監視に加えて25ms周期の状態監視を追加し、iOS/WebKitでabortイベントが遅延する場合も `json()` 待機を解除できるようにした。
 - Response body cancellationを継続し、タイムアウト後に検索処理が次Providerへ進めるようにした。
-- バージョン情報を4.13.73へ統一。
+- バージョン情報を4.13.74へ統一。
 
 
 # v4.13.72
