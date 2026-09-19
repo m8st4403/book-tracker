@@ -22,7 +22,7 @@ function check(name, ok, detail='') { (ok ? pass : fail)(name, detail); }
 const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
 const dupIds = [...new Set(ids.filter((id,i)=>ids.indexOf(id)!==i))];
 check('STATIC-001 unique DOM ids', dupIds.length===0, dupIds.join(', '));
-check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.68["']/.test(html), 'version marker present');
+check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.13\.70["']/.test(html), 'version marker present');
 const packagePath=path.join(path.dirname(target),'package.json');
 let packageVersion='';
 try{packageVersion=JSON.parse(fs.readFileSync(packagePath,'utf8')).version||''}catch(e){}
@@ -32,6 +32,8 @@ check('STATIC-018 version sources are consistent', !!packageVersion&&appVersionM
 check('STATIC-019 persistence/backup gap audit exists', fs.existsSync(path.join(path.dirname(target),'RULE_GAP_AUDIT_v4_13_44.md'))&&fs.existsSync(path.join(path.dirname(target),'NEXT_IMPLEMENTATION_PRIORITY_v4_13_44.md')), 'persistence/backup/priority contracts');
 check('STATIC-020 backup schema validation contract', /Number\(d\.schemaVersion\)!==3/.test(html) && /function validateBackupData/.test(html) && /function restoreBackupData/.test(html), 'backup schemaVersion/key validation and atomic restore');
 check('STATIC-022 registration performance measurement contract', /bookTrackerRegistrationMetrics/.test(html) && /サンプルデータ：1冊登録/.test(html) && /検索結果：1冊登録/.test(html) && /検索結果：選択した本を一括登録/.test(html), 'operation label + timing metrics are explicit');
+check('STATIC-028 provider phase measurement is connected to active metric token', /token\.addApiPhase\s*=/.test(html) && /apiPhases/.test(html) && /rateLimitWait/.test(html) && /json/.test(html), 'phase durations are stored on the same metric token rendered in Settings');
+check('STATIC-029 settings version is derived from APP_VERSION', /id=\"appVersionText\"/.test(html) && /renderAppVersion\(\)/.test(html) && /firstChild\.nodeValue=/.test(html), 'Settings version display uses APP_VERSION as the source of truth');
 check('STATIC-027 search performance measurement contract', /bookTrackerSearchMetrics/.test(html) && /検索処理の計測/.test(html) && /追加：ISBN検索/.test(html) && /検索全体：/.test(html) && /Provider別：/.test(html), 'search start-to-result timing and API/provider breakdown are explicit');
 check('STATIC-022 search measurement operation labels are explicit', ['追加：作品＋巻数検索','書籍検索：キーワード検索','書籍検索：作家検索','書籍検索：作家新刊検索','類似作品検索：基礎作品検索','類似作品検索：候補検索','書籍詳細：関連書籍検索'].every(x=>html.includes(x)), 'all user-facing search flows have explicit measurement labels');
     check('STATIC-021 calendar/settings/ICS contracts exist', /function buildICS\(/.test(html) && /function escapeICSValue\(/.test(html) && /function getReleaseNotificationTargets\(/.test(html) && /persistedSettingsSnapshot/.test(html), 'calendar filters, settings rollback, ICS semantics, notification window');
@@ -557,6 +559,8 @@ async function main(){
 
     // Screenshot smoke at the final state. This catches catastrophic blank pages in addition to geometry tests.
     const shot=await cdp.send('Page.captureScreenshot',{format:'png'});
+    const phaseMetricContract=await evalJS(`(()=>{try{const sm=window.bookTrackerSearchMetrics;const t=sm.start('計測テスト','phase');t.addApiPhase('googleBooks','fetch',12);sm.finish(t,true,'',0,[]);return {ok:t.apiPhases?.googleBooks?.fetch===12};}catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
+    check('E2E-SEARCH-001 provider phase attaches to search record',phaseMetricContract?.ok===true,JSON.stringify(phaseMetricContract));
     check('E2E-SCREEN-001 screenshot captured',!!shot.data && shot.data.length>1000,'390x844 rendered screenshot');
   } catch(e){
     fail('E2E-FATAL',e.stack||e.message);

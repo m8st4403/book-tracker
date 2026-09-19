@@ -1,0 +1,99 @@
+# v4.13.63
+
+## 書籍検索のタイムアウト・フェイルオーバー改善
+
+- 通常の書籍検索でもProvider別タイムアウトを適用。
+- Google BooksはISBN検索と同様に最大4秒で打ち切り、次順位のNDL Searchへフェイルオーバー。
+- NDL Searchを通常検索のフォールバックProviderとして有効化。
+- AbortControllerによるキャンセル後にHTTPリトライや待機を継続しないよう修正。
+- 検索計測の操作ラベルはv4.13.62を継承。
+- バージョン表記を4.13.63へ統一。
+
+---
+
+# v4.13.64
+
+## 検索Provider一時停止時の計測・エラー表示改善
+
+- 検索Providerが一時クールダウン中にスキップされた場合、検索計測へその状態を保持。
+- 通信を行っていない0msの検索失敗を、実際のProvider通信失敗と区別できるよう改善。
+- 一時停止中のProviderを計測結果に「スキップ」として表示。
+- `api_management.js` のキャッシュバスターを4.13.64へ更新。
+- README、設定画面、package.json、Dev Guardのバージョン情報を4.13.64へ統一。
+
+---
+
+# v4.13.65
+
+## 通常の書籍検索フェイルオーバー
+
+- Google Books のキーワード検索がタイムアウトした場合に、NDL Searchへ自動フェイルオーバーするよう検索Provider優先順位を更新。
+- NDL Searchを通常検索のフォールバックProviderとして有効化。楽天Booksは認証情報が必要なため従来どおり無効。
+- Google Books / NDL SearchにProvider別4秒タイムアウトを設定。
+- 検索のtimeout→NDL fallbackを自動テストで固定化。
+- アプリ、README、package.json、Dev Guard、キャッシュバスターのバージョン表記を4.13.65へ統一。
+
+## 期待する動作
+
+Google Booksが約4秒でタイムアウトした場合、NDL Searchへ進み、結果を取得できれば検索成功となる。各Providerの通信時間・API回数・結果件数は既存の検索計測へ記録する。
+
+---
+
+# v4.13.66
+
+## NDL通常検索Adapter改善
+- NDL Searchの通常キーワード検索をSRUからOpenSearchへ切り替え。NDL公式仕様で提供されているOpenSearch検索を使用。
+- `intitle:` / `inauthor:` / 通常キーワードをOpenSearchの対応パラメータへ明示的に変換。
+- OpenSearch RSS/XMLの書誌情報をアプリのBookRecord形式へ正規化。
+- ISBN照会は既存のSRU経路を維持。
+- Google Booksタイムアウト→NDLフォールバックの既存計測・排他制御・4秒上限を維持。
+- バージョン表記を4.13.66へ統一。
+
+---
+
+# v4.13.67
+
+## NDL直結検索の安全側デフォルト化
+- NDL OpenSearch Adapter自体は維持し、XML/RSS正規化とfixtureテストも維持。
+- ただしiPhoneのブラウザからNDLへ直接接続する経路は、実機で4秒タイムアウトする状態が確認されたため、既定では無効化。
+- Google Booksがタイムアウトした検索で、未検証のNDL直結の追加4秒待ちを発生させない。
+- 検索計測には無効化されたProviderを「スキップ：Provider無効」として残し、何を試した／試していないかを判別可能にする。
+- NDL Adapterはテスト用に有効化でき、将来安全な通信経路を用意した時に再利用できる。
+- APP_VERSION / DEV_GUARD_VERSION / package.json / README / 設定タブ / キャッシュバスターを4.13.67へ統一。
+
+---
+
+# v4.13.68
+
+## Google Books等のProvider内通信工程を分解計測
+- 検索計測にProvider内の通信工程を追加。
+- `fetch` とレスポンス `body` の実測時間をProvider別に表示。
+- Providerタイムアウト時に、どの工程で時間を消費したかを実機計測で判別できるようにした。
+- 既存の検索全体/API通信/API回数/Provider別時間/スキップ理由は維持。
+- NDLはv4.13.67の安全側デフォルト（通常ブラウザ検索では無効）を維持。
+- APP_VERSION / DEV_GUARD_VERSION / package.json / README / 設定タブ / キャッシュバスターを4.13.68へ統一。
+
+---
+
+# v4.13.69
+
+## バージョン表記の最終修正
+
+- 設定タブ「このアプリについて」の表示を4.13.69へ修正。
+- APP_VERSION / DEV_GUARD_VERSION / package.json / README / 設定タブ / キャッシュバスターを4.13.69へ統一。
+- v4.13.67 / v4.13.68など過去バージョンのCHANGELOGは履歴として変更しない。
+- v4.13.68で追加した検索Provider内通信工程の計測機能は維持。
+
+---
+
+# v4.13.70
+
+## 検索Provider内通信工程の計測表示を修正
+
+- 検索計測トークン自身に `addApiPhase` を接続し、Provider内の工程計測が実際の検索記録へ保存されるよう修正。
+- 「待機 / fetch / json / body」など、どの工程で時間を消費したかを設定タブの検索計測に表示。
+- 検索操作名・検索条件・Provider名・工程別時間を同じ計測記録で確認できるよう維持。
+- 設定タブのバージョン表示を `APP_VERSION` から生成し、手動のハードコードによる表記ずれを防止。
+- `APP_VERSION` / `DEV_GUARD_VERSION` / `package.json` / README / キャッシュバスターを4.13.70へ統一。
+- GitHubアップロード側の変更履歴は `CHANGELOG.md` 1ファイルへ集約。旧バージョンの個別CHANGELOGは `アップロード不要/` に保管。
+
