@@ -1,3 +1,10 @@
+## v4.13.88
+- 無料トライアル終了後もGoogle Cloud課金なしで継続できる構成を優先し、Google Booksを既定OFFへ変更。
+- ISBN検索はopenBDを最優先とし、タイトル・著者検索は楽天Books Adapterを候補に変更。
+- 楽天Booksは公式仕様のJSONPを使うブラウザ向けAdapterを追加し、App ID / Access KeyをGitHubへ保存せず端末設定へ保存できる設定UIを追加。
+- NDL Search Adapterは保持するが、ブラウザ直結CORS未検証のため既定OFFを継続。
+- 無料運用API構成のRelease Guardを追加。
+
 ## v4.13.87
 - Google Booksの `Queries per day` 日次クォータ超過時、検索失敗を汎用エラーにせず原因を明示するよう改善。
 - 検索attemptに `GOOGLE_BOOKS_DAILY_QUOTA_EXCEEDED` を保持し、Provider停止状態を追跡可能にした。

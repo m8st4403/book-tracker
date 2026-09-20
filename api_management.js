@@ -5,20 +5,20 @@
  */
 (function(){
   "use strict";
-  const VERSION="1.4";
+  const VERSION="1.5";
   const CONF={UNKNOWN:0,LOW:1,MEDIUM:2,HIGH:3,VERIFIED:4};
   const CRITICAL=new Set(["isbn13","seriesId","seriesName","volumeNumber","listPrice","taxIncluded"]);
   const providers={
-    googleBooks:{enabled:true,capabilities:{isbnSearch:true,titleSearch:true,bibliographicRecord:true,seriesId:true,seriesName:true,volumeNumber:true,listPrice:true,taxIncluded:false,releaseDate:true,cover:true,author:true,publisher:true,pages:true}},
+    googleBooks:{enabled:false,capabilities:{isbnSearch:true,titleSearch:true,bibliographicRecord:true,seriesId:true,seriesName:true,volumeNumber:true,listPrice:true,taxIncluded:false,releaseDate:true,cover:true,author:true,publisher:true,pages:true}},
     openBD:{enabled:true,capabilities:{isbnSearch:true,titleSearch:false,bibliographicRecord:true,seriesId:false,seriesName:true,volumeNumber:true,listPrice:true,taxIncluded:false,releaseDate:true,cover:true,author:true,publisher:true,pages:true}},
-    rakuten:{enabled:false,capabilities:{isbnSearch:true,titleSearch:true,bibliographicRecord:true,seriesId:false,seriesName:true,volumeNumber:true,listPrice:false,taxIncluded:true,releaseDate:true,cover:true,author:true,publisher:true,pages:true}},
+    rakuten:{enabled:true,capabilities:{isbnSearch:true,titleSearch:true,bibliographicRecord:true,seriesId:false,seriesName:true,volumeNumber:true,listPrice:false,taxIncluded:true,releaseDate:true,cover:true,author:true,publisher:true,pages:true}},
     // NDL OpenSearch adapter is installed/testable, but disabled for direct browser use until its transport is verified.
     ndl:{enabled:false,capabilities:{isbnSearch:true,titleSearch:true,bibliographicRecord:true,seriesId:false,seriesName:true,volumeNumber:true,listPrice:true,taxIncluded:true,releaseDate:true,cover:false,author:true,publisher:true,pages:true}}
   };
   const priority={
-    search:["googleBooks","ndl","rakuten"],
+    search:["rakuten","ndl","googleBooks"],
     // ISBN照会は titleSearch の優先順位と分離する。openBD は ISBN照会を提供するため、Google Books障害時の次候補に含める。
-    isbnSearch:["googleBooks","openBD","rakuten","ndl"],
+    isbnSearch:["openBD","rakuten","ndl","googleBooks"],
     seriesId:["googleBooks"],
     seriesName:["googleBooks","rakuten","openBD","ndl"],
     volumeNumber:["googleBooks","rakuten","ndl","openBD","titleParser"],
@@ -53,7 +53,7 @@
     if(!result||result.value===null||result.value===undefined||result.value==="")return false;
     return rank(result.confidence)>=rank(thresholds[field]||"MEDIUM");
   }
-  function providerEnabled(name){return !!providers[name]?.enabled}
+  function providerEnabled(name){if(name==="rakuten")return !!providers[name]?.enabled&&!!getRakutenConfig();return !!providers[name]?.enabled}
   function hasCapability(name,cap){return providers[name]?.capabilities?.[cap]===true}
 
   const resolverCache=new Map();
@@ -61,7 +61,7 @@
   // never survive indefinitely or cross a Provider-priority/enabled-state change.
   const cachePolicy={ttlMs:10*60*1000,maxEntries:200};
   function providerConfigSignature(){
-    return JSON.stringify({providers,priority});
+    return JSON.stringify({providers,priority,rakuten:getRakutenConfig()});
   }
   function cacheGet(key){
     const entry=resolverCache.get(key);
@@ -163,8 +163,7 @@
       async isbn(isbn,opts={}){
         const cfg=getRakutenConfig();
         if(!cfg) return [];
-        const u=rakutenUrl({isbn,applicationId:cfg.applicationId,accessKey:cfg.accessKey,hits:10});
-        const d=await getJSON(u,{searchOnline:true,headers:{},signal:opts.signal,metrics:opts.metrics,onRetry:opts.onRetry});
+        const d=await getRakutenJSONP(rakutenUrl({isbn,applicationId:cfg.applicationId,accessKey:cfg.accessKey,hits:10}),opts);
         return (d.items||[]).map(x=>normalizeRakuten(x)).filter(x=>x?.title);
       },
       async search(q,limit=20,opts={}){
@@ -175,7 +174,7 @@
         if(/^inauthor:/i.test(qq))p.author=qq.replace(/^inauthor:/i,'').trim();
         else if(/^intitle:/i.test(qq))p.title=qq.replace(/^intitle:/i,'').trim();
         else p.title=qq;
-        const d=await getJSON(rakutenUrl(p),{searchOnline:true,signal:opts.signal});
+        const d=await getRakutenJSONP(rakutenUrl(p),opts);
         return (d.items||[]).map(x=>normalizeRakuten(x)).filter(x=>x?.title);
       }
     },
@@ -197,11 +196,30 @@
     return {applicationId:String(c.applicationId),accessKey:String(c.accessKey)};
   }
   function rakutenUrl(p){
-    const q=new URLSearchParams({applicationId:p.applicationId,accessKey:p.accessKey,format:"json",formatVersion:"2",hits:String(p.hits||20)});
+    const q=new URLSearchParams({applicationId:p.applicationId,accessKey:p.accessKey,format:"json",formatVersion:"2",hits:String(p.hits||20),callback:p.callback||""});
     if(p.isbn)q.set("isbn",String(p.isbn));
     if(p.title)q.set("title",String(p.title));
     if(p.author)q.set("author",String(p.author));
+    if(!p.callback)q.delete("callback");
     return "https://openapi.rakuten.co.jp/services/api/BooksBook/Search/20170404?"+q.toString();
+  }
+  function getRakutenJSONP(url,opts={}){
+    return new Promise((resolve,reject)=>{
+      if(opts.signal?.aborted){reject(new DOMException("Aborted","AbortError"));return;}
+      const started=performance.now(),metrics=opts.metrics;
+      const cb="__bookTrackerRakutenJsonp_"+Date.now()+"_"+Math.random().toString(36).slice(2);
+      let done=false,timer=null,script=null;
+      const finish=(fn,value)=>{if(done)return;done=true;if(timer)clearTimeout(timer);try{delete window[cb]}catch(_){window[cb]=undefined}script?.remove();fn(value)};
+      window[cb]=(data)=>{metricApiPhase(metrics?.activeProvider||"rakuten","jsonp-response",performance.now()-started,metrics);finish(resolve,data)};
+      script=document.createElement("script");
+      script.async=true;
+      script.src=url+(url.includes("?")?"&":"?")+"callback="+encodeURIComponent(cb);
+      script.onerror=()=>finish(reject,Error("楽天Books APIへのJSONP通信に失敗しました。"));
+      if(opts.signal)opts.signal.addEventListener("abort",()=>finish(reject,new DOMException("Aborted","AbortError")),{once:true});
+      document.head.appendChild(script);
+      timer=setTimeout(()=>finish(reject,Error("楽天Books APIがタイムアウトしました。")),Math.max(1000,Number(opts.timeoutMs)||4000));
+      metricApiPhase(metrics?.activeProvider||"rakuten","jsonp-wait",0,metrics);
+    });
   }
   async function getText(url,opts={}){
     const metrics=opts.metrics;

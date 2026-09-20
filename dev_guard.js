@@ -170,8 +170,8 @@ async function main(){
     // Phase 5/6: real resolver/search routing is tested with deterministic adapter doubles.
     const failoverSmoke=await evalJS(`(async()=>{try{
       const api=window.bookTrackerApiManagement, old={google:api.adapters.googleBooks.isbn,rak:api.adapters.rakuten.isbn,searchG:api.adapters.googleBooks.search,searchR:api.adapters.rakuten.search};
-      const saved={g:api.providers.googleBooks.enabled,r:api.providers.rakuten.enabled,threshold:api.runtimePolicy.failureThreshold,cooldown:api.runtimePolicy.cooldownMs,timeout:api.runtimePolicy.requestTimeoutMs,providerTimeouts:{...(api.runtimePolicy.providerTimeoutMs||{})}};
-      api.providers.googleBooks.enabled=true;api.providers.rakuten.enabled=true;api.runtimePolicy.failureThreshold=1;api.runtimePolicy.cooldownMs=60000;api.runtimePolicy.requestTimeoutMs=50;
+      const saved={g:api.providers.googleBooks.enabled,r:api.providers.rakuten.enabled,o:api.providers.openBD.enabled,threshold:api.runtimePolicy.failureThreshold,cooldown:api.runtimePolicy.cooldownMs,timeout:api.runtimePolicy.requestTimeoutMs,providerTimeouts:{...(api.runtimePolicy.providerTimeoutMs||{})},search:[...api.priority.search],isbn:[...api.priority.isbnSearch],rakutenConfig:globalThis.bookTrackerProviderConfig?.rakuten};
+      api.providers.googleBooks.enabled=true;api.providers.rakuten.enabled=true;api.providers.openBD.enabled=false;globalThis.bookTrackerProviderConfig={rakuten:{applicationId:'guard-app',accessKey:'guard-key'}};api.priority.search=['googleBooks','rakuten','ndl'];api.priority.isbnSearch=['googleBooks','rakuten','openBD','ndl'];api.clearResolverCache();api.runtimePolicy.failureThreshold=1;api.runtimePolicy.cooldownMs=60000;api.runtimePolicy.requestTimeoutMs=50;
       let gCalls=0,rCalls=0,sgCalls=0,srCalls=0;
       api.adapters.googleBooks.isbn=async()=>{gCalls++;throw Error('synthetic Google outage')};
       api.adapters.rakuten.isbn=async isbn=>{rCalls++;return [{isbn,title:'楽天フォールバック本',author:'A',publisher:'P',date:'2026-01-01',source:'rakuten',series:null,priceMeta:{listPrice:null,salePrice:500,taxIncluded:true},fieldEvidence:{title:api.evidenceFor('title','楽天フォールバック本',{identifierMatched:true,countryMatched:true})}}]};
@@ -189,12 +189,12 @@ async function main(){
       const timeoutFallback=st?.results?.[0]?.title==='タイムアウト後フォールバック'&&st?.attempts?.some(x=>x.provider==='googleBooks'&&x.ok===false&&String(x.error||'').includes('timeout'))&&st?.attempts?.some(x=>x.provider==='rakuten'&&x.ok===true);
       const before=gCalls;const two=await api.resolveIsbn('9784088720722',{full:true}).catch(()=>null);const cooldownSkip=gCalls===before&&two?.resolution?.attempts?.some(x=>x.provider==='googleBooks'&&x.skipped===true);
       api.adapters.googleBooks.isbn=old.google;api.adapters.rakuten.isbn=old.rak;api.adapters.googleBooks.search=old.searchG;api.adapters.rakuten.search=old.searchR;
-      api.providers.googleBooks.enabled=saved.g;api.providers.rakuten.enabled=saved.r;api.runtimePolicy.failureThreshold=saved.threshold;api.runtimePolicy.cooldownMs=saved.cooldown;api.runtimePolicy.requestTimeoutMs=saved.timeout;api.runtimePolicy.providerTimeoutMs=saved.providerTimeouts;
+      api.providers.googleBooks.enabled=saved.g;api.providers.rakuten.enabled=saved.r;api.providers.openBD.enabled=saved.o;globalThis.bookTrackerProviderConfig={rakuten:saved.rakutenConfig||{applicationId:'',accessKey:''}};api.priority.search=saved.search;api.priority.isbnSearch=saved.isbn;api.runtimePolicy.failureThreshold=saved.threshold;api.runtimePolicy.cooldownMs=saved.cooldown;api.runtimePolicy.requestTimeoutMs=saved.timeout;api.runtimePolicy.providerTimeoutMs=saved.providerTimeouts;api.clearResolverCache();
       return {firstFallback,searchFallback,timeoutFallback,cooldownSkip,gCalls,rCalls,sgCalls,srCalls};
     }catch(e){return {error:String(e?.message||e)}}})()`);
     check('E2E-API-006E ISBN自動フェイルオーバー',failoverSmoke?.firstFallback===true,JSON.stringify(failoverSmoke));
     check('E2E-API-006F 検索自動フェイルオーバー',failoverSmoke?.searchFallback===true,JSON.stringify(failoverSmoke));
-    const ndlSearchFallback=await evalJS(`(async()=>{try{const api=window.bookTrackerApiManagement;const oldG=api.adapters.googleBooks.search,oldN=api.adapters.ndl.search;const saved={g:api.providers.googleBooks.enabled,n:api.providers.ndl.enabled,threshold:api.runtimePolicy.failureThreshold,cooldown:api.runtimePolicy.cooldownMs,timeout:api.runtimePolicy.requestTimeoutMs,pt:{...(api.runtimePolicy.providerTimeoutMs||{})}};api.clearResolverCache();for(const h of api.providerHealth.values()){h.failures=0;h.temporarilyDisabledUntil=0;h.lastError='';}api.providers.googleBooks.enabled=true;api.providers.ndl.enabled=true;api.runtimePolicy.failureThreshold=99;api.runtimePolicy.cooldownMs=1000;api.runtimePolicy.requestTimeoutMs=500;api.runtimePolicy.providerTimeoutMs={googleBooks:40,ndl:100};let gc=0,nc=0;api.adapters.googleBooks.search=async()=>{gc++;return await new Promise(r=>setTimeout(()=>r([]),200))};api.adapters.ndl.search=async()=>{nc++;return [{isbn:'9784088720739',title:'レベルE',author:'冨樫義博',source:'ndl'}]};const r=await api.search('レベルE',5);const g=r?.attempts?.find(x=>x.provider==='googleBooks'),n=r?.attempts?.find(x=>x.provider==='ndl');const ok=gc===1&&nc===1&&g?.ok===false&&String(g?.error||'').toLowerCase().includes('timeout')&&n?.ok===true&&r?.results?.[0]?.title==='レベルE';api.adapters.googleBooks.search=oldG;api.adapters.ndl.search=oldN;api.providers.googleBooks.enabled=saved.g;api.providers.ndl.enabled=saved.n;api.runtimePolicy.failureThreshold=saved.threshold;api.runtimePolicy.cooldownMs=saved.cooldown;api.runtimePolicy.requestTimeoutMs=saved.timeout;api.runtimePolicy.providerTimeoutMs=saved.pt;api.clearResolverCache();return {ok,gc,nc,google:g,ndl:n};}catch(e){return {error:String(e?.message||e)}}})()`);
+    const ndlSearchFallback=await evalJS(`(async()=>{try{const api=window.bookTrackerApiManagement;const oldG=api.adapters.googleBooks.search,oldN=api.adapters.ndl.search;const saved={g:api.providers.googleBooks.enabled,n:api.providers.ndl.enabled,threshold:api.runtimePolicy.failureThreshold,cooldown:api.runtimePolicy.cooldownMs,timeout:api.runtimePolicy.requestTimeoutMs,pt:{...(api.runtimePolicy.providerTimeoutMs||{})},search:[...api.priority.search]};api.clearResolverCache();for(const h of api.providerHealth.values()){h.failures=0;h.temporarilyDisabledUntil=0;h.lastError='';}api.providers.googleBooks.enabled=true;api.providers.ndl.enabled=true;api.priority.search=['googleBooks','ndl'];api.runtimePolicy.failureThreshold=99;api.runtimePolicy.cooldownMs=1000;api.runtimePolicy.requestTimeoutMs=500;api.runtimePolicy.providerTimeoutMs={googleBooks:40,ndl:100};let gc=0,nc=0;api.adapters.googleBooks.search=async()=>{gc++;return await new Promise(r=>setTimeout(()=>r([]),200))};api.adapters.ndl.search=async()=>{nc++;return [{isbn:'9784088720739',title:'レベルE',author:'冨樫義博',source:'ndl'}]};const r=await api.search('レベルE',5);const g=r?.attempts?.find(x=>x.provider==='googleBooks'),n=r?.attempts?.find(x=>x.provider==='ndl');const ok=gc===1&&nc===1&&g?.ok===false&&String(g?.error||'').toLowerCase().includes('timeout')&&n?.ok===true&&r?.results?.[0]?.title==='レベルE';api.adapters.googleBooks.search=oldG;api.adapters.ndl.search=oldN;api.providers.googleBooks.enabled=saved.g;api.providers.ndl.enabled=saved.n;api.priority.search=saved.search;api.runtimePolicy.failureThreshold=saved.threshold;api.runtimePolicy.cooldownMs=saved.cooldown;api.runtimePolicy.requestTimeoutMs=saved.timeout;api.runtimePolicy.providerTimeoutMs=saved.pt;api.clearResolverCache();return {ok,gc,nc,google:g,ndl:n};}catch(e){return {error:String(e?.message||e)}}})()`);
     check('E2E-API-006K 検索 timeout -> NDL fallback',ndlSearchFallback?.ok===true,JSON.stringify(ndlSearchFallback));
     check('E2E-API-006G 障害Provider一時クールダウン',failoverSmoke?.cooldownSkip===true,JSON.stringify(failoverSmoke));
     check('E2E-API-006H timeout時の自動フェイルオーバー',failoverSmoke?.timeoutFallback===true,JSON.stringify(failoverSmoke));
@@ -220,10 +220,10 @@ async function main(){
 
     // Phase 7: bounded/config-aware resolver cache and critical-field non-downgrade contracts.
     const phase7Cache=await evalJS(`(async()=>{try{
-      const api=window.bookTrackerApiManagement, old={isbn:api.adapters.googleBooks.isbn};
+      const api=window.bookTrackerApiManagement, old={isbn:api.adapters.googleBooks.isbn},oldPriority=[...api.priority.isbnSearch];
       api.clearResolverCache();
       for(const h of api.providerHealth.values()){h.failures=0;h.temporarilyDisabledUntil=0;h.lastError='';}
-      api.providers.googleBooks.enabled=true;
+      api.providers.googleBooks.enabled=true;api.priority.isbnSearch=['googleBooks','openBD','rakuten','ndl'];
       api.runtimePolicy.requestTimeoutMs=500;
       let calls=0;
       api.adapters.googleBooks.isbn=async isbn=>{calls++;return [{isbn,title:'Cache Test '+calls,author:'A',publisher:'P',source:'googleBooks',fieldEvidence:{title:api.evidenceFor('title','Cache Test '+calls,{identifierMatched:true,countryMatched:true})}}]};
@@ -234,7 +234,7 @@ async function main(){
       api.providers.googleBooks.enabled=false;api.providers.rakuten.enabled=false;api.providers.ndl.enabled=false;api.providers.openBD.enabled=false;
       const invalidated=api.cacheInfo().size===1 && (await api.resolveIsbn('9784088720990',{full:true}).catch(()=>null))===null;
       api.providers.googleBooks.enabled=oldEnabled.g;api.providers.rakuten.enabled=oldEnabled.r;api.providers.ndl.enabled=oldEnabled.n;api.providers.openBD.enabled=oldEnabled.o;
-      api.adapters.googleBooks.isbn=old.isbn;
+      api.adapters.googleBooks.isbn=old.isbn;api.priority.isbnSearch=oldPriority;
       api.clearResolverCache();
       return {cacheHit,invalidated,cacheInfo:api.cacheInfo()};
     }catch(e){return {error:String(e?.message||e)}}})()`);
@@ -499,12 +499,12 @@ async function main(){
     // settings write must roll the in-memory object back to the last durable snapshot.
     const settingsRoundTrip=await evalJS(`(()=>{try{
       const before=JSON.parse(JSON.stringify(appSettings));
-      const next={...JSON.parse(JSON.stringify(appSettings)),profile:{name:'P1名',genre:'P1ジャンル',author:'P1作者',memo:'P1メモ'},theme:'green',font:'large',skin:{primary:'#123456',bg:'#abcdef',surface:'#fedcba',text:'#102030'},background:{image:'data:image/png;base64,P1',avgLum:.42,avgColor:'#667788'},autoTextContrast:false,search:{resultCount:40,sort:'title-asc',jpPriority:false,unownedFirst:true,cache:false},calendar:{weekStart:1,showLibrary:false,showRelated:true,showRecommended:false,openToday:false,ics:true}};
-      appSettings=next;const saved=saveSettings();const loaded=readJSONStorage(SETTINGS_KEY,null);const fields=['profile','theme','font','skin','background','autoTextContrast','search','calendar'];
+      const next={...JSON.parse(JSON.stringify(appSettings)),profile:{name:'P1名',genre:'P1ジャンル',author:'P1作者',memo:'P1メモ'},theme:'green',font:'large',skin:{primary:'#123456',bg:'#abcdef',surface:'#fedcba',text:'#102030'},background:{image:'data:image/png;base64,P1',avgLum:.42,avgColor:'#667788'},autoTextContrast:false,search:{resultCount:40,sort:'title-asc',jpPriority:false,unownedFirst:true,cache:false},calendar:{weekStart:1,showLibrary:false,showRelated:true,showRecommended:false,openToday:false,ics:true},rakuten:{applicationId:'guard-app',accessKey:'guard-key'}};
+      appSettings=next;const saved=saveSettings();const loaded=readJSONStorage(SETTINGS_KEY,null);const fields=['profile','theme','font','skin','background','autoTextContrast','search','calendar','rakuten'];
       const equal=saved&&fields.every(k=>JSON.stringify(loaded?.[k])===JSON.stringify(next[k]));
       const durable=JSON.stringify(loaded);
       const realSet=__guardStorage.setItem.bind(__guardStorage);__guardStorage.setItem=()=>{throw Error('synthetic settings quota failure')};
-      appSettings={...next,theme:'dark',font:'small',calendar:{...next.calendar,ics:false}};const failed=!saveSettings();__guardStorage.setItem=realSet;
+      appSettings={...next,theme:'dark',font:'small',calendar:{...next.calendar,ics:false},rakuten:{applicationId:'changed',accessKey:'changed'}};const failed=!saveSettings();__guardStorage.setItem=realSet;
       const rolledBack=appSettings.theme==='green'&&appSettings.font==='large'&&appSettings.calendar?.ics===true&&appSettings.search?.resultCount===40;
       const uiRolledBack=$('setWeekStart')?.value==='1'&&$('setICS')?.checked===true&&$('themeCurrent')?.textContent==='現在：ナチュラル'&&$('fontCurrent')?.textContent==='現在：大';
       __guardStorage.setItem(SETTINGS_KEY,durable);appSettings=before;saveSettings();
