@@ -270,25 +270,33 @@
     }
   }
   async function searchNDL({isbn,title,creator,anywhere,limit=20,signal,metrics,booksOnly=false}){
+    const take=Math.max(1,Number(limit)||20);
+    // Keyword/title/author search is OpenSearch-first. ISBN lookup stays SRU-first.
+    if(!isbn){
+      try{
+        const openRows=await searchNDLOpenSearch({title,creator,any:anywhere,limit:Math.max(20,take),signal,metrics,booksOnly});
+        if(openRows.length)return openRows.slice(0,take);
+      }catch(e){
+        if(signal?.aborted)throw e;
+      }
+    }
     const sruUrl=buildNDLSruSearchUrl({isbn,title,creator,anywhere,limit,booksOnly});
     try{
       const xml=await getTextWithDeadline(sruUrl,{signal,metrics,timeoutMs:3500});
       const rows=normalizeNDLSru(xml,isbn||"");
-      if(rows.length)return rows;
+      if(rows.length)return rows.slice(0,take);
     }catch(e){
       if(signal?.aborted)throw e;
     }
-    // SRUは応答が不安定な時間帯があるため、同じNDLの公式OpenSearchへフォールバックする。
-    const openUrl=new URL("https://ndlsearch.ndl.go.jp/api/opensearch");
-    openUrl.searchParams.set("cnt",String(Math.min(20,Math.max(1,limit))));
-    openUrl.searchParams.set("dpid","iss-ndl-opac");
-    if(booksOnly)openUrl.searchParams.set("mediatype","books");
-    if(isbn)openUrl.searchParams.set("isbn",String(isbn));
-    if(title)openUrl.searchParams.set("title",String(title));
-    if(creator)openUrl.searchParams.set("creator",String(creator));
-    if(anywhere)openUrl.searchParams.set("any",String(anywhere));
-    const xml=await getTextWithDeadline(openUrl.toString(),{signal,metrics,timeoutMs:4000});
-    return normalizeNDLOpenSearch(xml);
+    if(!isbn){
+      try{
+        const openRows=await searchNDLOpenSearch({title,creator,any:anywhere,limit:Math.max(20,take),signal,metrics,booksOnly});
+        return openRows.slice(0,take);
+      }catch(e){
+        if(signal?.aborted)throw e;
+      }
+    }
+    return [];
   }
   function xmlText(node){return String(node?.textContent||"").trim();}
   function firstLocal(root,name){return [...(root?.getElementsByTagNameNS?.("*",name)||[])].find(Boolean)||null;}
@@ -328,7 +336,11 @@
       const link=text("link");
       const description=text("description");
       const seriesMatch=description.match(/シリーズ名[：:]\s*([^<\n]+)/);
-      const out={isbn:isbnId,title,subtitle:"",author:creators.join(", "),publisher,date:issued,cover:"",description, categories:[],source:"ndl",series:seriesMatch?{id:"",name:seriesMatch[1].trim(),volumeNumber:null,displayVolume:"",bookType:""}:null,priceMeta:null,identifiers:{ndlRecordId:link||""},fieldEvidence:{}};
+      const parsed=parseVolumeTitle(title);
+      const seriesFallback=parsed.volume!=null?String(parsed.title||"").replace(/[.．。\s]+$/g,"").trim():"";
+      const volumeNumber=parsed.volume!=null?parsed.volume:null;
+      const seriesName=seriesMatch?seriesMatch[1].trim():seriesFallback;
+      const out={isbn:isbnId,title,subtitle:"",author:creators.join(", "),publisher,date:issued,cover:"",description,categories:[],source:"ndl",series:seriesName?{id:"",name:seriesName,volumeNumber,displayVolume:volumeNumber!=null?String(volumeNumber):"",bookType:""}:null,priceMeta:null,identifiers:{ndlRecordId:link||""},fieldEvidence:{}};
       if(isbn)out.isbn=isbn;
       const match=!!isbn;
       for(const [field,value] of [["isbn13",/^97[89]\d{10}$/.test(String(out.isbn))?out.isbn:null],["title",out.title],["author",out.author],["publisher",out.publisher],["releaseDate",out.date],["seriesName",out.series?.name]])if(value)out.fieldEvidence[field]=evidenceFor(field,value,{identifierMatched:match,countryMatched:true});
@@ -337,7 +349,8 @@
     }).filter(x=>x.title);
   }
   async function searchNDLOpenSearch({title,creator,any,limit=20,signal,metrics,booksOnly=false}){
-    const p=new URLSearchParams({cnt:String(Math.min(20,Math.max(1,limit))),dpid:"iss-ndl-opac"});
+    const candidateLimit=Math.max(20,Number(limit)||20);
+    const p=new URLSearchParams({cnt:String(Math.min(50,candidateLimit)),dpid:"iss-ndl-opac"});
     if(booksOnly)p.set("mediatype","books");
     if(title)p.set("title",String(title));
     if(creator)p.set("creator",String(creator));

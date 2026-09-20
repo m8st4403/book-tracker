@@ -1,11 +1,13 @@
-# v4.13.95
+# v4.13.96
 
-## NDL検索フォールバック・シリーズ統合キー修正
-- NDL SRUが約3.5秒以上応答しない場合、同じNDLの公式OpenSearchへ自動フォールバック。
-- SRUが0件の場合もOpenSearchへフォールバックし、`dpid=iss-ndl-opac` と `mediatype=books` を維持。
-- provider固有のseries.idだけをシリーズ表示の主キーにせず、巻数を除いた作品タイトルを主キーに変更。同一作品がAPI由来のID差で分裂する問題を防止。
-- 登録時にAPI解決結果の空シリーズ名で元のシリーズ情報を上書きしないよう保護。
-- APP_VERSION / package.json / README / キャッシュバスターを4.13.95へ統一。
+## NDL検索の高速安定化・検索関連度・巻数補完を修正
+- 通常のキーワード／タイトル／著者検索をNDL OpenSearch優先へ変更し、SRUの遅延で検索全体が約7.5秒待たされる経路を回避。
+- OpenSearchが0件または失敗した場合のみSRUへフォールバック。
+- NDL OpenSearchの候補取得数を増やし、作品タイトルそのもの・巻数表記を、作品名を含む解説的タイトルより優先する関連度順へ改善。
+- OpenSearch結果からタイトル表記の巻数を解析し、series.name / series.volumeNumber / displayVolume を補完。
+- 「レベルE. 1」のような末尾ピリオドはシリーズ判定キーだけで正規化。保存する書籍タイトル自体は変更しない。
+- ISBN照会は引き続きSRU優先。Google Books既定OFF、楽天Booksは認証情報がある場合のみ利用。
+- APP_VERSION / package.json / README / キャッシュバスターを4.13.96へ統一。
 
 # v4.13.94
 
