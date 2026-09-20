@@ -1,4 +1,4 @@
-# v4.13.98
+# v4.13.99
 
 ## 検索結果からの一括登録データ保持修正
 - NDL OpenSearchのDC-NDL `volume` / `seriesTitle` を検索結果へ取り込み、巻数表示を独立情報として保持。
@@ -6,7 +6,7 @@
 - 書名またはISBNが欠ける書誌は一括登録対象から除外し、空白蔵書を生成しない。
 - 一括登録後の検索結果の登録済み状態をISBNで再判定。
 - 蔵書タブから削除した場合も検索結果表示を即時再描画。
-- APP_VERSION / DEV_GUARD_VERSION / package.json / キャッシュバスターを4.13.98へ統一。
+- APP_VERSION / DEV_GUARD_VERSION / package.json / キャッシュバスターを4.13.99へ統一。
 
 # v4.13.97
 
