@@ -1,4 +1,10 @@
-## v4.13.103
+## v4.13.104
+- 検索結果からの一括登録で、既存の不完全な蔵書を先に「登録済み」と判定してしまう経路を修正。選択した検索結果は既存ISBNがあっても登録処理へ進み、ISBN書誌解決で不足情報を補完する。
+- 登録時に検索結果が不完全な場合はISBN解決を実行し、上下巻・複数巻の検索結果でも書誌情報を補完して登録する。
+- 修復登録時は同一ISBNの旧レコードを確実に置換し、旧ブランクレコードを残さないよう修正。
+- NDL OpenSearchの名前空間付きDC/DC-NDL項目の正規化を修正（title / creator / publisher / issued）。
+- リリーステスト：192/192、Mutation 3/3。
+
 
 - NDL OpenSearch の DC-NDL 名前空間付き項目を正しく正規化するよう修正。
 - `title / creator / publisher / issued` を XML の localName で取得し、`dcndl:volume / volumeTitle / seriesTitle` を巻数判定に利用。

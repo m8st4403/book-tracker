@@ -326,18 +326,15 @@
     return items.map(item=>{
       const text=(name)=>firstLocalText(item,name);
       const all=(name)=>allLocal(item,name);
-      // OpenSearch DC-NDL uses namespace-qualified elements. DOM localName is
-      // `title` / `creator` / `publisher` / `issued`, not `dc:title` etc.
-      // Prefer local names and retain prefixed-name fallback for legacy fixtures.
-      const title=text("title")||text("dc:title")||text("dcterms:title");
-      const creators=all("creator").concat(all("dc:creator")).filter((v,i,a)=>a.indexOf(v)===i);
-      const publisher=text("publisher")||text("dc:publisher")||text("dcterms:publisher");
-      const issued=text("issued")||text("dcterms:issued")||text("date");
+      const title=text("title");
+      const creators=all("creator");
+      const publisher=text("publisher");
+      const issued=text("issued");
       // DC-NDL exposes volume/volumeTitle as independent bibliographic fields.
       // Prefer those fields over guessing from the display title.
-      const volumeRaw=firstLocalText(item,"volume")||firstLocalText(item,"dcndl:volume");
-      const volumeTitle=firstLocalText(item,"volumeTitle")||firstLocalText(item,"dcndl:volumeTitle");
-      const seriesTitle=text("seriesTitle")||text("dcndl:seriesTitle");
+      const volumeRaw=firstLocalText(item,"volume");
+      const volumeTitle=firstLocalText(item,"volumeTitle");
+      const seriesTitle=text("seriesTitle");
       const ids=[...item.getElementsByTagNameNS("*","identifier")].map(x=>({value:String(x.textContent||"").trim(),type:String(x.getAttribute("xsi:type")||x.getAttribute("type")||"")}));
       const isbnId=ids.find(x=>/isbn/i.test(x.type))?.value||ids.map(x=>x.value).find(v=>/^97[89][0-9-]{10,17}$/.test(v))||"";
       const isbn=canonicalIsbn(isbnId);
@@ -346,8 +343,7 @@
       const seriesMatch=description.match(/シリーズ名[：:]\s*([^<\n]+)/);
       const parsed=parseVolumeTitle(title);
       const volumeParsed=String(volumeRaw||"").match(/\d+/);
-      const volumeTitleParsed=String(volumeTitle||"").match(/(?:第\s*)?(\d+)(?:\s*(?:巻|集))?/i);
-      const volumeNumber=volumeParsed?parseInt(volumeParsed[0],10):(volumeTitleParsed?parseInt(volumeTitleParsed[1],10):(parsed.volume!=null?parsed.volume:null));
+      const volumeNumber=volumeParsed?parseInt(volumeParsed[0],10):(parsed.volume!=null?parsed.volume:null);
       const seriesFallback=volumeNumber!=null?String(title||"").replace(/[.．。\s]+$/g,"").trim():"";
       const seriesName=(seriesTitle||seriesMatch?.[1]||seriesFallback).trim();
       const out={isbn:isbnId,title,subtitle:"",author:creators.join(", "),publisher,date:issued,cover:"",description,categories:[],source:"ndl",series:seriesName?{id:"",name:seriesName,volumeNumber,displayVolume:volumeNumber!=null?String(volumeNumber):"",bookType:""}:null,priceMeta:null,identifiers:{ndlRecordId:link||""},fieldEvidence:{}};
