@@ -330,6 +330,11 @@
       const creators=all("dc:creator");
       const publisher=text("dc:publisher");
       const issued=text("dcterms:issued");
+      // DC-NDL exposes volume/volumeTitle as independent bibliographic fields.
+      // Prefer those fields over guessing from the display title.
+      const volumeRaw=firstLocalText(item,"volume");
+      const volumeTitle=firstLocalText(item,"volumeTitle");
+      const seriesTitle=text("seriesTitle");
       const ids=[...item.getElementsByTagNameNS("*","identifier")].map(x=>({value:String(x.textContent||"").trim(),type:String(x.getAttribute("xsi:type")||x.getAttribute("type")||"")}));
       const isbnId=ids.find(x=>/isbn/i.test(x.type))?.value||ids.map(x=>x.value).find(v=>/^97[89][0-9-]{10,17}$/.test(v))||"";
       const isbn=canonicalIsbn(isbnId);
@@ -337,9 +342,10 @@
       const description=text("description");
       const seriesMatch=description.match(/シリーズ名[：:]\s*([^<\n]+)/);
       const parsed=parseVolumeTitle(title);
-      const seriesFallback=parsed.volume!=null?String(parsed.title||"").replace(/[.．。\s]+$/g,"").trim():"";
-      const volumeNumber=parsed.volume!=null?parsed.volume:null;
-      const seriesName=seriesMatch?seriesMatch[1].trim():seriesFallback;
+      const volumeParsed=String(volumeRaw||"").match(/\d+/);
+      const volumeNumber=volumeParsed?parseInt(volumeParsed[0],10):(parsed.volume!=null?parsed.volume:null);
+      const seriesFallback=volumeNumber!=null?String(title||"").replace(/[.．。\s]+$/g,"").trim():"";
+      const seriesName=(seriesTitle||seriesMatch?.[1]||seriesFallback).trim();
       const out={isbn:isbnId,title,subtitle:"",author:creators.join(", "),publisher,date:issued,cover:"",description,categories:[],source:"ndl",series:seriesName?{id:"",name:seriesName,volumeNumber,displayVolume:volumeNumber!=null?String(volumeNumber):"",bookType:""}:null,priceMeta:null,identifiers:{ndlRecordId:link||""},fieldEvidence:{}};
       if(isbn)out.isbn=isbn;
       const match=!!isbn;
