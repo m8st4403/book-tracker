@@ -87,7 +87,7 @@
     // Providerごとの応答特性を踏まえた個別上限。未指定Providerは共通上限を使用する。
     // Google Booksが応答しない環境で12秒待ち続けるケースを4秒で切り上げ、
     // 次順位Provider（openBD等）へ速やかにフェイルオーバーする。
-    providerTimeoutMs:{googleBooks:4000,ndl:4000}
+    providerTimeoutMs:{googleBooks:4000,ndl:8000}
   };
   const providerHealth=new Map(Object.keys(providers).map(name=>[name,{failures:0,temporarilyDisabledUntil:0,lastFailureAt:0,lastSuccessAt:0,lastError:""}]));
   function health(name){if(!providerHealth.has(name))providerHealth.set(name,{failures:0,temporarilyDisabledUntil:0,lastFailureAt:0,lastSuccessAt:0,lastError:""});return providerHealth.get(name)}
@@ -239,12 +239,17 @@
   }
   function buildNDLSruSearchUrl({isbn,title,creator,anywhere,limit=20,booksOnly=false}){
     const q=[];
+    // NDL SRU: data provider / data group are CQL conditions, not top-level URL parameters.
+    // Use the current main NDL holdings provider plus the "book" data group, and keep the
+    // material-type condition for ordinary book search so scores/music/image records do not mix in.
+    q.unshift('dpid=iss-ndl-opac');
+    q.unshift('dpgroupid=book');
     if(isbn)q.push('isbn="'+String(isbn).replace(/[-\s]/g,'')+'"');
     if(title)q.push('title="'+String(title).replace(/"/g,'')+'"');
     if(creator)q.push('creator="'+String(creator).replace(/"/g,'')+'"');
     if(anywhere)q.push('anywhere="'+String(anywhere).replace(/"/g,'')+'"');
     if(booksOnly)q.push('mediatype=books');
-    const params=new URLSearchParams({operation:"searchRetrieve",version:"1.2",maximumRecords:String(Math.min(50,Math.max(1,limit))),recordSchema:"dcndl",recordPacking:"xml",onlyBib:"true",dpid:"iss-ndl-opac-bib",query:q.join(" AND ")});
+    const params=new URLSearchParams({operation:"searchRetrieve",version:"1.2",maximumRecords:String(Math.min(50,Math.max(1,limit))),recordSchema:"dcndl",recordPacking:"xml",onlyBib:"true",query:q.join(" AND ")});
     return "https://ndlsearch.ndl.go.jp/api/sru?"+params.toString();
   }
   async function searchNDL({isbn,title,creator,anywhere,limit=20,signal,metrics,booksOnly=false}){
