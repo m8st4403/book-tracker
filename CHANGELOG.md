@@ -1,3 +1,16 @@
+# v4.13.91
+
+## NDL検索を図書書誌中心へ改善
+- 通常のキーワード・タイトル・著者検索をNDL Search SRUへ切り替え。
+- `mediatype=books` を指定し、楽譜などの非図書資料が通常検索結果へ混入しにくい構成へ変更。
+- `recordSchema=dcndl` / `recordPacking=xml` / `onlyBib=true` を指定し、シリーズ名・巻数・ISBN等の書誌情報を取得しやすくした。
+- `iss-ndl-opac-bib`（国立国会図書館蔵書・巻号以外）を指定し、さらに資料種別を図書へ絞り込む。
+- 検索結果カードでAPIから取得した `series.volumeNumber` も巻数として表示。保存されるタイトル文字列自体は変更しない。
+- NDLのProvider内通信計測（fetch/body）を維持。
+- APP_VERSION / DEV_GUARD_VERSION / package.json / README / 設定タブ / キャッシュバスターを4.13.91へ統一。
+
+---
+
 # v4.13.90
 
 ## 無課金キーワード検索の復旧

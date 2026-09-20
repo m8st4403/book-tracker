@@ -184,9 +184,9 @@
       },
       async search(q,limit=20,opts={}){
         const qq=String(q||'').trim();
-        if(/^inauthor:/i.test(qq))return searchNDLOpenSearch({creator:qq.replace(/^inauthor:/i,'').trim(),limit,signal:opts.signal,metrics:opts.metrics,onRetry:opts.onRetry});
-        if(/^intitle:/i.test(qq))return searchNDLOpenSearch({title:qq.replace(/^intitle:/i,'').trim(),limit,signal:opts.signal,metrics:opts.metrics,onRetry:opts.onRetry});
-        return searchNDLOpenSearch({title:qq,limit,signal:opts.signal,metrics:opts.metrics,onRetry:opts.onRetry});
+        if(/^inauthor:/i.test(qq))return searchNDL({creator:qq.replace(/^inauthor:/i,'').trim(),limit,signal:opts.signal,metrics:opts.metrics,booksOnly:true});
+        if(/^intitle:/i.test(qq))return searchNDL({title:qq.replace(/^intitle:/i,'').trim(),limit,signal:opts.signal,metrics:opts.metrics,booksOnly:true});
+        return searchNDL({title:qq,limit,signal:opts.signal,metrics:opts.metrics,booksOnly:true});
       }
     }
   };
@@ -237,13 +237,18 @@
     }
     throw err||Error("通信エラー");
   }
-  async function searchNDL({isbn,title,creator,anywhere,limit=20,signal,metrics}){
+  function buildNDLSruSearchUrl({isbn,title,creator,anywhere,limit=20,booksOnly=false}){
     const q=[];
     if(isbn)q.push('isbn="'+String(isbn).replace(/[-\s]/g,'')+'"');
     if(title)q.push('title="'+String(title).replace(/"/g,'')+'"');
     if(creator)q.push('creator="'+String(creator).replace(/"/g,'')+'"');
     if(anywhere)q.push('anywhere="'+String(anywhere).replace(/"/g,'')+'"');
-    const url="https://ndlsearch.ndl.go.jp/api/sru?operation=searchRetrieve&version=1.2&maximumRecords="+Math.min(20,Math.max(1,limit))+"&query="+encodeURIComponent(q.join(" AND "));
+    if(booksOnly)q.push('mediatype=books');
+    const params=new URLSearchParams({operation:"searchRetrieve",version:"1.2",maximumRecords:String(Math.min(50,Math.max(1,limit))),recordSchema:"dcndl",recordPacking:"xml",onlyBib:"true",dpid:"iss-ndl-opac-bib",query:q.join(" AND ")});
+    return "https://ndlsearch.ndl.go.jp/api/sru?"+params.toString();
+  }
+  async function searchNDL({isbn,title,creator,anywhere,limit=20,signal,metrics,booksOnly=false}){
+    const url=buildNDLSruSearchUrl({isbn,title,creator,anywhere,limit,booksOnly});
     const xml=await getText(url,{signal,metrics});
     return normalizeNDLSru(xml,isbn||"");
   }
@@ -529,5 +534,5 @@
     return {value:null,confidence:"UNKNOWN",provider:null,evidence:null,attempts};
   }
   function config(){return {version:VERSION,runtimePolicy:JSON.parse(JSON.stringify(runtimePolicy)),providerHealth:JSON.parse(JSON.stringify(Object.fromEntries(providerHealth))),providers:JSON.parse(JSON.stringify(providers)),priority:JSON.parse(JSON.stringify(priority)),thresholds:JSON.parse(JSON.stringify(thresholds))}}
-  window.bookTrackerApiManagement={VERSION,CONFIDENCE:CONF,CRITICAL_FIELDS:[...CRITICAL],providers,priority,thresholds,adapters,evidenceFor,acceptable,listPriceAccepted,runField,resolveIsbn,seriesAcceptable,mergeCandidates,config,normalizeRakuten,normalizeNDLFixture,normalizeNDLOpenSearch,providerHealth,runtimePolicy,providerTemporarilyDisabled,search,clearResolverCache,cacheInfo,cachePolicy};
+  window.bookTrackerApiManagement={VERSION,CONFIDENCE:CONF,CRITICAL_FIELDS:[...CRITICAL],providers,priority,thresholds,adapters,evidenceFor,acceptable,listPriceAccepted,runField,resolveIsbn,seriesAcceptable,mergeCandidates,config,normalizeRakuten,normalizeNDLFixture,normalizeNDLOpenSearch,buildNDLSruSearchUrl,providerHealth,runtimePolicy,providerTemporarilyDisabled,search,clearResolverCache,cacheInfo,cachePolicy};
 })();
