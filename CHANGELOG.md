@@ -1,4 +1,4 @@
-# v4.13.96
+# v4.13.97
 
 ## NDL検索の高速安定化・検索関連度・巻数補完を修正
 - 通常のキーワード／タイトル／著者検索をNDL OpenSearch優先へ変更し、SRUの遅延で検索全体が約7.5秒待たされる経路を回避。
@@ -7,7 +7,7 @@
 - OpenSearch結果からタイトル表記の巻数を解析し、series.name / series.volumeNumber / displayVolume を補完。
 - 「レベルE. 1」のような末尾ピリオドはシリーズ判定キーだけで正規化。保存する書籍タイトル自体は変更しない。
 - ISBN照会は引き続きSRU優先。Google Books既定OFF、楽天Booksは認証情報がある場合のみ利用。
-- APP_VERSION / package.json / README / キャッシュバスターを4.13.96へ統一。
+- APP_VERSION / package.json / README / キャッシュバスターを4.13.97へ統一。
 
 # v4.13.94
 
