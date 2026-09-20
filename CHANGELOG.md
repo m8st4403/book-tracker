@@ -1,4 +1,13 @@
-# v4.13.92
+# v4.13.93
+
+## NDL SRU検索条件の修正
+- NDLの現行仕様で2023年12月に廃止された `dpgroupid` をSRU検索条件から削除。前版でこの条件を付けたため、実機で0件になっていた問題を修正。
+- `dpid=iss-ndl-opac` と `mediatype=books` による図書検索へ修正。
+- NDL OpenSearchフォールバックにも `mediatype=books` を指定し、SRUが0件の場合も図書検索を維持。
+- Google Booksは既定OFF、楽天Booksは認証情報が設定されている場合のみ候補とする方針を維持。
+- APP_VERSION / DEV_GUARD_VERSION / package.json / README / 設定タブ / キャッシュバスターを4.13.93へ統一。
+
+# v4.13.93
 
 ## NDL検索を図書書誌中心へ改善
 - 通常のキーワード・タイトル・著者検索をNDL Search SRUへ切り替え。
@@ -7,7 +16,7 @@
 - `iss-ndl-opac` + `dpgroupid=book`（図書/巻号書誌群）をCQL条件として指定し、さらに `mediatype=books` で図書へ絞り込む。
 - 検索結果カードでAPIから取得した `series.volumeNumber` も巻数として表示。保存されるタイトル文字列自体は変更しない。
 - NDLのProvider内通信計測（fetch/body）を維持。
-- APP_VERSION / DEV_GUARD_VERSION / package.json / README / 設定タブ / キャッシュバスターを4.13.92へ統一。
+- APP_VERSION / DEV_GUARD_VERSION / package.json / README / 設定タブ / キャッシュバスターを4.13.93へ統一。
 
 ---
 

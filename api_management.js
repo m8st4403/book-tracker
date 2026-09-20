@@ -243,7 +243,6 @@
     // Use the current main NDL holdings provider plus the "book" data group, and keep the
     // material-type condition for ordinary book search so scores/music/image records do not mix in.
     q.unshift('dpid=iss-ndl-opac');
-    q.unshift('dpgroupid=book');
     if(isbn)q.push('isbn="'+String(isbn).replace(/[-\s]/g,'')+'"');
     if(title)q.push('title="'+String(title).replace(/"/g,'')+'"');
     if(creator)q.push('creator="'+String(creator).replace(/"/g,'')+'"');
@@ -303,8 +302,9 @@
       return out;
     }).filter(x=>x.title);
   }
-  async function searchNDLOpenSearch({title,creator,any,limit=20,signal,metrics}){
+  async function searchNDLOpenSearch({title,creator,any,limit=20,signal,metrics,booksOnly=false}){
     const p=new URLSearchParams({cnt:String(Math.min(20,Math.max(1,limit))),dpid:"iss-ndl-opac"});
+    if(booksOnly)p.set("mediatype","books");
     if(title)p.set("title",String(title));
     if(creator)p.set("creator",String(creator));
     if(any)p.set("any",String(any));
