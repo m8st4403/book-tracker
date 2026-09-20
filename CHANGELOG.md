@@ -1,3 +1,10 @@
+## v4.13.100
+
+- NDL OpenSearch の DC-NDL 名前空間付き項目を正しく正規化するよう修正。
+- `title / creator / publisher / issued` を XML の localName で取得し、`dcndl:volume / volumeTitle / seriesTitle` を巻数判定に利用。
+- 検索結果の巻数・著者・出版社・発売年が API 応答から欠落する経路を修正。
+- NDL OpenSearch 正規化の回帰テストを強化。
+
 # v4.13.99
 
 ## 検索結果からの一括登録データ保持修正
