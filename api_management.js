@@ -251,10 +251,44 @@
     const params=new URLSearchParams({operation:"searchRetrieve",version:"1.2",maximumRecords:String(Math.min(50,Math.max(1,limit))),recordSchema:"dcndl",recordPacking:"xml",onlyBib:"true",query:q.join(" AND ")});
     return "https://ndlsearch.ndl.go.jp/api/sru?"+params.toString();
   }
+  async function getTextWithDeadline(url,{signal,metrics,timeoutMs=3500}={}){
+    const controller=new AbortController();
+    let timer=null,abortHandler=null;
+    const parent=signal;
+    if(parent){
+      if(parent.aborted)throw Error("検索処理が中断されました。");
+      abortHandler=()=>{try{controller.abort()}catch(_){}};
+      parent.addEventListener("abort",abortHandler,{once:true});
+    }
+    try{
+      const work= getText(url,{signal:controller.signal,metrics});
+      const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>{try{controller.abort()}catch(_){};reject(Error("NDL検索タイムアウト"))},Math.max(500,Number(timeoutMs)||3500))});
+      return await Promise.race([work,timeout]);
+    }finally{
+      if(timer)clearTimeout(timer);
+      if(parent&&abortHandler)parent.removeEventListener("abort",abortHandler);
+    }
+  }
   async function searchNDL({isbn,title,creator,anywhere,limit=20,signal,metrics,booksOnly=false}){
-    const url=buildNDLSruSearchUrl({isbn,title,creator,anywhere,limit,booksOnly});
-    const xml=await getText(url,{signal,metrics});
-    return normalizeNDLSru(xml,isbn||"");
+    const sruUrl=buildNDLSruSearchUrl({isbn,title,creator,anywhere,limit,booksOnly});
+    try{
+      const xml=await getTextWithDeadline(sruUrl,{signal,metrics,timeoutMs:3500});
+      const rows=normalizeNDLSru(xml,isbn||"");
+      if(rows.length)return rows;
+    }catch(e){
+      if(signal?.aborted)throw e;
+    }
+    // SRUは応答が不安定な時間帯があるため、同じNDLの公式OpenSearchへフォールバックする。
+    const openUrl=new URL("https://ndlsearch.ndl.go.jp/api/opensearch");
+    openUrl.searchParams.set("cnt",String(Math.min(20,Math.max(1,limit))));
+    openUrl.searchParams.set("dpid","iss-ndl-opac");
+    if(booksOnly)openUrl.searchParams.set("mediatype","books");
+    if(isbn)openUrl.searchParams.set("isbn",String(isbn));
+    if(title)openUrl.searchParams.set("title",String(title));
+    if(creator)openUrl.searchParams.set("creator",String(creator));
+    if(anywhere)openUrl.searchParams.set("any",String(anywhere));
+    const xml=await getTextWithDeadline(openUrl.toString(),{signal,metrics,timeoutMs:4000});
+    return normalizeNDLOpenSearch(xml);
   }
   function xmlText(node){return String(node?.textContent||"").trim();}
   function firstLocal(root,name){return [...(root?.getElementsByTagNameNS?.("*",name)||[])].find(Boolean)||null;}
