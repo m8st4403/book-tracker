@@ -12,11 +12,11 @@
     googleBooks:{enabled:false,capabilities:{isbnSearch:true,titleSearch:true,bibliographicRecord:true,seriesId:true,seriesName:true,volumeNumber:true,listPrice:true,taxIncluded:false,releaseDate:true,cover:true,author:true,publisher:true,pages:true}},
     openBD:{enabled:true,capabilities:{isbnSearch:true,titleSearch:false,bibliographicRecord:true,seriesId:false,seriesName:true,volumeNumber:true,listPrice:true,taxIncluded:false,releaseDate:true,cover:true,author:true,publisher:true,pages:true}},
     rakuten:{enabled:true,capabilities:{isbnSearch:true,titleSearch:true,bibliographicRecord:true,seriesId:false,seriesName:true,volumeNumber:true,listPrice:false,taxIncluded:true,releaseDate:true,cover:true,author:true,publisher:true,pages:true}},
-    // NDL OpenSearch adapter is installed/testable, but disabled for direct browser use until its transport is verified.
-    ndl:{enabled:false,capabilities:{isbnSearch:true,titleSearch:true,bibliographicRecord:true,seriesId:false,seriesName:true,volumeNumber:true,listPrice:true,taxIncluded:true,releaseDate:true,cover:false,author:true,publisher:true,pages:true}}
+    // NDL OpenSearch is used as the no-billing keyword/title/author search provider.
+    ndl:{enabled:true,capabilities:{isbnSearch:true,titleSearch:true,bibliographicRecord:true,seriesId:false,seriesName:true,volumeNumber:true,listPrice:true,taxIncluded:true,releaseDate:true,cover:false,author:true,publisher:true,pages:true}}
   };
   const priority={
-    search:["rakuten","ndl","googleBooks"],
+    search:["ndl","rakuten","googleBooks"],
     // ISBN照会は titleSearch の優先順位と分離する。openBD は ISBN照会を提供するため、Google Books障害時の次候補に含める。
     isbnSearch:["openBD","rakuten","ndl","googleBooks"],
     seriesId:["googleBooks"],
@@ -298,7 +298,7 @@
     if(title)p.set("title",String(title));
     if(creator)p.set("creator",String(creator));
     if(any)p.set("any",String(any));
-    const xml=await getText("https://ndlsearch.ndl.go.jp/api/opensearch?"+p.toString(),{signal});
+    const xml=await getText("https://ndlsearch.ndl.go.jp/api/opensearch?"+p.toString(),{signal,metrics});
     return normalizeNDLOpenSearch(xml);
   }
   function normalizeNDLRecord(rec,hint=""){
