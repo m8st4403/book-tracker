@@ -1,4 +1,4 @@
-## v4.13.101
+## v4.13.102
 
 - NDL OpenSearch の DC-NDL 名前空間付き項目を正しく正規化するよう修正。
 - `title / creator / publisher / issued` を XML の localName で取得し、`dcndl:volume / volumeTitle / seriesTitle` を巻数判定に利用。
