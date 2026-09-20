@@ -1,4 +1,4 @@
-# v4.13.89
+# v4.13.90
 
 ## 無課金キーワード検索の復旧
 - Google Booksを既定OFFとする方針を維持。
@@ -6,7 +6,7 @@
 - 検索優先順位を `NDL → 楽天Books → Google Books` に変更。楽天Booksは認証情報が設定されている場合のみ実行。
 - NDLのProvider内通信計測へ `fetch` / `body` 等を渡し、検索結果から「何の通信を行ったか」を確認できるよう維持。
 - ISBN検索は引き続き `openBD → 楽天Books → NDL → Google Books`。
-- APP_VERSION / DEV_GUARD_VERSION / package.json / README / キャッシュバスターを4.13.89へ統一。
+- APP_VERSION / DEV_GUARD_VERSION / package.json / README / キャッシュバスターを4.13.90へ統一。
 
 ---
 

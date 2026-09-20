@@ -186,7 +186,7 @@
         const qq=String(q||'').trim();
         if(/^inauthor:/i.test(qq))return searchNDLOpenSearch({creator:qq.replace(/^inauthor:/i,'').trim(),limit,signal:opts.signal,metrics:opts.metrics,onRetry:opts.onRetry});
         if(/^intitle:/i.test(qq))return searchNDLOpenSearch({title:qq.replace(/^intitle:/i,'').trim(),limit,signal:opts.signal,metrics:opts.metrics,onRetry:opts.onRetry});
-        return searchNDLOpenSearch({any:qq,limit,signal:opts.signal,metrics:opts.metrics,onRetry:opts.onRetry});
+        return searchNDLOpenSearch({title:qq,limit,signal:opts.signal,metrics:opts.metrics,onRetry:opts.onRetry});
       }
     }
   };
@@ -294,7 +294,7 @@
     }).filter(x=>x.title);
   }
   async function searchNDLOpenSearch({title,creator,any,limit=20,signal,metrics}){
-    const p=new URLSearchParams({cnt:String(Math.min(20,Math.max(1,limit)))});
+    const p=new URLSearchParams({cnt:String(Math.min(20,Math.max(1,limit))),dpid:"iss-ndl-opac"});
     if(title)p.set("title",String(title));
     if(creator)p.set("creator",String(creator));
     if(any)p.set("any",String(any));

@@ -17,9 +17,9 @@ iPhone向けの書籍管理アプリのプロトタイプです。
 
 ## 現在のバージョン
 
-**v4.13.89**
+**v4.13.90**
 
-v4.13.89ではGoogle Booksを既定OFFとし、Google Cloudの課金設定を前提にしない検索構成へ切り替えました。ISBN検索はopenBDを最優先にし、タイトル・著者検索は楽天Books Adapter（公式JSONP）を候補とします。楽天BooksのApp ID / Access KeyはGitHubへ保存せず端末設定へ保存します。NDL Search Adapterは実装・fixtureテスト済みですが、iPhoneブラウザからの直結はCORSの検証結果から既定OFFのままとします。v4.13.87までのGoogle Books日次クォータ超過診断も保持します。
+v4.13.90ではGoogle Booksを既定OFFとし、Google Cloudの課金設定を前提にしない検索構成へ切り替えました。ISBN検索はopenBDを最優先にし、タイトル・著者検索は楽天Books Adapter（公式JSONP）を候補とします。楽天BooksのApp ID / Access KeyはGitHubへ保存せず端末設定へ保存します。NDL Search Adapterは実装・fixtureテスト済みですが、iPhoneブラウザからの直結はCORSの検証結果から既定OFFのままとします。v4.13.87までのGoogle Books日次クォータ超過診断も保持します。
 
 v4.13.36では、全タブのデータ変更操作を共通排他制御し、検索中も登録・削除などのデータ変更を開始できないようにしました。また蔵書の並び順は、選択した並び順を最優先キーとし、同値時は「作品名 → 巻数 → 登録順」で統一しました。
 
