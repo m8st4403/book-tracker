@@ -68,6 +68,8 @@ check('STATIC-012 series repair excludes demo records', /isDemoRecord\(b\)/.test
 check('STATIC-013 resolver session cache contract', /resolverCache/.test(fs.readFileSync(path.join(path.dirname(target),'api_management.js'),'utf8')), 'ISBN resolver results are cached per session');
 check('STATIC-014 rule/test ledger exists', fs.existsSync(path.join(path.dirname(target),'RULE_LEDGER_v4_13_40.md')) && fs.existsSync(path.join(path.dirname(target),'RULE_TEST_MATRIX_v4_13_40.md')), 'rule ledger and verification matrix');
 check('STATIC-015 UI display contract exists', /scrollWidth<=el\.clientWidth/.test(fs.readFileSync(path.join(path.dirname(target),'dev_guard.js'),'utf8')) && /E2E-UI-002 compact library statistics keep labels visible/.test(fs.readFileSync(path.join(path.dirname(target),'dev_guard.js'),'utf8')), 'visible/readable/clipping contract');
+check('STATIC-042 diagnostic output containment contract exists', /diagnostic-output\{[^}]*max-height:42vh;overflow:auto/.test(html) && /registration-trace\{[^}]*max-height:34vh;overflow:auto/.test(html), 'long investigation results are bounded and scrollable');
+check('STATIC-043 diagnostic copy controls exist', /copySeriesDiagnosticBtn/.test(html) && /copyDevGuardBtn/.test(html) && /copyRegistrationMetrics/.test(html) && /copySearchMetrics/.test(html) && /function copyElementText\(/.test(html), 'investigation results can be copied as full text');
 check('STATIC-016 sort tie-break contract exists', /REG-002B/.test(fs.readFileSync(target,'utf8')), 'all sort modes use deterministic tie-breaks');
 check('STATIC-017 operation catalog exists', fs.existsSync(path.join(path.dirname(target),'OPERATION_CATALOG_v4_13_40.md')), 'data mutation operation catalog');
 
@@ -146,7 +148,7 @@ async function main(){
     const tabContracts={
       home:['homeBookCount','homeBookTotal','homePurchaseCount','homeUnreadCount','homeFavoriteCount','homeUpcomingBooks'],
       add:['scan','isbnRows','isbnSearch','work','vol','workSearch'],
-      library:['libraryStats','libraryFilter','libraryFilterToggle','seriesViewToggle','librarySort','filterAuthor','filterPublisher','filterYear','filterRelease','filterReading','filterFavorite','filterPrice','filterReset','myBooks','seriesCheckBtn','seriesRepairBtn','unreadOnlyBtn'],
+      library:['libraryStats','libraryFilter','libraryFilterToggle','seriesViewToggle','librarySort','filterAuthor','filterPublisher','filterYear','filterRelease','filterReading','filterFavorite','filterPrice','filterReset','myBooks','seriesCheckBtn','shareDiagnosticReportBtn','seriesRepairBtn','unreadOnlyBtn'],
       search:['searchModeBook','searchModeAuthor','query','searchBtn','searchUnownedOnly','searchResults','similarBox','similarBtn','author','authorBtn','authorNewBtn','authorResults'],
       calendar:['calendarMonthCard','prevMonth','todayMonth','monthTitle','nextMonth','calHead','calendarGrid','calendarDayCard','calendarMonthReleasedCard','ics'],
       settings:['profileName','profileGenre','profileAuthor','profileMemo','profileSave','themeCurrent','fontCurrent','theme-choice','font-choice','skinSave','skinApply','bgImageInput','bgImageRemove','autoTextContrast','backupDataBtn','restoreDataBtn','setSearchCount','setSearchSort','setWeekStart','setICS']
@@ -376,6 +378,44 @@ async function main(){
       return {ok:visible,visible,text,display:labels.map(x=>getComputedStyle(x).display)};
     })()`);
     check('E2E-UI-002 compact library statistics keep labels visible',compactStatsUi?.ok===true,JSON.stringify(compactStatsUi));
+
+    const diagnosticUi=await evalJS(`(()=>{
+      const details=[...document.querySelectorAll('.diagnostic-tools')];
+      const allClosed=details.every(d=>!d.open);
+      const outputs=[...document.querySelectorAll('.diagnostic-output')];
+      const bounded=outputs.every(e=>{const s=getComputedStyle(e);return s.overflowY==='auto'&&s.maxHeight!=='none'});
+      const copyIds=['copySeriesDiagnosticBtn','copyDevGuardBtn','copyRegistrationMetrics','copySearchMetrics'];
+      const copies=copyIds.every(id=>!!document.getElementById(id));
+      return {details:details.length,allClosed,bounded,copies};
+    })()`);
+    check('E2E-UI-003 investigation UI is collapsed and bounded',diagnosticUi?.allClosed===true&&diagnosticUi?.bounded===true&&diagnosticUi?.copies===true,JSON.stringify(diagnosticUi));
+
+    const investigationExpandedUi=await evalJS(`(()=>{try{
+      const long='長文調査結果 '.repeat(600);
+      const nav=id=>document.querySelector('#bottomNav button[data-s="'+id+'"]')?.click();
+      nav('library');
+      const libDetails=[...document.querySelectorAll('#library .diagnostic-tools')];
+      libDetails.forEach(d=>d.open=true);
+      const series=document.getElementById('seriesCheckResults');
+      if(series)series.innerHTML='<div class=\"series-box\">'+long+'</div>';
+      const libraryOutputs=[...document.querySelectorAll('#library .diagnostic-output')];
+      const libraryBounded=libraryOutputs.every(e=>{const st=getComputedStyle(e),r=e.getBoundingClientRect();return st.overflowY==='auto'&&st.maxHeight!=='none'&&r.height<=innerHeight});
+      const normalSeriesButton=document.getElementById('seriesCheckBtn');
+      const insideDetails=!!normalSeriesButton?.closest('.diagnostic-tools');
+      nav('settings');
+      const setDetails=[...document.querySelectorAll('#settings .diagnostic-tools')];
+      setDetails.forEach(d=>d.open=true);
+      for(const id of ['devGuardStatus','registrationMetricsList','searchMetricsList']){const e=document.getElementById(id);if(e)e.innerHTML='<div>'+long+'</div>';}
+      const settingsOutputs=[...document.querySelectorAll('#settings .diagnostic-output')];
+      const settingsBounded=settingsOutputs.every(e=>{const st=getComputedStyle(e),r=e.getBoundingClientRect();return st.overflowY==='auto'&&st.maxHeight!=='none'&&r.height<=innerHeight});
+      nav('library');
+      const report=typeof buildDiagnosticReport==='function'?buildDiagnosticReport():'';
+      const reportOk=report.includes('本棚スケジュール 調査結果')&&report.includes('長文調査結果');
+      libDetails.forEach(d=>d.open=false);setDetails.forEach(d=>d.open=false);
+      if(series)series.innerHTML='';
+      return {libraryBounded,settingsBounded,insideDetails,reportOk,libraryDetails:libDetails.length,settingsDetails:setDetails.length};
+    }catch(e){return {error:String(e?.message||e)}}})()`);
+    check('E2E-UI-004 expanded investigation results remain bounded',investigationExpandedUi?.libraryBounded===true&&investigationExpandedUi?.settingsBounded===true&&investigationExpandedUi?.insideDetails===false&&investigationExpandedUi?.reportOk===true,JSON.stringify(investigationExpandedUi));
 
     const overflowExpression = `(()=>{
       const visible=e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);return r.width>0&&r.height>0&&s.display!=='none'&&s.visibility!=='hidden'};
