@@ -288,6 +288,18 @@
     }catch(e){
       if(signal?.aborted)throw e;
     }
+    // NDL's OpenSearch keyword route can find ISBNs that the ISBN-specific SRU
+    // query does not return. Use it only as an exact-ISBN fallback so unrelated
+    // keyword hits cannot enter the ISBN resolver.
+    if(isbn){
+      try{
+        const openRows=await searchNDLOpenSearch({any:String(isbn),limit:Math.max(20,take),signal,metrics,booksOnly});
+        const exact=openRows.filter(r=>canonicalIsbn(r?.isbn)===canonicalIsbn(isbn));
+        if(exact.length)return exact.slice(0,take);
+      }catch(e){
+        if(signal?.aborted)throw e;
+      }
+    }
     if(!isbn){
       try{
         const openRows=await searchNDLOpenSearch({title,creator,any:anywhere,limit:Math.max(20,take),signal,metrics,booksOnly});
