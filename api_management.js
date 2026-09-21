@@ -541,7 +541,10 @@
       try{
         metricApiStart(name,opts.metrics); let got; try{got=await withTimeout((signal,extend)=>adapters[name].isbn(isbn,{signal,onRetry:extend}),timeoutMs);metricApiEnd(name,true,opts.metrics)}catch(e){metricApiEnd(name,false,opts.metrics);throw e}
         const exact=got.filter(r=>canonicalIsbn(r?.isbn)===ctx.isbn);
-        const usable=exact.length?exact:got;
+        // ISBN解決では要求したISBNと一致しない書誌を登録候補へ流さない。
+        // 不一致fallbackを許すと、Providerが別ISBNの先頭結果を返した際に
+        // 複数冊の検索結果が同一書籍へ収束し、登録冊数が減る原因になる。
+        const usable=exact;
         if(usable.length){
           rows.push(...usable.map(r=>({...r,source:r.source||name})));attempts.push({provider:name,ok:true,count:usable.length,timeoutMs});recordProviderSuccess(name);
           if(opts.fast){
