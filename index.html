@@ -643,7 +643,7 @@ let calendarExtras=readJSONStorage("calendarExtras_v442",[]);if(!Array.isArray(c
 const DEMO_ENABLED=true;
 // Prototype/dev builds: a deleted sample set stays deleted within this build, but a new build/version starts with samples again.
 // Production/App Store builds set DEMO_ENABLED=false, so this logic is never exposed to end users.
-const APP_VERSION="4.13.106";
+const APP_VERSION="4.13.108";
 function renderAppVersion(){const el=document.getElementById("appVersionText");if(el)el.firstChild.nodeValue=`バージョン：${APP_VERSION}（Google Books依存を解除し、楽天Books JSONPを無課金運用候補として追加）`;}
 const DEMO_DELETED_KEY="bookTrackerDemoDeleted";
 const DEMO_RESET_VERSION_KEY="bookTrackerDemoResetVersion";
