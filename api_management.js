@@ -554,7 +554,7 @@
     }
     if(!rows.length)throw Error("このISBNに一致する書誌情報が見つかりませんでした。");
     const fields=["isbn13","title","author","publisher","releaseDate","seriesId","seriesName","volumeNumber","listPrice","taxIncluded","cover","description","categories"];
-    const out={isbn:ctx.isbn,title:"",author:"",publisher:"",date:"",cover:"",description:"",categories:[],source:"apiManager",sources:[],series:null,priceMeta:null,price:0,currency:"JPY",identifiers:{},fieldEvidence:{},resolution:{version:VERSION,attempts,fields:{}}};
+    const out={isbn:ctx.isbn,title:"",author:"",publisher:"",date:"",cover:"",description:"",categories:[],source:"apiManager",sources:[],series:null,priceMeta:null,price:0,currency:"JPY",identifiers:{},fieldEvidence:{},resolution:{version:VERSION,attempts,fields:{},providerResults:rows.map(r=>({provider:String(r?.source||""),isbn:canonicalIsbn(r?.isbn),title:String(r?.title||""),publisher:String(r?.publisher||""),seriesId:String(r?.series?.id||r?.identifiers?.googleSeriesId||""),seriesName:String(r?.series?.name||""),volume:r?.series?.volumeNumber??null,displayVolume:String(r?.series?.displayVolume||"")}))}};
     for(const row of rows){out.sources.push({provider:row.source,fields:fieldsFor(row)});if(row.identifiers)Object.assign(out.identifiers,row.identifiers)}
     for(const field of fields){
       const cs=rows.map(r=>candidate(field,r,ctx)).filter(Boolean);
