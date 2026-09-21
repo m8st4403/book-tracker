@@ -283,3 +283,4 @@ Google Booksが約4秒でタイムアウトした場合、NDL Searchへ進み、
 - `APP_VERSION` / `DEV_GUARD_VERSION` / `package.json` / README / キャッシュバスターを4.13.70へ統一。
 - GitHubアップロード側の変更履歴は `CHANGELOG.md` 1ファイルへ集約。旧バージョンの個別CHANGELOGは `アップロード不要/` に保管。
 
+\n\n# v4.13.114\n\n- シリーズ分類キーを修正。同一作品名でも保存済みseriesNameが異なる出版シリーズは分離。\n- 「集英社文庫 ; と21-3 / と21-4」のような末尾巻番号はシリーズスコープから除外し、同一シリーズとして扱う。\n- シリーズ分類診断に正規化後のseriesScopeを表示。\n- 巻表記統一テストに出版シリーズ分離・文庫シリーズ統合の回帰検査を追加。\n- バージョン別CHANGELOGファイルは追加せず、既存のCHANGELOG.mdへ集約。\n
