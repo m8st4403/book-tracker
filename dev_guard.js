@@ -233,12 +233,12 @@ async function main(){
       api.runtimePolicy.requestTimeoutMs=500;
       let calls=0;
       api.adapters.googleBooks.isbn=async isbn=>{calls++;return [{isbn,title:'Cache Test '+calls,author:'A',publisher:'P',source:'googleBooks',fieldEvidence:{title:api.evidenceFor('title','Cache Test '+calls,{identifierMatched:true,countryMatched:true})}}]};
-      const a=await api.resolveIsbn('9784088720990',{full:true});
-      const b=await api.resolveIsbn('9784088720990',{full:true});
+      const a=await api.resolveIsbn('9784088720999',{full:true});
+      const b=await api.resolveIsbn('9784088720999',{full:true});
       const cacheHit=calls===1&&a.title===b.title;
       const oldEnabled={g:api.providers.googleBooks.enabled,r:api.providers.rakuten.enabled,n:api.providers.ndl.enabled,o:api.providers.openBD.enabled};
       api.providers.googleBooks.enabled=false;api.providers.rakuten.enabled=false;api.providers.ndl.enabled=false;api.providers.openBD.enabled=false;
-      const invalidated=api.cacheInfo().size===1 && (await api.resolveIsbn('9784088720990',{full:true}).catch(()=>null))===null;
+      const invalidated=api.cacheInfo().size===1 && (await api.resolveIsbn('9784088720999',{full:true}).catch(()=>null))===null;
       api.providers.googleBooks.enabled=oldEnabled.g;api.providers.rakuten.enabled=oldEnabled.r;api.providers.ndl.enabled=oldEnabled.n;api.providers.openBD.enabled=oldEnabled.o;
       api.adapters.googleBooks.isbn=old.isbn;api.priority.isbnSearch=oldPriority;
       api.clearResolverCache();
