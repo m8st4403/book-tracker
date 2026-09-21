@@ -643,7 +643,7 @@ let calendarExtras=readJSONStorage("calendarExtras_v442",[]);if(!Array.isArray(c
 const DEMO_ENABLED=true;
 // Prototype/dev builds: a deleted sample set stays deleted within this build, but a new build/version starts with samples again.
 // Production/App Store builds set DEMO_ENABLED=false, so this logic is never exposed to end users.
-const APP_VERSION="4.13.110";
+const APP_VERSION="4.13.111";
 function renderAppVersion(){const el=document.getElementById("appVersionText");if(el)el.firstChild.nodeValue=`バージョン：${APP_VERSION}（Google Books依存を解除し、楽天Books JSONPを無課金運用候補として追加）`;}
 const DEMO_DELETED_KEY="bookTrackerDemoDeleted";
 const DEMO_RESET_VERSION_KEY="bookTrackerDemoResetVersion";
@@ -2197,16 +2197,31 @@ async function commitBulkPreparedBooks(candidates,preparedList,metrics){
  const corruptPlaceholders=books.filter(b=>isCorruptRegistrationPlaceholder(b));
  candidates.forEach((source,i)=>{
   const prepared=preparedList[i];
-  if(!prepared||prepared.error||!String(prepared.title||"").trim()||!canonicalIsbn(prepared.isbn)){failedPreparations.push({book:source,error:prepared?.error||new Error("書名またはISBNが取得できないため登録を中止しました")});return;}
+  const preparedIsbn=canonicalIsbn(prepared?.isbn),preparedTitle=String(prepared?.title||"").trim();
+  if(!prepared||prepared.error||!preparedTitle||!preparedIsbn){
+   failedPreparations.push({book:source,error:prepared?.error||new Error("書名またはISBNが取得できないため登録を中止しました")});
+   return;
+  }
   const key=bookResultKey(prepared),existing=books.filter(b=>bookResultKey(b)===key),usableExisting=existing.find(b=>isUsableBookRecord(b));
-  if(usableExisting&&!isRicherBookRecord(prepared,usableExisting)){skippedDuplicates.push(canonicalIsbn(prepared.isbn)||key);return;}
-  const x=cacheBookCover({...prepared,demo:!!prepared?.demo});delete x._rowEl;delete x._rowEls;delete x._register;delete x._fromSearch;added.push(x);
-  if(existing.length){replacedIsbns.push(canonicalIsbn(prepared.isbn)||key);removedRecords.push(...existing.map(b=>canonicalIsbn(b.isbn)||bookResultKey(b)));}
+  if(usableExisting&&!isRicherBookRecord(prepared,usableExisting)){skippedDuplicates.push(preparedIsbn||key);return;}
+  // v4.13.111: create the commit object explicitly from the already-validated prepared record.
+  // The selected search result identity is preserved; no resolver or implicit transformation is allowed here.
+  const x={...prepared,isbn:preparedIsbn,title:preparedTitle,demo:!!prepared?.demo};
+  if(typeof prepared?.cover==="string"&&prepared.cover.startsWith("data:"))x.cachedCover=prepared.cover;
+  delete x._rowEl;delete x._rowEls;delete x._register;delete x._fromSearch;
+  const objectIsbn=canonicalIsbn(x.isbn),objectTitle=String(x.title||"").trim();
+  metrics?.traceStep("登録オブジェクト生成",{index:i,sourceIsbn:canonicalIsbn(source?.isbn),preparedIsbn,preparedTitle,objectIsbn,objectTitle,identitySource:String(x?._registrationIdentitySource||prepared?._registrationIdentitySource||"")});
+  if(objectIsbn!==preparedIsbn||objectTitle!==preparedTitle){
+   failedPreparations.push({book:source,error:new Error("登録オブジェクト生成時にISBNまたはタイトルが変化したため登録を中止しました")});
+   return;
+  }
+  added.push(x);
+  metrics?.traceStep("追加配列へ格納",{index:i,isbn:objectIsbn,title:objectTitle});
+  if(existing.length){replacedIsbns.push(preparedIsbn||key);removedRecords.push(...existing.map(b=>canonicalIsbn(b.isbn)||bookResultKey(b)));}
   setPurchaseStatus(x.isbn,"purchased");
  });
  metrics?.traceStep("書誌準備結果",{prepared:preparedList.length,added:added.length,failed:failedPreparations.length,skippedDuplicates:skippedDuplicates.length,replaced:replacedIsbns.length,isbn:added.map(b=>canonicalIsbn(b.isbn)).filter(Boolean),preparedBooks:preparedList.map((b,i)=>({index:i,sourceIsbn:canonicalIsbn(candidates[i]?.isbn),sourceTitle:String(candidates[i]?.title||""),preparedIsbn:canonicalIsbn(b?.isbn),preparedTitle:String(b?.title||""),identitySource:b?._registrationIdentitySource||""}))});
- // v4.13.109: registration is atomic. Never remove/replace existing books if any selected book failed preparation.
- if(failedPreparations.length || added.length!==candidates.length-skippedDuplicates.length){
+ if(failedPreparations.length||added.length!==candidates.length-skippedDuplicates.length){
   metrics?.traceStep("登録コミット中止",{reason:"prepared data invalid or incomplete",candidateCount:candidates.length,added:added.length,failed:failedPreparations.length,skippedDuplicates:skippedDuplicates.length});
   return {ok:false,added,failedPreparations,skippedDuplicates,replacedIsbns,removedRecords,atomicAborted:true};
  }
@@ -2216,12 +2231,23 @@ async function commitBulkPreparedBooks(candidates,preparedList,metrics){
   const removedPlaceholders=corruptPlaceholders.map(b=>canonicalIsbn(b.isbn)||bookResultKey(b));
   removedRecords.push(...removedPlaceholders);
   books.push(...added);
-  metrics?.traceStep("追加差分",{before:oldBooks.length,removed:oldBooks.length-(books.length-added.length),added:added.length,after:books.length,replacedIsbns,removedRecords,removedCorruptPlaceholders:removedPlaceholders});
-  const demoAdded=new Set(added.filter(b=>b.demo).map(b=>canonicalIsbn(b.isbn)));if(demoAdded.size)calendarExtras=calendarExtras.filter(e=>!(isDemoExtra(e)&&demoAdded.has(canonicalIsbn(e.isbn))));
+  metrics?.traceStep("追加直後books",{count:books.length,isbn:books.map(b=>canonicalIsbn(b.isbn)).filter(Boolean),titles:books.map(b=>String(b?.title||"")).filter(Boolean)});
+  const expectedAdded=new Set(added.map(b=>canonicalIsbn(b.isbn)).filter(Boolean));
+  const actualAdded=new Set(books.map(b=>canonicalIsbn(b.isbn)).filter(Boolean));
+  const missingAdded=[...expectedAdded].filter(isbn=>!actualAdded.has(isbn));
+  metrics?.traceStep("追加整合性確認",{expectedAdded:[...expectedAdded],missingAdded,ok:missingAdded.length===0});
+  if(missingAdded.length){
+   books=oldBooks;calendarExtras=oldExtras;bookMeta=oldMeta;
+   metrics?.traceStep("登録コミット中止",{reason:"booksへの追加直後に登録ISBNが存在しない",missingAdded,atomicAborted:true});
+   return {ok:false,added:[],failedPreparations,skippedDuplicates,replacedIsbns,removedRecords,atomicAborted:true};
+  }
+  const demoAdded=new Set(added.filter(b=>b.demo).map(b=>canonicalIsbn(b.isbn)));
+  if(demoAdded.size)calendarExtras=calendarExtras.filter(e=>!(isDemoExtra(e)&&demoAdded.has(canonicalIsbn(e.isbn))));
+  metrics?.traceStep("保存直前books",{count:books.length,isbn:books.map(b=>canonicalIsbn(b.isbn)).filter(Boolean)});
   const st=performance.now(),saveFailed=!saveMeta()||!await saveBooksSafely()||!persistCalendarExtras();if(metrics)metrics.saveMs+=(performance.now()-st);
-  if(saveFailed){books=oldBooks;calendarExtras=oldExtras;bookMeta=oldMeta;saveMeta();persistBooks();persistCalendarExtras();return {ok:false,added,failedPreparations,skippedDuplicates,replacedIsbns,removedRecords};}
+  if(saveFailed){books=oldBooks;calendarExtras=oldExtras;bookMeta=oldMeta;saveMeta();persistBooks();persistCalendarExtras();metrics?.traceStep("保存失敗・ロールバック",{count:books.length,isbn:books.map(b=>canonicalIsbn(b.isbn)).filter(Boolean)});return {ok:false,added,failedPreparations,skippedDuplicates,replacedIsbns,removedRecords};}
  }
- metrics?.traceStep("保存後books",{count:books.length,isbn:books.map(b=>canonicalIsbn(b.isbn)).filter(Boolean)});
+ metrics?.traceStep("保存完了books",{count:books.length,isbn:books.map(b=>canonicalIsbn(b.isbn)).filter(Boolean)});
  return {ok:true,added,failedPreparations,skippedDuplicates,replacedIsbns,removedRecords};
 }
 async function prepareRegistrationBatch(items){
@@ -2272,7 +2298,7 @@ window.bulkAdd=async(id,button)=>{const metrics=window.bookTrackerRegistrationMe
 };
 </script>
 
-<script src="./api_management.js?v=4.13.110"></script>
+<script src="./api_management.js?v=4.13.111"></script>
 <script id="v410-spec-guard">
 /* v4.10.0: Runtime specification guard + lightweight regression checks.
    Development build only. These checks intentionally fail loudly instead of silently masking regressions. */
