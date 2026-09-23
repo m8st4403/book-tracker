@@ -1,4 +1,4 @@
-**v4.13.108**
+**v4.13.128**
 
 - ISBN検索のAPI実測計測を修正
 - Google Books → openBD等のフェイルオーバー時にAPI通信時間・回数・Provider別時間を正確に記録
@@ -12,6 +12,10 @@
 - Google Booksのタイムアウト時にopenBD等へのフェイルオーバーを早め、AbortControllerによる通信キャンセルと連動
 
 # Book Tracker
+
+## 現在のリリース
+
+**v4.13.128**
 
 iPhone向けの書籍管理アプリのプロトタイプです。
 

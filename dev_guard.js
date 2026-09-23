@@ -30,7 +30,14 @@ let packageVersion='';
 try{packageVersion=JSON.parse(fs.readFileSync(packagePath,'utf8')).version||''}catch(e){}
 const appVersionMatch=html.match(/const APP_VERSION=\"([^\"]+)\"/);
 const guardVersionMatch=html.match(/const DEV_GUARD_VERSION=\"([^\"]+)\"/);
+const readUtf8=p=>{try{return fs.readFileSync(p,'utf8')}catch(e){return ''}};
+const readmeText=readUtf8(path.join(path.dirname(target),'README.md'));
+const specText=readUtf8(path.join(path.dirname(target),'SPEC.md'));
+const headerVersionMatch=html.match(/id="appHeaderSub">v([^<]+)<br\/>/);
+const currentDocVersion=(readmeText.match(/## 現在のリリース\s*\n\s*\*\*v([^*]+)\*\*/)||[])[1]||'';
+const specCurrentVersion=(specText.match(/^# v([^ ]+) 現行リリース契約/m)||[])[1]||'';
 check('STATIC-018 version sources are consistent', !!packageVersion&&appVersionMatch?.[1]===packageVersion&&guardVersionMatch?.[1]===packageVersion, `package=${packageVersion} app=${appVersionMatch?.[1]||''} guard=${guardVersionMatch?.[1]||''}`);
+check('STATIC-044 release version is consistent across package/app/docs', !!packageVersion&&headerVersionMatch?.[1]===packageVersion&&currentDocVersion===packageVersion&&specCurrentVersion===packageVersion, `package=${packageVersion} header=${headerVersionMatch?.[1]||''} README=${currentDocVersion} SPEC=${specCurrentVersion}`);
 check('STATIC-019 persistence/backup gap audit exists', fs.existsSync(path.join(path.dirname(target),'RULE_GAP_AUDIT_v4_13_44.md'))&&fs.existsSync(path.join(path.dirname(target),'NEXT_IMPLEMENTATION_PRIORITY_v4_13_44.md')), 'persistence/backup/priority contracts');
 check('STATIC-020 backup schema validation contract', /Number\(d\.schemaVersion\)!==3/.test(html) && /function validateBackupData/.test(html) && /function restoreBackupData/.test(html), 'backup schemaVersion/key validation and atomic restore');
 check('STATIC-022 registration performance measurement contract', /bookTrackerRegistrationMetrics/.test(html) && /サンプルデータ：1冊登録/.test(html) && /検索結果：1冊登録/.test(html) && /検索結果：選択した本を一括登録/.test(html), 'operation label + timing metrics are explicit');
@@ -378,6 +385,21 @@ async function main(){
       return {ok:visible,visible,text,display:labels.map(x=>getComputedStyle(x).display)};
     })()`);
     check('E2E-UI-002 compact library statistics keep labels visible',compactStatsUi?.ok===true,JSON.stringify(compactStatsUi));
+
+    const compactTopUi=await evalJS(`(async()=>{
+      const nav=id=>document.querySelector('#bottomNav button[data-s="'+id+'"]')?.click();
+      nav('library');
+      window.scrollTo(0,Math.max(0,document.documentElement.scrollHeight-innerHeight));
+      await new Promise(r=>setTimeout(r,50));
+      if(typeof updateLibraryStatsCompact==='function')updateLibraryStatsCompact();
+      const lib=document.getElementById('libraryStats');
+      const cs=getComputedStyle(lib),r=lib.getBoundingClientRect();
+      const topOk=Math.abs(r.top)<=1;
+      const fixedOk=cs.position==='fixed';
+      const noHeaderOffset=cs.top==='0px';
+      return {ok:topOk&&fixedOk&&noHeaderOffset,top:r.top,position:cs.position,cssTop:cs.top};
+    })()`);
+    check('E2E-UI-005 compact library statistics stick to viewport top',compactTopUi?.ok===true,JSON.stringify(compactTopUi));
 
     const diagnosticUi=await evalJS(`(()=>{
       const details=[...document.querySelectorAll('.diagnostic-tools')];
