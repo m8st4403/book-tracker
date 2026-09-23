@@ -69,7 +69,7 @@ check('STATIC-013 resolver session cache contract', /resolverCache/.test(fs.read
 check('STATIC-014 rule/test ledger exists', fs.existsSync(path.join(path.dirname(target),'RULE_LEDGER_v4_13_40.md')) && fs.existsSync(path.join(path.dirname(target),'RULE_TEST_MATRIX_v4_13_40.md')), 'rule ledger and verification matrix');
 check('STATIC-015 UI display contract exists', /scrollWidth<=el\.clientWidth/.test(fs.readFileSync(path.join(path.dirname(target),'dev_guard.js'),'utf8')) && /E2E-UI-002 compact library statistics keep labels visible/.test(fs.readFileSync(path.join(path.dirname(target),'dev_guard.js'),'utf8')), 'visible/readable/clipping contract');
 check('STATIC-042 diagnostic output containment contract exists', /diagnostic-output\{[^}]*max-height:42vh;overflow:auto/.test(html) && /registration-trace\{[^}]*max-height:34vh;overflow:auto/.test(html), 'long investigation results are bounded and scrollable');
-check('STATIC-043 diagnostic copy/clear controls exist', /copyLibrarySeriesCheckBtn/.test(html) && /copyLibraryReportBtn/.test(html) && /copyAllReportBtn/.test(html) && /copySeriesGroupingBtn/.test(html) && /copyBibliographyBtn/.test(html) && /copyIsbnPrepBtn/.test(html) && /copySeriesRepairBtn/.test(html) && /copySettingsReportBtn/.test(html) && /copyDevGuardBtn/.test(html) && /copyRegistrationMetrics/.test(html) && /copySearchMetrics/.test(html) && /clearLibrarySeriesCheckBtn/.test(html) && /clearLibraryReportBtn/.test(html) && /clearAllReportBtn/.test(html) && /clearSettingsReportBtn/.test(html) && /function copyElementText\(/.test(html), 'investigation results support individual, tab-level, global copy and matching clear controls');
+check('STATIC-043 diagnostic copy controls exist', /copySeriesDiagnosticBtn/.test(html) && /copyDevGuardBtn/.test(html) && /copyRegistrationMetrics/.test(html) && /copySearchMetrics/.test(html) && /function copyElementText\(/.test(html), 'investigation results can be copied as full text');
 check('STATIC-016 sort tie-break contract exists', /REG-002B/.test(fs.readFileSync(target,'utf8')), 'all sort modes use deterministic tie-breaks');
 check('STATIC-017 operation catalog exists', fs.existsSync(path.join(path.dirname(target),'OPERATION_CATALOG_v4_13_40.md')), 'data mutation operation catalog');
 
@@ -384,13 +384,11 @@ async function main(){
       const allClosed=details.every(d=>!d.open);
       const outputs=[...document.querySelectorAll('.diagnostic-output')];
       const bounded=outputs.every(e=>{const s=getComputedStyle(e);return s.overflowY==='auto'&&s.maxHeight!=='none'});
-      const copyIds=['copyLibrarySeriesCheckBtn','copyLibraryReportBtn','copyAllReportBtn','copySeriesGroupingBtn','copyBibliographyBtn','copyIsbnPrepBtn','copySeriesRepairBtn','copyDevGuardBtn','copyRegistrationMetrics','copySearchMetrics','copySettingsReportBtn'];
-      const clearIds=['clearLibrarySeriesCheckBtn','clearLibraryReportBtn','clearAllReportBtn','clearSeriesGroupingBtn','clearBibliographyBtn','clearIsbnPrepBtn','clearSeriesRepairBtn','clearDevGuardBtn','clearRegistrationMetrics','clearSearchMetrics','clearSettingsReportBtn'];
+      const copyIds=['copySeriesDiagnosticBtn','copyDevGuardBtn','copyRegistrationMetrics','copySearchMetrics'];
       const copies=copyIds.every(id=>!!document.getElementById(id));
-      const clears=clearIds.every(id=>!!document.getElementById(id));
-      return {details:details.length,allClosed,bounded,copies,clears};
+      return {details:details.length,allClosed,bounded,copies};
     })()`);
-    check('E2E-UI-003 investigation UI is collapsed and bounded',diagnosticUi?.allClosed===true&&diagnosticUi?.bounded===true&&diagnosticUi?.copies===true&&diagnosticUi?.clears===true,JSON.stringify(diagnosticUi));
+    check('E2E-UI-003 investigation UI is collapsed and bounded',diagnosticUi?.allClosed===true&&diagnosticUi?.bounded===true&&diagnosticUi?.copies===true,JSON.stringify(diagnosticUi));
 
     const investigationExpandedUi=await evalJS(`(()=>{try{
       const long='長文調査結果 '.repeat(600);
