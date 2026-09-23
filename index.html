@@ -436,13 +436,69 @@ input[type="checkbox"]{
 /* v4.11.8 feature additions; v4.11.3 remains the visual baseline. */
 .library-book-layout{display:flex;gap:12px;align-items:flex-start;min-width:0}.library-cover-col{flex:0 0 78px;width:78px;display:flex;flex-direction:column;align-items:center;gap:7px}.library-cover-col .cover{width:68px;height:96px;flex:0 0 auto}.library-detail-btn{width:78px;min-height:40px;padding:8px 5px;font-size:13px;line-height:1.15;white-space:nowrap}.library-book-info{flex:1 1 auto;min-width:0}.library-title-status{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start;min-width:0}.library-status-stack{display:flex;flex-direction:column;align-items:flex-start;gap:4px;flex:0 0 78px;width:78px;min-width:78px}.library-status-stack .meta-badge,.library-status-stack .owned-badge,.library-status-stack .unowned-badge{box-sizing:border-box;width:78px;min-width:78px;max-width:78px;height:30px;min-height:30px;margin:0;padding:5px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;cursor:pointer;line-height:18px}.library-status-stack .meta-badge.favorite{font-size:10px;letter-spacing:-.11em;padding-left:2px;padding-right:2px}.library-status-stack .purchase-status{cursor:default}.library-info-line{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.library-card{position:relative}.library-card>.library-select{position:absolute;left:8px;top:8px;z-index:3;width:26px;height:26px;margin:0}.library-card .selectline{display:block}.library-card .content{width:100%}
 .series-cyclic-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;padding:13px 14px;border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}.series-cyclic-title{min-width:0;color:#0f172a;font-weight:800;line-height:1.35;overflow-wrap:anywhere;word-break:break-word;white-space:normal}.series-cyclic-count{flex:0 0 auto;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;min-width:3.6em;padding:3px 8px;border-radius:999px;background:#dcfce7;color:#166534;font-size:13px}.series-cyclic-hint{padding:0 14px 9px;font-size:11px;color:var(--theme-muted);text-align:right}.series-cyclic-body{padding:0 8px 7px}.series-deck{position:relative;padding:8px 0 28px;min-width:0}.series-deck::before,.series-deck::after{content:"";position:absolute;left:10px;right:10px;top:18px;bottom:12px;border:1px solid var(--line);border-radius:18px;background:var(--surface);z-index:1}.series-deck::before{transform:translate(9px,9px);box-shadow:0 1px 3px #0001}.series-deck::after{transform:translate(18px,18px);box-shadow:0 1px 3px #0001}.series-deck .card{position:relative;z-index:3;margin:0 10px 0 0!important;box-shadow:0 1px 3px #0001!important}.series-deck-count{display:none}.series-title-list{display:grid;gap:6px;padding:4px 0 8px}.series-title-item{display:grid;grid-template-columns:auto minmax(0,1fr) 78px;gap:7px;align-items:start;padding:7px 2px;border-bottom:1px solid #eee;min-width:0}.series-title-item:last-child{border-bottom:0}.series-title-index{font-size:12px;color:#6b7280;line-height:1.5;min-width:1.6em;text-align:right}.series-title-name{min-width:0;color:inherit;font:inherit;font-weight:800;text-align:left;line-height:1.35;overflow-wrap:anywhere;word-break:break-word;cursor:pointer}.series-title-status-stack{display:flex;flex-direction:column;align-items:flex-start;gap:4px;width:78px;min-width:78px}.series-title-status-stack .meta-badge{box-sizing:border-box;width:78px;min-width:78px;max-width:78px;height:30px;min-height:30px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;cursor:pointer;font-size:10px;padding:3px 2px;line-height:18px}.series-title-status-stack .meta-badge.favorite{font-size:10px;letter-spacing:-.11em}.series-title-expanded-head{padding:4px 0 8px}.series-title-collapse{display:inline!important;align-items:initial;background:none!important;color:#6b7280!important;border:0!important;box-shadow:none!important;padding:0!important;min-height:0!important;height:auto!important;font-size:12px!important;font-weight:600!important;border-radius:0!important;white-space:nowrap;-webkit-appearance:none!important;appearance:none!important;cursor:pointer}@media(max-width:390px){.library-book-layout{gap:9px}.library-cover-col{flex-basis:74px;width:74px}.library-cover-col .cover{width:64px;height:90px}.library-detail-btn{width:74px;font-size:12px}.library-title-status{gap:6px}.series-title-item{gap:5px}.series-title-status-stack .meta-badge{font-size:10px;padding:3px 5px}}
-/* After scrolling past the summary, compact it into a persistent five-column strip. */
-.library-stats.is-compact{display:flex;gap:5px;margin:0 -4px 12px;padding:5px 4px;background:rgba(255,255,255,.96);position:sticky;top:68px;z-index:4;border-bottom:1px solid rgba(15,23,42,.10);box-shadow:0 3px 8px rgba(15,23,42,.06);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.library-stats.is-compact .statbox{flex:1 1 0;min-width:0;padding:6px 3px;border-radius:9px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:2px;box-shadow:none}
-.library-stats.is-compact .library-stat-label{display:block;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px;line-height:1.15;color:var(--theme-muted)}
-.library-stats.is-compact .statbox b{display:block;min-width:0;white-space:nowrap;overflow:visible;text-overflow:clip;font-size:14px;line-height:1.15;margin:0}
-@media(max-width:380px){.library-stats.is-compact{gap:3px;margin-left:-2px;margin-right:-2px}.library-stats.is-compact .statbox{padding-left:2px;padding-right:2px}.library-stats.is-compact .library-stat-label{font-size:9px}.library-stats.is-compact .statbox b{font-size:13px}}
-@media(max-width:340px){.library-stats.is-compact .statbox b{font-size:12px;letter-spacing:-.02em}}
+/* v4.13.127: compact five-column library stats stay at the very top below the sticky app header. */
+.library-stats.is-compact{
+ display:flex!important;
+ position:fixed!important;
+ top:var(--library-stats-top,68px)!important;
+ left:0!important;
+ right:0!important;
+ width:min(100%,800px)!important;
+ margin:0 auto!important;
+ padding:5px 8px!important;
+ gap:5px!important;
+ box-sizing:border-box!important;
+ background:rgba(255,255,255,.96)!important;
+ z-index:20!important;
+ border-bottom:1px solid rgba(15,23,42,.10)!important;
+ box-shadow:0 3px 8px rgba(15,23,42,.10)!important;
+ backdrop-filter:blur(8px);
+ -webkit-backdrop-filter:blur(8px);
+}
+.library-stats.is-compact .statbox{
+ flex:1 1 0!important;
+ min-width:0!important;
+ padding:6px 3px!important;
+ border-radius:9px!important;
+ text-align:center!important;
+ display:flex!important;
+ flex-direction:column!important;
+ justify-content:center!important;
+ gap:2px!important;
+ box-shadow:none!important;
+}
+.library-stats.is-compact .library-stat-label{
+ display:block!important;
+ min-width:0!important;
+ white-space:nowrap!important;
+ overflow:hidden!important;
+ text-overflow:ellipsis!important;
+ font-size:10px!important;
+ line-height:1.15!important;
+}
+.library-stats.is-compact .statbox b{
+ display:block!important;
+ min-width:0!important;
+ white-space:nowrap!important;
+ overflow:visible!important;
+ text-overflow:clip!important;
+ font-size:14px!important;
+ line-height:1.15!important;
+ margin:0!important;
+}
+.library-stats.is-compact .statbox>.muted:not(.library-stat-label),
+.library-stats.is-compact .stat-price-summary{
+ display:none!important;
+}
+@media(max-width:380px){
+ .library-stats.is-compact{gap:3px!important;padding-left:4px!important;padding-right:4px!important}
+ .library-stats.is-compact .statbox{padding-left:2px!important;padding-right:2px!important}
+ .library-stats.is-compact .library-stat-label{font-size:9px!important}
+ .library-stats.is-compact .statbox b{font-size:13px!important}
+}
+@media(max-width:340px){
+ .library-stats.is-compact .statbox b{font-size:12px!important;letter-spacing:-.02em}
+}
 /* v4.12.4: 5+ series header background only. Title text keeps the v4.11.3 text color. */
 .series-group.is-cyclic .series-cyclic-head{background:color-mix(in srgb,var(--primary) 8%,var(--surface))!important;border-radius:14px!important}
 .series-group.is-cyclic .series-cyclic-title{color:var(--app-text)!important;font-weight:800!important}
@@ -543,7 +599,7 @@ body.font-large{--unified-card-heading-size:20px}
 /* v4.13.34: registration is a global operation; search targets use generation tokens. */
 [data-register-action="1"][disabled]{opacity:.65!important;cursor:wait!important;transform:none!important}
 </style></head><body>
-<div id="appBackground" aria-hidden="true"></div><header><b id="appHeaderTitle">📚 本棚スケジュール</b><div class="muted" id="appHeaderSub">v4.13.126<br/>複数ISBN・詳細/関連検索・発売日カレンダー対応</div></header>
+<div id="appBackground" aria-hidden="true"></div><header><b id="appHeaderTitle">📚 本棚スケジュール</b><div class="muted" id="appHeaderSub">v4.13.127<br/>複数ISBN・詳細/関連検索・発売日カレンダー対応</div></header>
 <main id="content">
 <div id="demoNotice" class="demo-global" hidden role="button" tabindex="0" aria-label="サンプルデータの削除確認"><b>📚 サンプルデータを表示しています</b><span>アプリの見え方を確認するためのサンプル蔵書が表示されています。設定内の削除ボタン、またはこのメッセージをタップしてサンプル蔵書を削除できます。</span></div>
 <section class="active" id="home">
@@ -1956,10 +2012,11 @@ function updateLibraryStatsCompact(){
  const el=$("libraryStats"),sec=$("library");
  if(!el||!sec||sec.hidden){if(el)el.classList.remove("is-compact");return}
  const header=$("appHeaderTitle")?.closest("header");
- const topOffset=(header?.getBoundingClientRect().height||68)+2;
+ const headerHeight=Math.ceil(header?.getBoundingClientRect().height||68);
+ document.documentElement.style.setProperty("--library-stats-top",headerHeight+"px");
  const rect=el.getBoundingClientRect();
- if(rect.top<=topOffset)el.classList.add("is-compact");
- else if(rect.top>topOffset+18)el.classList.remove("is-compact");
+ if(rect.top<=headerHeight+18)el.classList.add("is-compact");
+ else el.classList.remove("is-compact");
 }
 function bindLibraryStatsCompact(){
  if(libraryStatsCompactBound)return;
@@ -3004,7 +3061,3 @@ window.bulkAdd=async(id,button)=>{const metrics=window.bookTrackerRegistrationMe
 })();
 </script>
 </body></html>
- 
-<style id="v413126-library-five-column-top">
-#a855f7,#a9c5ec,#b45309,#b9a5e8,#cbd5e1,#d1d5db,#d1fae5,#dbe7f5,#dce5ee,#dce5f2,#e5dcff,#e5e7eb,#e5eaf2,#e9d5ff,#ecfdf5,#eef5ff,#f1f5f9,#f3faf5,#f59e0b,#f5f0ff,#f5f1ff,#f5f3ff,#f5f5f7{order:-100 !important;}
-</style>
