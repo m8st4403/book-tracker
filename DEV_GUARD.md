@@ -1,4 +1,4 @@
-# v4.13.128 リリース回帰チェック
+# v4.13.129 リリース回帰チェック
 
 - APP_VERSION / DEV_GUARD_VERSION / package.json / README の現行バージョン一致を外部ガードで検査する。
 - 蔵書統計の縮小5列表示は、ビューポート上端へ到達したとき `position: fixed` / `top: 0` となることを実ブラウザで検査する。

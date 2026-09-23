@@ -38,7 +38,8 @@ const currentDocVersion=(readmeText.match(/## 現在のリリース\s*\n\s*\*\*v
 const specCurrentVersion=(specText.match(/^# v([^ ]+) 現行リリース契約/m)||[])[1]||'';
 check('STATIC-018 version sources are consistent', !!packageVersion&&appVersionMatch?.[1]===packageVersion&&guardVersionMatch?.[1]===packageVersion, `package=${packageVersion} app=${appVersionMatch?.[1]||''} guard=${guardVersionMatch?.[1]||''}`);
 check('STATIC-044 release version is consistent across package/app/docs', !!packageVersion&&headerVersionMatch?.[1]===packageVersion&&currentDocVersion===packageVersion&&specCurrentVersion===packageVersion, `package=${packageVersion} header=${headerVersionMatch?.[1]||''} README=${currentDocVersion} SPEC=${specCurrentVersion}`);
-check('STATIC-019 persistence/backup gap audit exists', fs.existsSync(path.join(path.dirname(target),'RULE_GAP_AUDIT_v4_13_44.md'))&&fs.existsSync(path.join(path.dirname(target),'NEXT_IMPLEMENTATION_PRIORITY_v4_13_44.md')), 'persistence/backup/priority contracts');
+
+check('STATIC-046 visible appVersionText uses current release', html.includes('id="appVersionText">バージョン：4.13.129') && !html.includes('id="appVersionText">バージョン：4.13.106'), 'settings-visible appVersionText matches current release');check('STATIC-019 persistence/backup gap audit exists', fs.existsSync(path.join(path.dirname(target),'RULE_GAP_AUDIT_v4_13_44.md'))&&fs.existsSync(path.join(path.dirname(target),'NEXT_IMPLEMENTATION_PRIORITY_v4_13_44.md')), 'persistence/backup/priority contracts');
 check('STATIC-020 backup schema validation contract', /Number\(d\.schemaVersion\)!==3/.test(html) && /function validateBackupData/.test(html) && /function restoreBackupData/.test(html), 'backup schemaVersion/key validation and atomic restore');
 check('STATIC-022 registration performance measurement contract', /bookTrackerRegistrationMetrics/.test(html) && /サンプルデータ：1冊登録/.test(html) && /検索結果：1冊登録/.test(html) && /検索結果：選択した本を一括登録/.test(html), 'operation label + timing metrics are explicit');
 check('STATIC-028 provider phase measurement is connected to active metric token', /token\.addApiPhase\s*=/.test(html) && /apiPhases/.test(html) && /rateLimitWait/.test(html) && /json/.test(html), 'phase durations are stored on the same metric token rendered in Settings');
@@ -77,6 +78,7 @@ check('STATIC-014 rule/test ledger exists', fs.existsSync(path.join(path.dirname
 check('STATIC-015 UI display contract exists', /scrollWidth<=el\.clientWidth/.test(fs.readFileSync(path.join(path.dirname(target),'dev_guard.js'),'utf8')) && /E2E-UI-002 compact library statistics keep labels visible/.test(fs.readFileSync(path.join(path.dirname(target),'dev_guard.js'),'utf8')), 'visible/readable/clipping contract');
 check('STATIC-042 diagnostic output containment contract exists', /diagnostic-output\{[^}]*max-height:42vh;overflow:auto/.test(html) && /registration-trace\{[^}]*max-height:34vh;overflow:auto/.test(html), 'long investigation results are bounded and scrollable');
 check('STATIC-043 diagnostic copy controls exist', /copySeriesDiagnosticBtn/.test(html) && /copyDevGuardBtn/.test(html) && /copyRegistrationMetrics/.test(html) && /copySearchMetrics/.test(html) && /function copyElementText\(/.test(html), 'investigation results can be copied as full text');
+check('STATIC-045 diagnostic copy/clear hierarchy exists', /copyLibraryDiagnosticReportBtn/.test(html) && /copySettingsDiagnosticReportBtn/.test(html) && /copyAllDiagnosticReportBtn/.test(html) && /clearSeriesDiagnosticBtn/.test(html) && /clearDevGuardBtn/.test(html) && /clearLibraryDiagnosticResultsBtn/.test(html) && /clearSettingsDiagnosticResultsBtn/.test(html) && /clearAllDiagnosticResultsBtn/.test(html) && /function clearAllDiagnosticResults\(/.test(html), 'individual/tab/session copy and clear controls are wired');
 check('STATIC-016 sort tie-break contract exists', /REG-002B/.test(fs.readFileSync(target,'utf8')), 'all sort modes use deterministic tie-breaks');
 check('STATIC-017 operation catalog exists', fs.existsSync(path.join(path.dirname(target),'OPERATION_CATALOG_v4_13_40.md')), 'data mutation operation catalog');
 
@@ -438,6 +440,23 @@ async function main(){
       return {libraryBounded,settingsBounded,insideDetails,reportOk,libraryDetails:libDetails.length,settingsDetails:setDetails.length};
     }catch(e){return {error:String(e?.message||e)}}})()`);
     check('E2E-UI-004 expanded investigation results remain bounded',investigationExpandedUi?.libraryBounded===true&&investigationExpandedUi?.settingsBounded===true&&investigationExpandedUi?.insideDetails===false&&investigationExpandedUi?.reportOk===true,JSON.stringify(investigationExpandedUi));
+
+    const diagnosticCopyClearUi=await evalJS(`(()=>{try{
+  const series=document.getElementById('seriesCheckResults'),dev=document.getElementById('devGuardStatus'),reg=document.getElementById('registrationMetricsList'),search=document.getElementById('searchMetricsList');
+  series.innerHTML='<div>LIB-RESULT</div>';dev.textContent='SET-RESULT';reg.innerHTML='<div>REG-RESULT</div>';search.innerHTML='<div>SEARCH-RESULT</div>';
+  const lib=buildLibraryDiagnosticReport(),set=buildSettingsDiagnosticReport(),all=buildDiagnosticReport();
+  const copies=lib.includes('LIB-RESULT')&&set.includes('SET-RESULT')&&set.includes('REG-RESULT')&&set.includes('SEARCH-RESULT')&&all.includes('LIB-RESULT')&&all.includes('SET-RESULT');
+  clearLibraryDiagnosticResults();
+  const libraryCleared=!(series.textContent||'').trim()&&(dev.textContent||'').includes('SET-RESULT');
+  clearSettingsDiagnosticResults();
+  const settingsCleared=!(dev.textContent||'').trim()&&!(reg.textContent||'').trim()&&!(search.textContent||'').trim();
+  series.innerHTML='<div>LIB-RESULT</div>';dev.textContent='SET-RESULT';
+  clearAllDiagnosticResults();
+  const allCleared=!(series.textContent||'').trim()&&!(dev.textContent||'').trim();
+  return {copies,libraryCleared,settingsCleared,allCleared};
+}catch(e){return {error:String(e?.message||e)}}})()`);
+check('E2E-UI-006 diagnostic copy/clear hierarchy works',diagnosticCopyClearUi?.copies===true&&diagnosticCopyClearUi?.libraryCleared===true&&diagnosticCopyClearUi?.settingsCleared===true&&diagnosticCopyClearUi?.allCleared===true,JSON.stringify(diagnosticCopyClearUi));
+
 
     const overflowExpression = `(()=>{
       const visible=e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);return r.width>0&&r.height>0&&s.display!=='none'&&s.visibility!=='hidden'};
