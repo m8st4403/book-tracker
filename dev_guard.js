@@ -39,7 +39,7 @@ const specCurrentVersion=(specText.match(/^# v([^ ]+) 現行リリース契約/m
 check('STATIC-018 version sources are consistent', !!packageVersion&&appVersionMatch?.[1]===packageVersion&&guardVersionMatch?.[1]===packageVersion, `package=${packageVersion} app=${appVersionMatch?.[1]||''} guard=${guardVersionMatch?.[1]||''}`);
 check('STATIC-044 release version is consistent across package/app/docs', !!packageVersion&&headerVersionMatch?.[1]===packageVersion&&currentDocVersion===packageVersion&&specCurrentVersion===packageVersion, `package=${packageVersion} header=${headerVersionMatch?.[1]||''} README=${currentDocVersion} SPEC=${specCurrentVersion}`);
 
-check('STATIC-046 visible appVersionText uses current release', html.includes('id="appVersionText">バージョン：4.13.130') && !html.includes('id="appVersionText">バージョン：4.13.106'), 'settings-visible appVersionText matches current release');check('STATIC-019 persistence/backup gap audit exists', fs.existsSync(path.join(path.dirname(target),'RULE_GAP_AUDIT_v4_13_44.md'))&&fs.existsSync(path.join(path.dirname(target),'NEXT_IMPLEMENTATION_PRIORITY_v4_13_44.md')), 'persistence/backup/priority contracts');
+check('STATIC-046 visible appVersionText uses current release', html.includes('id="appVersionText">バージョン：4.13.135') && !html.includes('id="appVersionText">バージョン：4.13.106'), 'settings-visible appVersionText matches current release');check('STATIC-019 persistence/backup gap audit exists', fs.existsSync(path.join(path.dirname(target),'RULE_GAP_AUDIT_v4_13_44.md'))&&fs.existsSync(path.join(path.dirname(target),'NEXT_IMPLEMENTATION_PRIORITY_v4_13_44.md')), 'persistence/backup/priority contracts');
 check('STATIC-020 backup schema validation contract', /Number\(d\.schemaVersion\)!==3/.test(html) && /function validateBackupData/.test(html) && /function restoreBackupData/.test(html), 'backup schemaVersion/key validation and atomic restore');
 check('STATIC-022 registration performance measurement contract', /bookTrackerRegistrationMetrics/.test(html) && /サンプルデータ：1冊登録/.test(html) && /検索結果：1冊登録/.test(html) && /検索結果：選択した本を一括登録/.test(html), 'operation label + timing metrics are explicit');
 check('STATIC-028 provider phase measurement is connected to active metric token', /token\.addApiPhase\s*=/.test(html) && /apiPhases/.test(html) && /rateLimitWait/.test(html) && /json/.test(html), 'phase durations are stored on the same metric token rendered in Settings');
@@ -72,6 +72,8 @@ check('STATIC-025 processing measurement receives token', /window\.bookTrackerRe
 check('STATIC-009 global registration lock contract', /registrationBusy/.test(html) && /runRegistrationAction/.test(html) && /data-register-action/.test(html), 'individual/bulk/detail/calendar registration shares one lock');
 check('STATIC-010 search generation contract', /searchGenerations/.test(html) && /runSearchSingleFlight/.test(html) && /isCurrentSearch/.test(html), 'stale search responses cannot overwrite current results');
 check('STATIC-011 data operation lock contract', /dataOperationBusy/.test(html) && /setDataOperationUiBusy/.test(html) && /data-data-operation/.test(html), 'registration and series repair share a data-operation lock');
+check('STATIC-046 library diagnostics share operation lock', ['seriesCheckBtn','seriesDiagnoseBtn','bibliographyCompareBtn','isbnRegistrationPrepBtn','seriesRepairBtn'].every(id=>new RegExp('id=\"'+id+'\"[^>]*data-data-operation=\"1\"').test(html)) && /runLibraryDiagnosticAction/.test(html), 'all library diagnostics use the shared operation lock');
+check('STATIC-047 library diagnostic result separation', /id="seriesCheckResults"/.test(html) && /id="seriesDiagnoseResults"/.test(html) && /id="bibliographyCompareResults"/.test(html) && /id="isbnRegistrationPrepResults"/.test(html) && /id="seriesRepairResults"/.test(html) && /function buildLibraryDiagnosticReport\(/.test(html), 'each library diagnostic retains its own result area and bundle report');
 check('STATIC-012 series repair excludes demo records', /isDemoRecord\(b\)/.test(html) && /通常の蔵書/.test(html), 'demo/sample records are excluded from repair');
 check('STATIC-013 resolver session cache contract', /resolverCache/.test(fs.readFileSync(path.join(path.dirname(target),'api_management.js'),'utf8')), 'ISBN resolver results are cached per session');
 check('STATIC-014 rule/test ledger exists', fs.existsSync(path.join(path.dirname(target),'RULE_LEDGER_v4_13_40.md')) && fs.existsSync(path.join(path.dirname(target),'RULE_TEST_MATRIX_v4_13_40.md')), 'rule ledger and verification matrix');
@@ -321,6 +323,8 @@ async function main(){
     check('E2E-CONCURRENCY-002 registration actions are globally serialized',concurrencySmoke?.registrationSecondRejected===true&&concurrencySmoke?.registrationFirstCompleted===true,JSON.stringify(concurrencySmoke));
     const dataLockSmoke=await evalJS(`(async()=>{const before=dataOperationBusy;dataOperationBusy=true;const searchBlocked=await runSearchSingleFlight('guard-data-lock','guard-data-lock-target',null,async()=>true)===null;const regBlocked=await runRegistrationAction(async()=>true)===false;dataOperationBusy=before;return {searchBlocked,regBlocked};})()`);
     check('E2E-CONCURRENCY-003 data operation lock blocks competing actions',dataLockSmoke?.searchBlocked===true&&dataLockSmoke?.regBlocked===true,JSON.stringify(dataLockSmoke));
+    const libraryDiagnosticLockSmoke=await evalJS(`(async()=>{const before=dataOperationBusy;dataOperationBusy=true;syncOperationUi();const ids=['seriesCheckBtn','seriesDiagnoseBtn','bibliographyCompareBtn','isbnRegistrationPrepBtn','seriesRepairBtn'];const disabled=ids.every(id=>document.getElementById(id)?.disabled===true);const a=await runSeriesCheck()===false;const b=await diagnoseSeriesGrouping()===false;const c=await compareBibliographyPaths()===false;const d=await diagnoseIsbnRegistrationPreparation()===false;const e=await repairExistingSeries()===false;dataOperationBusy=before;syncOperationUi();return {disabled,blocked:[a,b,c,d,e].every(Boolean)}})()`);
+    check('E2E-CONCURRENCY-004 all library diagnostics are mutually exclusive',libraryDiagnosticLockSmoke?.disabled===true&&libraryDiagnosticLockSmoke?.blocked===true,JSON.stringify(libraryDiagnosticLockSmoke));
     const repairSmoke=await evalJS(`(async()=>{
       const api=window.bookTrackerApiManagement, oldResolve=api.resolveIsbn, oldConfirm=window.confirm, oldAlert=window.alert, oldBooks=books.slice();
       const sample=[
@@ -442,17 +446,17 @@ async function main(){
     check('E2E-UI-004 expanded investigation results remain bounded',investigationExpandedUi?.libraryBounded===true&&investigationExpandedUi?.settingsBounded===true&&investigationExpandedUi?.insideDetails===false&&investigationExpandedUi?.reportOk===true,JSON.stringify(investigationExpandedUi));
 
     const diagnosticCopyClearUi=await evalJS(`(()=>{try{
-  const series=document.getElementById('seriesCheckResults'),dev=document.getElementById('devGuardStatus'),reg=document.getElementById('registrationMetricsList'),search=document.getElementById('searchMetricsList');
-  series.innerHTML='<div>LIB-RESULT</div>';dev.textContent='SET-RESULT';reg.innerHTML='<div>REG-RESULT</div>';search.innerHTML='<div>SEARCH-RESULT</div>';
+  const series=document.getElementById('seriesCheckResults'),seriesDiag=document.getElementById('seriesDiagnoseResults'),bib=document.getElementById('bibliographyCompareResults'),prep=document.getElementById('isbnRegistrationPrepResults'),repair=document.getElementById('seriesRepairResults'),dev=document.getElementById('devGuardStatus'),reg=document.getElementById('registrationMetricsList'),search=document.getElementById('searchMetricsList');
+  series.innerHTML='<div>LIB-GAP</div>';seriesDiag.innerHTML='<div>LIB-SERIES</div>';bib.innerHTML='<div>LIB-BIB</div>';prep.innerHTML='<div>LIB-PREP</div>';repair.innerHTML='<div>LIB-REPAIR</div>';dev.textContent='SET-RESULT';reg.innerHTML='<div>REG-RESULT</div>';search.innerHTML='<div>SEARCH-RESULT</div>';
   const lib=buildLibraryDiagnosticReport(),set=buildSettingsDiagnosticReport(),all=buildDiagnosticReport();
-  const copies=lib.includes('LIB-RESULT')&&set.includes('SET-RESULT')&&set.includes('REG-RESULT')&&set.includes('SEARCH-RESULT')&&all.includes('LIB-RESULT')&&all.includes('SET-RESULT');
+  const copies=['LIB-GAP','LIB-SERIES','LIB-BIB','LIB-PREP','LIB-REPAIR'].every(x=>lib.includes(x)&&all.includes(x))&&set.includes('SET-RESULT')&&set.includes('REG-RESULT')&&set.includes('SEARCH-RESULT');
   clearLibraryDiagnosticResults();
-  const libraryCleared=!(series.textContent||'').trim()&&(dev.textContent||'').includes('SET-RESULT');
+  const libraryCleared=[series,seriesDiag,bib,prep,repair].every(e=>!(e.textContent||'').trim())&&(dev.textContent||'').includes('SET-RESULT');
   clearSettingsDiagnosticResults();
   const settingsCleared=!(dev.textContent||'').trim()&&!(reg.textContent||'').trim()&&!(search.textContent||'').trim();
-  series.innerHTML='<div>LIB-RESULT</div>';dev.textContent='SET-RESULT';
+  series.innerHTML='<div>LIB-RESULT</div>';seriesDiag.innerHTML='<div>LIB-SERIES</div>';repair.innerHTML='<div>LIB-REPAIR</div>';dev.textContent='SET-RESULT';
   clearAllDiagnosticResults();
-  const allCleared=!(series.textContent||'').trim()&&!(dev.textContent||'').trim();
+  const allCleared=[series,seriesDiag,bib,prep,repair].every(e=>!(e.textContent||'').trim())&&!(dev.textContent||'').trim();
   return {copies,libraryCleared,settingsCleared,allCleared};
 }catch(e){return {error:String(e?.message||e)}}})()`);
 check('E2E-UI-006 diagnostic copy/clear hierarchy works',diagnosticCopyClearUi?.copies===true&&diagnosticCopyClearUi?.libraryCleared===true&&diagnosticCopyClearUi?.settingsCleared===true&&diagnosticCopyClearUi?.allCleared===true,JSON.stringify(diagnosticCopyClearUi));
