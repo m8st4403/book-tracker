@@ -187,6 +187,10 @@
         if(/^inauthor:/i.test(qq))return searchNDL({creator:qq.replace(/^inauthor:/i,'').trim(),limit,signal:opts.signal,metrics:opts.metrics,booksOnly:true});
         if(/^intitle:/i.test(qq))return searchNDL({title:qq.replace(/^intitle:/i,'').trim(),limit,signal:opts.signal,metrics:opts.metrics,booksOnly:true});
         return searchNDL({title:qq,limit,signal:opts.signal,metrics:opts.metrics,booksOnly:true});
+      },
+      // Diagnostic-only route: expose the NDL OpenSearch `any` field without changing normal search behavior.
+      async searchAny(q,limit=20,opts={}){
+        return searchNDLOpenSearch({any:String(q||'').trim(),limit,signal:opts.signal,metrics:opts.metrics,booksOnly:true});
       }
     }
   };
