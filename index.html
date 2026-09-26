@@ -714,8 +714,8 @@ let calendarExtras=readJSONStorage("calendarExtras_v442",[]);if(!Array.isArray(c
 const DEMO_ENABLED=true;
 // Prototype/dev builds: a deleted sample set stays deleted within this build, but a new build/version starts with samples again.
 // Production/App Store builds set DEMO_ENABLED=false, so this logic is never exposed to end users.
-const APP_VERSION="4.13.142";
-function renderAppVersion(){const el=document.getElementById("appVersionText");if(el)el.firstChild.nodeValue=`バージョン：${APP_VERSION}（NDL範囲診断の表示・コピー・クリアを修正）`;}
+const APP_VERSION="4.13.143";
+function renderAppVersion(){const el=document.getElementById("appVersionText");if(el)el.firstChild.nodeValue=`バージョン：${APP_VERSION}（NDL診断の結果取得・コピー・クリアを修正）`;}
 const DEMO_DELETED_KEY="bookTrackerDemoDeleted";
 const DEMO_RESET_VERSION_KEY="bookTrackerDemoResetVersion";
 const DEMO_TITLES=["サンプル本棚：前月の便り","サンプル本棚：月夜の標本","サンプルシリーズ：星の余白 1巻","サンプルシリーズ：星の余白 2巻","サンプル本棚：翌月の灯り"];
@@ -1945,10 +1945,12 @@ async function diagnoseNdlProviderScopes(){
   const scopes=[{id:'',label:'データプロバイダ指定なし'},{id:'iss-ndl-opac',label:'国立国会図書館蔵書'},{id:'iss-ndl-opac-national',label:'国立国会図書館全国書誌情報'},{id:'iss-ndl-opac-inprocess',label:'国立国会図書館新着書誌情報'},{id:'ndl-dl',label:'国立国会図書館デジタルコレクション'},{id:'ndl-dl-online',label:'国立国会図書館デジタルコレクション（電子書籍・電子雑誌）'}];
   const lines=['<b>NDLデータプロバイダ範囲診断</b><br><span class="muted">操作：同一ISBNをOpenSearchのデータプロバイダ範囲ごとに照会します。蔵書データは変更しません。実行は1ISBN×1範囲ずつ順番に行います。</span>','対象ISBN：'+targets.length+'件'];
   const queryWithTimeout=async(isbn,scopeId)=>{
-   const controller=new AbortController(); const timer=setTimeout(()=>controller.abort(),8000);
-   try{return await api.adapters.ndl.searchAnyByProvider(isbn,scopeId,20,{fast:false,signal:controller.signal});}
+   const controller=new AbortController(); let timer=null;
+   const request=Promise.resolve().then(()=>api.adapters.ndl.searchAnyByProvider(isbn,scopeId,20,{fast:false,signal:controller.signal}));
+   const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>{try{controller.abort()}catch(_){ } reject(Error('NDL検索タイムアウト（8秒）'))},8000)});
+   try{return await Promise.race([request,timeout]);}
    catch(e){if(e?.name==='AbortError')throw Error('NDL検索タイムアウト（8秒）');throw e}
-   finally{clearTimeout(timer)}
+   finally{if(timer)clearTimeout(timer)}
   };
   box.innerHTML='<div class="series-box">'+lines.join('')+'<br><span class="muted">診断を開始しました。各範囲の取得結果を順次表示します。</span></div>';
   for(let i=0;i<targets.length;i++){
@@ -1979,26 +1981,36 @@ async function diagnoseNdlSeriesCandidates(){
   });
   if(!targets.length){box.innerHTML='<div class="series-box"><b>NDL検索経路比較診断</b><br>シリーズ情報が不足している通常蔵書はありません。<br><span class="muted">この診断は蔵書データを変更しません。</span></div>';return true;}
   const lines=['<b>NDL検索経路比較診断</b><br><span class="muted">操作：既存蔵書のシリーズ情報不足ISBNについて、NDLの3経路（作品名検索・登録タイトル検索・ISBNをany検索）をISBN単位で比較します。データは変更しません。実行は1ISBNずつ順番に行います。</span>','対象ISBN：'+targets.length+'件'];
+  const queryWithTimeout=async(fn,label)=>{
+   let timer=null; const controller=new AbortController();
+   const request=Promise.resolve().then(()=>fn(controller.signal));
+   const timeout=new Promise((_,reject)=>{timer=setTimeout(()=>{try{controller.abort()}catch(_){ } reject(Error(label+'タイムアウト（8秒）'))},8000)});
+   try{return await Promise.race([request,timeout]);}catch(e){if(e?.name==='AbortError')throw Error(label+'タイムアウト（8秒）');throw e}finally{if(timer)clearTimeout(timer)}
+  };
+  box.innerHTML='<div class="series-box">'+lines.join('<br>')+'<br><span class="muted">診断を開始しました。各経路の取得結果を順次表示します。</span></div>';
   let checked=0;
   for(const t of targets){
    checked++;
-   try{
-    const workRows=await api.adapters.ndl.search('intitle:'+t.query,20,{});
-    const titleRows=await api.adapters.ndl.search('intitle:'+t.title,20,{});
-    const anyRows=await api.adapters.ndl.searchAny(t.isbn,50,{});
-    const exact=rows=>rows.filter(r=>canonicalIsbn(r?.isbn)===canonicalIsbn(t.isbn));
-    const show=rows=>exact(rows).map(r=>({isbn:canonicalIsbn(r?.isbn)||String(r?.isbn||''),title:String(r?.title||''),seriesName:String(r?.series?.name||''),volume:r?.series?.volumeNumber??null,source:String(r?.source||'ndl')}));
-    const top=rows=>rows.slice(0,5).map(r=>({isbn:canonicalIsbn(r?.isbn)||String(r?.isbn||''),title:String(r?.title||''),seriesName:String(r?.series?.name||''),volume:r?.series?.volumeNumber??null,source:String(r?.source||'ndl')}));
-    lines.push('<br><b>['+checked+'/'+targets.length+'] ISBN='+esc(t.isbn)+'</b>','対象タイトル：'+esc(t.title));
-    const add=(label,term,rows)=>{lines.push('<b>'+label+'</b><br>検索語：'+esc(term)+'<br>候補数：'+rows.length+'<br>ISBN一致：'+exact(rows).length);lines.push(exact(rows).length?'一致候補：'+esc(JSON.stringify(show(rows))):'上位候補：'+esc(JSON.stringify(top(rows))));};
-    add('【操作A】作品名検索（巻数除外）','intitle:'+t.query,workRows);
-    add('【操作B】登録タイトル検索（巻数を含む）','intitle:'+t.title,titleRows);
-    add('【操作C】ISBNをany検索',t.isbn,anyRows);
-    lines.push('<b>経路判定：</b>'+([workRows,titleRows,anyRows].some(rows=>exact(rows).length)?'いずれかのNDL検索経路でISBN一致を確認':'3経路ともISBN一致なし'));
-   }catch(e){lines.push('<br><b>['+checked+'/'+targets.length+'] ISBN='+esc(t.isbn)+'</b><br>診断失敗：'+esc(String(e?.message||e)));}
-   box.innerHTML='<div class="series-box">'+lines.join('<br>')+'</div>';
+   lines.push('<br><b>['+checked+'/'+targets.length+'] ISBN='+esc(t.isbn)+'</b>','対象タイトル：'+esc(t.title));
+   box.innerHTML='<div class="series-box">'+lines.join('<br>')+'<br><span class="muted">['+checked+'/'+targets.length+'] 作品名検索を実行中…</span></div>';
+   let workRows=[],titleRows=[],anyRows=[];
+   try{workRows=await queryWithTimeout(signal=>api.adapters.ndl.search('intitle:'+t.query,20,{signal}), 'NDL作品名検索')}catch(e){lines.push('<br>【操作A】取得エラー：'+esc(String(e?.message||e)));}
+   const exact=rows=>Array.isArray(rows)?rows.filter(r=>canonicalIsbn(r?.isbn)===canonicalIsbn(t.isbn)):[];
+   const show=rows=>exact(rows).map(r=>({isbn:canonicalIsbn(r?.isbn)||String(r?.isbn||''),title:String(r?.title||''),seriesName:String(r?.series?.name||''),volume:r?.series?.volumeNumber??null,source:String(r?.source||'ndl')}));
+   const top=rows=>(Array.isArray(rows)?rows:[]).slice(0,5).map(r=>({isbn:canonicalIsbn(r?.isbn)||String(r?.isbn||''),title:String(r?.title||''),seriesName:String(r?.series?.name||''),volume:r?.series?.volumeNumber??null,source:String(r?.source||'ndl')}));
+   const add=(label,term,rows)=>{lines.push('<b>'+label+'</b><br>検索語：'+esc(term)+'<br>候補数：'+(Array.isArray(rows)?rows.length:0)+'<br>ISBN一致：'+exact(rows).length);lines.push(exact(rows).length?'一致候補：'+esc(JSON.stringify(show(rows))):'上位候補：'+esc(JSON.stringify(top(rows))));};
+   add('【操作A】作品名検索（巻数除外）','intitle:'+t.query,workRows);
+   box.innerHTML='<div class="series-box">'+lines.join('<br>')+'<br><span class="muted">['+checked+'/'+targets.length+'] 登録タイトル検索を実行中…</span></div>';
+   try{titleRows=await queryWithTimeout(signal=>api.adapters.ndl.search('intitle:'+t.title,20,{signal}), 'NDL登録タイトル検索')}catch(e){lines.push('<br>【操作B】取得エラー：'+esc(String(e?.message||e)));}
+   add('【操作B】登録タイトル検索（巻数を含む）','intitle:'+t.title,titleRows);
+   box.innerHTML='<div class="series-box">'+lines.join('<br>')+'<br><span class="muted">['+checked+'/'+targets.length+'] ISBN any検索を実行中…</span></div>';
+   try{anyRows=await queryWithTimeout(signal=>api.adapters.ndl.searchAny(t.isbn,50,{signal}), 'NDL ISBN any検索')}catch(e){lines.push('<br>【操作C】取得エラー：'+esc(String(e?.message||e)));}
+   add('【操作C】ISBNをany検索',t.isbn,anyRows);
+   lines.push('<b>経路判定：</b>'+([workRows,titleRows,anyRows].some(rows=>exact(rows).length)?'いずれかのNDL検索経路でISBN一致を確認':'3経路ともISBN一致なし'));
+   box.innerHTML='<div class="series-box">'+lines.join('<br>')+'<br><span class="muted">['+checked+'/'+targets.length+'] 次のISBNを処理します。</span></div>';
   }
-  return true;
+  lines.push('<br><b>判定：</b>3経路をISBN単位で比較しました。<br><span class="muted">この診断ではシリーズ情報・蔵書データを変更しません。</span>');
+  box.innerHTML='<div class="series-box">'+lines.join('<br>')+'</div>'; return true;
  });
 }
 
