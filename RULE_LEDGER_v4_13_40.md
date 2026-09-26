@@ -46,3 +46,12 @@ UIは「存在する」だけで完了としない。仕様が「読める」を
 | PERSIST-003 | 重要状態は実reload後に意味を維持する | browser reload E2E | CURRENT |
 | BACKUP-001 | バックアップはschema/version/許可キーを満たす | logic + E2E | CURRENT |
 | VERSION-001 | package/app/guardのバージョンを一致させる | static release gate | CURRENT |
+
+## v4.13.152 引き渡し前実動作ルール
+
+| ID | ルール | 検証方法 | 状態 |
+|---|---|---|---|
+| RELEASE-002 | 新規診断は静的配線だけでなくBrowser E2Eで実動作を確認してから引き渡す | 代表対象E2E | CURRENT |
+| RELEASE-003 | 診断のコピー・クリアは実際の操作結果まで検証する | Browser E2E | CURRENT |
+| RELEASE-004 | データ非変更診断は実行前後の蔵書スナップショット一致を確認する | Browser E2E | CURRENT |
+| RELEASE-005 | 新規診断の処理中ロック・完了・失敗解除を確認する | Browser E2E + concurrency | CURRENT |

@@ -78,3 +78,19 @@
 - E2E-CALENDAR-001/002: temporary calendar filters re-sync from saved defaults; calendar-extra write failure rolls back.
 - E2E-ICS-001: release-date ICS uses VALUE=DATE, escaped text values, stable deterministic UIDs, and excludes invalid dates.
 - E2E-NOTIFY-001: notification target window is inclusive from today through seven days later; disabled/invalid dates are excluded.
+
+## v4.13.152 — 引き渡し前実動作必須ルール
+
+新規診断機能は静的配線チェックだけでは配布可としない。引き渡し前に、実際のBrowser E2Eで代表対象を最後まで処理する。
+
+必須確認：
+- 対象ISBNを5件以上、Providerを4経路以上、逐次処理すること
+- 処理中表示・操作ロック・完了表示を確認すること
+- 結果が途中で消えないこと
+- コピーが実際に結果本文を取得すること
+- クリアが実際に結果領域を空にすること
+- 診断中に蔵書データが変更されないこと
+- 失敗時にエラー表示して操作ロックを解除すること
+- 既存診断との排他制御を確認すること
+
+上記の実動作E2Eが未実施、またはFAILの場合は、他のGateが全PASSでも引き渡し不可。

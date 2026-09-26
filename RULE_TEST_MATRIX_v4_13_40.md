@@ -28,3 +28,11 @@ DOM存在 → computed display/visibility → width/height → scrollWidth/scrol
 | Calendar extra save is atomic | Synthetic save failure | E2E-CALENDAR-002 |
 | ICS release-date semantics | VALUE=DATE + escaping + stable UID | E2E-ICS-001 |
 | Release notification window | today through +7 days inclusive | E2E-NOTIFY-001 |
+
+## v4.13.152 新規診断引き渡しゲート
+
+| 機能 | 正常 | 境界 | 異常 | 状態遷移 | 保存再読込 | Browser/UI | Mutation |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| ISBNシリーズ供給源診断 | ○ | ○ | ○ | ○ | - | **○ 必須** | ○ |
+
+Browser/UIでは5ISBN×4Providerの逐次処理、処理中ロック、完了、結果保持、コピー、クリア、蔵書データ非変更を確認する。

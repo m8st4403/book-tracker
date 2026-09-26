@@ -81,6 +81,9 @@ check('STATIC-047 library diagnostic result separation', /id="seriesCheckResults
 check('STATIC-048 NDL diagnostic individual action wiring', ['copyNdlProviderScopeBtn','clearNdlProviderScopeBtn','copyNdlSeriesCandidateBtn','clearNdlSeriesCandidateBtn'].every(id=>new RegExp('id=\"'+id+'\"').test(html)) && /copyNdlProviderScopeBtn\"\)\?\.addEventListener/.test(html) && /clearNdlProviderScopeBtn\"\)\?\.addEventListener/.test(html) && /copyNdlSeriesCandidateBtn\"\)\?\.addEventListener/.test(html) && /clearNdlSeriesCandidateBtn\"\)\?\.addEventListener/.test(html), 'NDL range/candidate copy and clear handlers are wired');
 check('STATIC-049 library aggregate includes NDL diagnostics', /section\('NDLデータプロバイダ範囲診断','ndlProviderScopeResults'\)/.test(html) && /section\('NDLシリーズ候補取得診断','ndlSeriesCandidateResults'\)/.test(html), 'library bundle copy includes both NDL diagnostics');
 check('STATIC-050 NDL scope diagnostic has bounded request timeout', /const queryWithTimeout=async\(isbn,scopeId\)=>/.test(html) && /setTimeout\(\(\)=>controller\.abort\(\),8000\)/.test(html), 'each diagnostic provider-range request cannot hang indefinitely');
+check('STATIC-051 ISBN series source diagnostic is fully wired', ['isbnSeriesSourceBtn','isbnSeriesSourceResults','copyIsbnSeriesSourceBtn','clearIsbnSeriesSourceBtn'].every(id=>new RegExp('id=\"'+id+'\"').test(html)) && /function diagnoseIsbnSeriesSources\(\)/.test(html) && /isbnSeriesSourceBtn\"\)\.onclick=diagnoseIsbnSeriesSources/.test(html) && /copyIsbnSeriesSourceBtn\"\)\?\.addEventListener/.test(html) && /clearIsbnSeriesSourceBtn\"\)\?\.addEventListener/.test(html), 'ISBN series source diagnostic has action, result, copy, clear and execution wiring');
+check('STATIC-052 ISBN series source diagnostic classifies provider outcomes', /FOUND/.test(html) && /NO_MATCH/.test(html) && /TIMEOUT/.test(html) && /SKIPPED/.test(html) && /楽天Books未設定/.test(html) && /Google Books無効/.test(html), 'provider diagnostic distinguishes usable data from absence, timeout and disabled providers');
+check('STATIC-053 ISBN series source diagnostic is included in aggregate report and clear', /section\('ISBNシリーズ供給源診断','isbnSeriesSourceResults'\)/.test(html) && /clearIsbnSeriesSourceResult\(\)/.test(html), 'new diagnostic participates in aggregate report and clear-all flow');
 check('STATIC-012 series repair excludes demo records', /isDemoRecord\(b\)/.test(html) && /通常の蔵書/.test(html), 'demo/sample records are excluded from repair');
 check('STATIC-013 resolver session cache contract', /resolverCache/.test(fs.readFileSync(path.join(path.dirname(target),'api_management.js'),'utf8')), 'ISBN resolver results are cached per session');
 check('STATIC-014 rule/test ledger exists', fs.existsSync(path.join(path.dirname(target),'RULE_LEDGER_v4_13_40.md')) && fs.existsSync(path.join(path.dirname(target),'RULE_TEST_MATRIX_v4_13_40.md')), 'rule ledger and verification matrix');
@@ -467,6 +470,38 @@ async function main(){
   return {copies,libraryCleared,settingsCleared,allCleared};
 }catch(e){return {error:String(e?.message||e)}}})()`);
 check('E2E-UI-006 diagnostic copy/clear hierarchy works',diagnosticCopyClearUi?.copies===true&&diagnosticCopyClearUi?.libraryCleared===true&&diagnosticCopyClearUi?.settingsCleared===true&&diagnosticCopyClearUi?.allCleared===true,JSON.stringify(diagnosticCopyClearUi));
+
+    const isbnSeriesSourceSmoke=await evalJS(`(async()=>{try{
+      const btn=document.getElementById('isbnSeriesSourceBtn'),box=document.getElementById('isbnSeriesSourceResults'),api=window.bookTrackerApiManagement;
+      const originalBooks=books, originalEnabled=api.providerEnabled, originals={};
+      const targets=[
+        {isbn:'9784065380161',title:'転生したらスライムだった件(028)'},
+        {isbn:'9784065396889',title:'転生したらスライムだった件(029)'},
+        {isbn:'9784065410561',title:'転生したらスライムだった件(030)'},
+        {isbn:'9784065423844',title:'転生したらスライムだった件 31'},
+        {isbn:'9784065437544',title:'転生したらスライムだった件(032)'}
+      ];
+      books=targets.map(x=>({isbn:x.isbn,title:x.title,series:null}));
+      for(const n of ['openBD','ndl','rakuten','googleBooks']) originals[n]=api.adapters[n].isbn;
+      api.providerEnabled=()=>true;
+      for(const n of Object.keys(originals)) api.adapters[n].isbn=async isbn=>{await new Promise(r=>setTimeout(r,25));return [{isbn,title:'fixture-'+n,series:{id:'SID-'+n,name:'fixture-series-'+n,volumeNumber:1,displayVolume:'1'},source:n,fieldEvidence:{seriesName:{confidence:'VERIFIED'},volumeNumber:{confidence:'VERIFIED'}}}]};
+      box.innerHTML='';
+      const before=books.map(b=>JSON.stringify(b));
+      const promise=diagnoseIsbnSeriesSources();
+      const running=await new Promise(resolve=>setTimeout(()=>resolve({disabled:!!btn.disabled,text:btn.textContent||''}),20));
+      const ok=await promise;
+      const text=box.textContent||'';
+      const after=books.map(b=>JSON.stringify(b));
+      const diff=[]; for(let di=0;di<Math.max(before.length,after.length);di++){if(before[di]!==after[di])diff.push({i:di,before:before[di],after:after[di]});}
+      const unchanged=before.length===after.length&&before.every((v,i)=>v===after[i]);
+      const complete=ok===true&&text.includes('[5/5]')&&text.includes('openBD')&&text.includes('ndl')&&text.includes('rakuten')&&text.includes('googleBooks')&&text.includes('FOUND')&&text.includes('判定：');
+      let copied=''; const oldCopy=window.copyTextValue; window.copyTextValue=(value)=>{copied=String(value||'')}; document.getElementById('copyIsbnSeriesSourceBtn').click(); window.copyTextValue=oldCopy; const copiedOk=copied.includes('[5/5]')&&copied.includes('fixture-googleBooks'); document.getElementById('clearIsbnSeriesSourceBtn').click(); const cleared=!(box.textContent||'').trim(); const copyClearWired=!!document.getElementById('copyIsbnSeriesSourceBtn')&&!!document.getElementById('clearIsbnSeriesSourceBtn')&&copiedOk&&cleared;
+      for(const n of Object.keys(originals)) api.adapters[n].isbn=originals[n]; api.providerEnabled=originalEnabled; books=originalBooks;
+      box.innerHTML='';
+      return {ok:complete&&unchanged&&copyClearWired,running,complete,unchanged,copyClearWired,copiedOk,cleared,diff,finalText:text.slice(-500)};
+    }catch(e){return {error:String(e?.message||e)}}})()`);
+    check('E2E-LIB-ISBN-SOURCE-001 ISBN series source diagnostic executes 5ISBN x 4Provider to completion',isbnSeriesSourceSmoke?.ok===true,JSON.stringify(isbnSeriesSourceSmoke));
+
 
 
     const overflowExpression = `(()=>{
