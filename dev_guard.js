@@ -319,6 +319,22 @@ async function main(){
       return out;
     })()`);
     for(const [name,ok] of Object.entries(logic)) check(`LOGIC-${name}`,ok,ok?'OK':'spec contract failed');
+    const seriesUiContract=await evalJS(`(()=>{try{
+      const items=[
+        {i:0,b:{isbn:'9784088720715',title:'レベルE 1',series:{name:'ジャンプ・コミックス'}}},
+        {i:1,b:{isbn:'9784088720722',title:'レベルE 2',series:{name:'ジャンプ・コミックス'}}},
+        {i:2,b:{isbn:'9784088720739',title:'レベルE 3',series:{name:'ジャンプ・コミックス\\n ジャンプ コミックス'}}}
+      ];
+      const keys=items.map(x=>seriesKey(x.b));
+      const key=keys[0];
+      const html=renderSeriesLibraryGroup(key,items);
+      const scope=normalizeSeriesScopeName('ジャンプ・コミックス\\n ジャンプ コミックス');
+      const label=seriesDisplayLabel(key,items);
+      const visibleTitleToken='<span class="series-cyclic-title">レベルE / ジャンプ・コミックス</span>';
+      const visibleTitle=html.includes(visibleTitleToken)?'レベルE / ジャンプ・コミックス':'';
+      return {ok:new Set(keys).size===1&&scope==='ジャンプ・コミックス'&&label==='レベルE / ジャンプ・コミックス'&&visibleTitle==='レベルE / ジャンプ・コミックス',grouped:new Set(keys).size===1,scope,label,visibleTitle};
+    }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
+    check('E2E-UI-SERIES-001 series header hides internal key and deduplicates bibliography spelling',seriesUiContract?.ok===true,JSON.stringify(seriesUiContract));
     const concurrencySmoke=await evalJS(`(async()=>{
       const first=runSearchSingleFlight('guard-search-a','guard-concurrency',null,async token=>{await sleep(80);return isCurrentSearch('guard-concurrency',token)});
       await sleep(10);

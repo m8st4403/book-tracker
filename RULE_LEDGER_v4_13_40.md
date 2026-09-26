@@ -55,3 +55,13 @@ UIは「存在する」だけで完了としない。仕様が「読める」を
 | RELEASE-003 | 診断のコピー・クリアは実際の操作結果まで検証する | Browser E2E | CURRENT |
 | RELEASE-004 | データ非変更診断は実行前後の蔵書スナップショット一致を確認する | Browser E2E | CURRENT |
 | RELEASE-005 | 新規診断の処理中ロック・完了・失敗解除を確認する | Browser E2E + concurrency | CURRENT |
+
+
+## v4.13.155 シリーズ表示・分類ルール
+
+| ID | ルール | 検証方法 | 状態 |
+|---|---|---|---|
+| SERIES-UI-001 | `series-work:` / `series-scope:` 等の内部分類キーをユーザー向けシリーズ見出しに表示しない | Browser E2E + UI表示検査 | CURRENT |
+| SERIES-UI-002 | 同一作品・同一出版シリーズの書誌表記差（改行・空白・中点差）は分類上同一化する | seriesKey boundary + Browser E2E | CURRENT |
+| SERIES-UI-003 | シリーズ見出しは作品名と出版シリーズ名をユーザー向け表記で表示する | Browser E2E | CURRENT |
+| SERIES-UI-004 | シリーズ表示修正は蔵書データ（タイトル・読書状態・お気に入り・価格等）を変更しない | Browser E2E snapshot | CURRENT |
