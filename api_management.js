@@ -364,7 +364,7 @@
       const volumeParsed=String(volumeRaw||"").match(/\d+/);
       const volumeNumber=volumeParsed?parseInt(volumeParsed[0],10):(parsed.volume!=null?parsed.volume:null);
       const seriesFallback=volumeNumber!=null?String(title||"").replace(/[.．。\s]+$/g,"").trim():"";
-      const seriesName=(seriesTitle||seriesMatch?.[1]||seriesFallback).trim();
+      const seriesName=(seriesTitle||seriesMatch?.[1]||"").trim();
       const out={isbn:isbnId,title,subtitle:"",author:creators.join(", "),publisher,date:issued,cover:"",description,categories:[],source:"ndl",series:seriesName?{id:"",name:seriesName,volumeNumber,displayVolume:volumeNumber!=null?String(volumeNumber):"",bookType:""}:null,priceMeta:null,identifiers:{ndlRecordId:link||""},fieldEvidence:{}};
       if(isbn)out.isbn=isbn;
       const match=!!isbn;
