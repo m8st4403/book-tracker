@@ -332,7 +332,16 @@ async function main(){
       const label=seriesDisplayLabel(key,items);
       const visibleTitleToken='<span class="series-cyclic-title">レベルE / ジャンプ・コミックス</span>';
       const visibleTitle=html.includes(visibleTitleToken)?'レベルE / ジャンプ・コミックス':'';
-      return {ok:new Set(keys).size===1&&scope==='ジャンプ・コミックス'&&label==='レベルE / ジャンプ・コミックス'&&visibleTitle==='レベルE / ジャンプ・コミックス',grouped:new Set(keys).size===1,scope,label,visibleTitle};
+      const bunkoItems=[
+        {i:0,b:{isbn:'9784086191524',title:'レベルE 1',series:{name:'集英社文庫 ; と21-3'}}},
+        {i:1,b:{isbn:'9784086191531',title:'レベルE 2',series:{name:'集英社文庫 ; と21-4\\nシュウエイシャ ブンコ ; ト(21)(4)'}}}
+      ];
+      const bunkoKeys=bunkoItems.map(x=>seriesKey(x.b));
+      const bunkoScope=normalizeSeriesScopeName(bunkoItems[1].b.series.name);
+      const bunkoHtml=renderSeriesLibraryGroup(bunkoKeys[0],bunkoItems);
+      const bunkoLabel=seriesDisplayLabel(bunkoKeys[0],bunkoItems);
+      const bunkoVisible=bunkoHtml.includes('<span class="series-cyclic-title">レベルE / 集英社文庫</span>');
+      return {ok:new Set(keys).size===1&&scope==='ジャンプ・コミックス'&&label==='レベルE / ジャンプ・コミックス'&&visibleTitle==='レベルE / ジャンプ・コミックス'&&new Set(bunkoKeys).size===1&&bunkoScope==='集英社文庫'&&bunkoLabel==='レベルE / 集英社文庫'&&bunkoVisible,grouped:new Set(keys).size===1,scope,label,visibleTitle,bunkoGrouped:new Set(bunkoKeys).size===1,bunkoScope,bunkoLabel,bunkoVisible};
     }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
     check('E2E-UI-SERIES-001 series header hides internal key and deduplicates bibliography spelling',seriesUiContract?.ok===true,JSON.stringify(seriesUiContract));
     const concurrencySmoke=await evalJS(`(async()=>{
