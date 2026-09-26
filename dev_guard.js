@@ -25,6 +25,9 @@ const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
 const dupIds = [...new Set(ids.filter((id,i)=>ids.indexOf(id)!==i))];
 check('STATIC-001 unique DOM ids', dupIds.length===0, dupIds.join(', '));
 check('STATIC-002 required version marker', /DEV_GUARD_VERSION\s*=\s*["']4\.\d+\.\d+["']/.test(html), 'version marker present');
+const escapeHtmlRefs=(html.match(/\bescapeHtml\s*\(/g)||[]).length;
+check('STATIC-048 escapeHtml helper is defined', escapeHtmlRefs===0 || /(?:const|let|var)\s+escapeHtml\s*=|function\s+escapeHtml\s*\(/.test(html), `references=${escapeHtmlRefs}`);
+
 const packagePath=path.join(path.dirname(target),'package.json');
 let packageVersion='';
 try{packageVersion=JSON.parse(fs.readFileSync(packagePath,'utf8')).version||''}catch(e){}
