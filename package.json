@@ -1,7 +1,7 @@
 {
   "name": "book-tracker-test-guard",
   "private": true,
-  "version": "4.13.140",
+  "version": "4.13.141",
   "scripts": {
     "test": "npm run test:guard && npm run test:mutation",
     "test:guard": "node dev_guard.js index.html",
