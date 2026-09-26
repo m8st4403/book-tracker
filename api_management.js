@@ -191,6 +191,9 @@
       // Diagnostic-only route: expose the NDL OpenSearch `any` field without changing normal search behavior.
       async searchAny(q,limit=20,opts={}){
         return searchNDLOpenSearch({any:String(q||'').trim(),limit,signal:opts.signal,metrics:opts.metrics,booksOnly:true});
+      },
+      async searchAnyByProvider(q,providerId,limit=20,opts={}){
+        return searchNDLOpenSearch({any:String(q||'').trim(),limit,signal:opts.signal,metrics:opts.metrics,booksOnly:false,dpid:providerId});
       }
     }
   };
@@ -370,9 +373,10 @@
       return out;
     }).filter(x=>x.title);
   }
-  async function searchNDLOpenSearch({title,creator,any,limit=20,signal,metrics,booksOnly=false}){
+  async function searchNDLOpenSearch({title,creator,any,limit=20,signal,metrics,booksOnly=false,dpid="iss-ndl-opac"}){
     const candidateLimit=Math.max(20,Number(limit)||20);
-    const p=new URLSearchParams({cnt:String(Math.min(50,candidateLimit)),dpid:"iss-ndl-opac"});
+    const p=new URLSearchParams({cnt:String(Math.min(50,candidateLimit))});
+    if(dpid)p.set("dpid",String(dpid));
     if(booksOnly)p.set("mediatype","books");
     if(title)p.set("title",String(title));
     if(creator)p.set("creator",String(creator));
