@@ -354,8 +354,9 @@
       const volumeRaw=firstLocalText(item,"volume");
       const volumeTitle=firstLocalText(item,"volumeTitle");
       const seriesTitle=text("seriesTitle");
-      const ids=[...item.getElementsByTagNameNS("*","identifier")].map(x=>({value:String(x.textContent||"").trim(),type:String(x.getAttribute("xsi:type")||x.getAttribute("type")||"")}));
-      const isbnId=ids.find(x=>/isbn/i.test(x.type))?.value||ids.map(x=>x.value).find(v=>/^97[89][0-9-]{10,17}$/.test(v))||"";
+      const ids=[...item.getElementsByTagNameNS("*","identifier")].map(x=>({value:String(x.textContent||"").trim(),type:String(x.getAttribute("xsi:type")||x.getAttribute("type")||"")})).filter(x=>x.value);
+      const rawIdentifierValues=ids.map(x=>x.value);
+      const isbnId=ids.find(x=>/isbn/i.test(x.type))?.value||ids.map(x=>x.value).map(v=>(v.match(/(97[89][0-9-]{10,17})/)||[])[1]||v).find(v=>/^97[89][0-9-]{10,17}$/.test(v))||"";
       const isbn=canonicalIsbn(isbnId);
       const link=text("link");
       const description=text("description");
@@ -365,7 +366,7 @@
       const volumeNumber=volumeParsed?parseInt(volumeParsed[0],10):(parsed.volume!=null?parsed.volume:null);
       const seriesFallback=volumeNumber!=null?String(title||"").replace(/[.．。\s]+$/g,"").trim():"";
       const seriesName=(seriesTitle||seriesMatch?.[1]||"").trim();
-      const out={isbn:isbnId,title,subtitle:"",author:creators.join(", "),publisher,date:issued,cover:"",description,categories:[],source:"ndl",series:seriesName?{id:"",name:seriesName,volumeNumber,displayVolume:volumeNumber!=null?String(volumeNumber):"",bookType:""}:null,priceMeta:null,identifiers:{ndlRecordId:link||""},fieldEvidence:{}};
+      const out={isbn:isbnId,title,subtitle:"",author:creators.join(", "),publisher,date:issued,cover:"",description,categories:[],source:"ndl",series:seriesName?{id:"",name:seriesName,volumeNumber,displayVolume:volumeNumber!=null?String(volumeNumber):"",bookType:""}:null,priceMeta:null,identifiers:{ndlRecordId:link||"",ndlIdentifiers:rawIdentifierValues},fieldEvidence:{}};
       if(isbn)out.isbn=isbn;
       const match=!!isbn;
       for(const [field,value] of [["isbn13",/^97[89]\d{10}$/.test(String(out.isbn))?out.isbn:null],["title",out.title],["author",out.author],["publisher",out.publisher],["releaseDate",out.date],["seriesName",out.series?.name]])if(value)out.fieldEvidence[field]=evidenceFor(field,value,{identifierMatched:match,countryMatched:true});
