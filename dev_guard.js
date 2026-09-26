@@ -358,8 +358,31 @@ async function main(){
     check('E2E-CONCURRENCY-002 registration actions are globally serialized',concurrencySmoke?.registrationSecondRejected===true&&concurrencySmoke?.registrationFirstCompleted===true,JSON.stringify(concurrencySmoke));
     const dataLockSmoke=await evalJS(`(async()=>{const before=dataOperationBusy;dataOperationBusy=true;const searchBlocked=await runSearchSingleFlight('guard-data-lock','guard-data-lock-target',null,async()=>true)===null;const regBlocked=await runRegistrationAction(async()=>true)===false;dataOperationBusy=before;return {searchBlocked,regBlocked};})()`);
     check('E2E-CONCURRENCY-003 data operation lock blocks competing actions',dataLockSmoke?.searchBlocked===true&&dataLockSmoke?.regBlocked===true,JSON.stringify(dataLockSmoke));
-    const libraryDiagnosticLockSmoke=await evalJS(`(async()=>{const before=dataOperationBusy;dataOperationBusy=true;syncOperationUi();const ids=['seriesCheckBtn','seriesDiagnoseBtn','bibliographyCompareBtn','isbnRegistrationPrepBtn','seriesRepairBtn'];const disabled=ids.every(id=>document.getElementById(id)?.disabled===true);const a=await runSeriesCheck()===false;const b=await diagnoseSeriesGrouping()===false;const c=await compareBibliographyPaths()===false;const d=await diagnoseIsbnRegistrationPreparation()===false;const e=await repairExistingSeries()===false;dataOperationBusy=before;syncOperationUi();return {disabled,blocked:[a,b,c,d,e].every(Boolean)}})()`);
+    const libraryDiagnosticLockSmoke=await evalJS(`(async()=>{const before=dataOperationBusy;dataOperationBusy=true;syncOperationUi();const ids=['seriesCheckBtn','seriesDiagnoseBtn','bibliographyCompareBtn','isbnRegistrationPrepBtn','seriesRepairBtn'];const disabled=ids.every(id=>document.getElementById(id)?.disabled===true);const a=await runSeriesCheck()===false;const b=await runSeriesDiagnosis()===false;const c=await compareBibliographyPaths()===false;const d=await diagnoseIsbnRegistrationPreparation()===false;const e=await repairExistingSeries()===false;dataOperationBusy=before;syncOperationUi();return {disabled,blocked:[a,b,c,d,e].every(Boolean)}})()`);
     check('E2E-CONCURRENCY-004 all library diagnostics are mutually exclusive',libraryDiagnosticLockSmoke?.disabled===true&&libraryDiagnosticLockSmoke?.blocked===true,JSON.stringify(libraryDiagnosticLockSmoke));
+    const seriesDiagnosticExecutionSmoke=await evalJS(`(async()=>{
+      const originalBooks=books, originalSeriesHtml=document.getElementById('seriesDiagnoseResults')?.innerHTML||'', originalCheckHtml=document.getElementById('seriesCheckResults')?.innerHTML||'';
+      const sample=[
+        {isbn:'9784088720715',title:'レベルE 1',series:{name:'ジャンプ・コミックス',volumeNumber:1}},
+        {isbn:'9784088720722',title:'レベルE 2',series:{name:'ジャンプ・コミックス',volumeNumber:2}},
+        {isbn:'9784086191524',title:'レベルE 1',series:{name:'集英社文庫 ; と21-3',volumeNumber:1}},
+        {isbn:'9784086191531',title:'レベルE 2',series:{name:'集英社文庫 ; と21-4',volumeNumber:2}}
+      ];
+      books=sample;
+      const diagBtn=document.getElementById('seriesDiagnoseBtn'), checkBtn=document.getElementById('seriesCheckBtn');
+      document.getElementById('seriesDiagnoseResults').innerHTML=''; document.getElementById('seriesCheckResults').innerHTML='';
+      const diagPromise=runSeriesDiagnosis();
+      const diagResult=await diagPromise;
+      const diagText=document.getElementById('seriesDiagnoseResults').textContent||'';
+      const diagOk=diagResult===true && diagText.includes('シリーズ分類診断') && diagText.includes('9784086191524') && diagText.includes('集英社文庫');
+      const checkResult=await runSeriesCheck();
+      const checkText=document.getElementById('seriesCheckResults').textContent||'';
+      const checkOk=checkResult===true && checkText.length>0 && (checkText.includes('巻抜け候補') || checkText.includes('巻抜け候補は見つかりませんでした'));
+      const buttonsRestored=diagBtn?.disabled===false && checkBtn?.disabled===false && diagBtn?.dataset.busy!=='1' && checkBtn?.dataset.busy!=='1';
+      books=originalBooks; document.getElementById('seriesDiagnoseResults').innerHTML=originalSeriesHtml; document.getElementById('seriesCheckResults').innerHTML=originalCheckHtml; syncOperationUi(); renderLibrary();
+      return {ok:diagOk&&checkOk&&buttonsRestored,diagOk,checkOk,buttonsRestored,diagResult,checkResult,diagText:diagText.slice(0,500),checkText:checkText.slice(0,500)};
+    })()`) ;
+    check('E2E-LIB-SERIES-DIAGNOSTIC-001 series diagnosis and missing-volume check execute and render results',seriesDiagnosticExecutionSmoke?.ok===true,JSON.stringify(seriesDiagnosticExecutionSmoke));
     const repairSmoke=await evalJS(`(async()=>{
       const api=window.bookTrackerApiManagement, oldResolve=api.resolveIsbn, oldConfirm=window.confirm, oldAlert=window.alert, oldBooks=books.slice();
       const sample=[
