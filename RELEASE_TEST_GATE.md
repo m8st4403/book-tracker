@@ -94,3 +94,8 @@
 - 既存診断との排他制御を確認すること
 
 上記の実動作E2Eが未実施、またはFAILの場合は、他のGateが全PASSでも引き渡し不可。
+
+
+## v4.13.153 — Provider設定状態ゲート
+
+ISBNシリーズ供給源診断は「有効API」の意味を実際のProvider設定状態と一致させる。未設定の楽天BooksはSKIPPED（楽天Books未設定）、既定OFFのGoogle BooksはSKIPPED（Google Books無効）と表示し、未設定Providerへ通信してはならない。

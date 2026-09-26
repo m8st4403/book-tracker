@@ -502,7 +502,24 @@ check('E2E-UI-006 diagnostic copy/clear hierarchy works',diagnosticCopyClearUi?.
     }catch(e){return {error:String(e?.message||e)}}})()`);
     check('E2E-LIB-ISBN-SOURCE-001 ISBN series source diagnostic executes 5ISBN x 4Provider to completion',isbnSeriesSourceSmoke?.ok===true,JSON.stringify(isbnSeriesSourceSmoke));
 
-
+    const isbnSeriesSourceConfigSmoke=await evalJS(`(async()=>{try{
+      const btn=document.getElementById('isbnSeriesSourceBtn'),box=document.getElementById('isbnSeriesSourceResults'),api=window.bookTrackerApiManagement;
+      const originalBooks=books, originalEnabled=api.providerEnabled, originals={}, originalProviderState={};
+      const originalCfg=globalThis.bookTrackerProviderConfig;
+      books=[{isbn:'9784065380161',title:'転生したらスライムだった件(028)',series:null}];
+      for(const n of ['openBD','ndl','rakuten','googleBooks']){ originals[n]=api.adapters[n].isbn; originalProviderState[n]=api.providers[n]?.enabled; }
+      const calls={openBD:0,ndl:0,rakuten:0,googleBooks:0};
+      api.providers.openBD.enabled=true; api.providers.ndl.enabled=true; api.providers.rakuten.enabled=true; api.providers.googleBooks.enabled=false;
+      for(const n of Object.keys(originals)) api.adapters[n].isbn=async isbn=>{calls[n]++;return [{isbn,title:'fixture-'+n,series:{id:'SID-'+n,name:'fixture-series-'+n,volumeNumber:1},source:n}]};
+      globalThis.bookTrackerProviderConfig={rakuten:{applicationId:'',accessKey:''}};
+      box.innerHTML='';
+      await diagnoseIsbnSeriesSources();
+      const text=box.textContent||'';
+      const ok=text.includes('【rakuten】')&&text.includes('SKIPPED')&&text.includes('楽天Books未設定')&&text.includes('【googleBooks】')&&text.includes('Google Books無効')&&calls.rakuten===0&&calls.googleBooks===0&&calls.openBD===1&&calls.ndl===1;
+      for(const n of Object.keys(originals)) api.adapters[n].isbn=originals[n]; for(const n of Object.keys(originalProviderState)) api.providers[n].enabled=originalProviderState[n]; api.providerEnabled=originalEnabled; globalThis.bookTrackerProviderConfig=originalCfg; books=originalBooks; box.innerHTML='';
+      return {ok,text,calls};
+    }catch(e){return {error:String(e?.message||e)}}})()`);
+    check('E2E-LIB-ISBN-SOURCE-002 unconfigured/disabled providers are skipped',isbnSeriesSourceConfigSmoke?.ok===true,JSON.stringify(isbnSeriesSourceConfigSmoke));
 
     const overflowExpression = `(()=>{
       const visible=e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);return r.width>0&&r.height>0&&s.display!=='none'&&s.visibility!=='hidden'};

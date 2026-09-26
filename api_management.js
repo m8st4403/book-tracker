@@ -632,5 +632,5 @@
     return {value:null,confidence:"UNKNOWN",provider:null,evidence:null,attempts};
   }
   function config(){return {version:VERSION,runtimePolicy:JSON.parse(JSON.stringify(runtimePolicy)),providerHealth:JSON.parse(JSON.stringify(Object.fromEntries(providerHealth))),providers:JSON.parse(JSON.stringify(providers)),priority:JSON.parse(JSON.stringify(priority)),thresholds:JSON.parse(JSON.stringify(thresholds))}}
-  window.bookTrackerApiManagement={VERSION,CONFIDENCE:CONF,CRITICAL_FIELDS:[...CRITICAL],providers,priority,thresholds,adapters,evidenceFor,acceptable,listPriceAccepted,runField,resolveIsbn,seriesAcceptable,mergeCandidates,config,normalizeRakuten,normalizeNDLFixture,normalizeNDLOpenSearch,buildNDLSruSearchUrl,providerHealth,runtimePolicy,providerTemporarilyDisabled,search,clearResolverCache,cacheInfo,cachePolicy};
+  window.bookTrackerApiManagement={VERSION,CONFIDENCE:CONF,CRITICAL_FIELDS:[...CRITICAL],providers,priority,thresholds,adapters,evidenceFor,acceptable,listPriceAccepted,runField,resolveIsbn,seriesAcceptable,mergeCandidates,config,normalizeRakuten,normalizeNDLFixture,normalizeNDLOpenSearch,buildNDLSruSearchUrl,providerHealth,runtimePolicy,providerEnabled,providerTemporarilyDisabled,search,clearResolverCache,cacheInfo,cachePolicy};
 })();
