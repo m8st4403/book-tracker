@@ -65,3 +65,15 @@ UIは「存在する」だけで完了としない。仕様が「読める」を
 | SERIES-UI-002 | 同一作品・同一出版シリーズの書誌表記差（改行・空白・中点差）は分類上同一化する | seriesKey boundary + Browser E2E | CURRENT |
 | SERIES-UI-003 | シリーズ見出しは作品名と出版シリーズ名をユーザー向け表記で表示する | Browser E2E | CURRENT |
 | SERIES-UI-004 | シリーズ表示修正は蔵書データ（タイトル・読書状態・お気に入り・価格等）を変更しない | Browser E2E snapshot | CURRENT |
+
+
+## v4.13.162 作者フィルター同一性ルール
+
+| ID | ルール | 検証方法 | 状態 |
+|---|---|---|---|
+| FILTER-AUTHOR-001 | 作者フィルターは生のauthor文字列完全一致ではなく作者同一性キーで分類する | logic + Browser E2E | CURRENT |
+| FILTER-AUTHOR-002 | 空白・NFKC・全角半角・役割接頭辞の差で同一作者を分割しない | boundary test | CURRENT |
+| FILTER-AUTHOR-003 | 複数作者は各作者を独立したフィルター候補として扱う | boundary + UI | CURRENT |
+| FILTER-AUTHOR-004 | 作者フィルター正規化で保存済み書誌値を変更しない | snapshot + persistence | CURRENT |
+| FILTER-AUTHOR-005 | 内部作者キーをUIへ表示しない | Browser E2E | CURRENT |
+

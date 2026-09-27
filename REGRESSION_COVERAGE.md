@@ -279,3 +279,14 @@ Chromiumを使ったUI回帰では390×844で小・中・大フォントをレ�
 | バックアップ契約 | schemaVersion/appVersion/許可storageキー | E2E |
 | 購入総額保存失敗 | storage書込み失敗時にmemory状態をrollback | failure injection E2E |
 | バージョン整合 | package.json / APP_VERSION / DEV_GUARD_VERSION | static |
+
+
+## v4.13.162 作者フィルター回帰
+| 仕様 | 回帰確認 | 方法 |
+|---|---|---|
+| 作者の空白差を同一扱い | `冨樫義博` / `冨樫 義博` | logic |
+| 作者の役割接頭辞を同一扱い | `原作：冨樫義博` / `冨樫義博` | logic |
+| 複数作者を個別選択 | `A, B` からA/B双方を候補化 | logic |
+| 別作者を分離 | AとBのキーが一致しない | logic |
+| 保存値を変更しない | 正規化前後のauthor一致 | logic |
+| UIに内部キーを出さない | 作者候補の表示値検査 | Browser E2E |

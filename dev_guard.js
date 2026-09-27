@@ -345,6 +345,32 @@ async function main(){
       return {ok:new Set(keys).size===1&&scope==='ジャンプ・コミックス'&&label==='レベルE / ジャンプ・コミックス'&&visibleTitle==='レベルE / ジャンプ・コミックス'&&new Set(bunkoKeys).size===1&&bunkoScope==='集英社文庫'&&bunkoLabel==='レベルE / 集英社文庫'&&bunkoVisible,grouped:new Set(keys).size===1,scope,label,visibleTitle,bunkoGrouped:new Set(bunkoKeys).size===1,bunkoScope,bunkoLabel,bunkoVisible};
     }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
     check('E2E-UI-SERIES-001 series header hides internal key and deduplicates bibliography spelling',seriesUiContract?.ok===true,JSON.stringify(seriesUiContract));
+    const authorFilterSmoke=await evalJS(`(()=>{
+      const originalBooks=books, originalAuthor=document.getElementById('filterAuthor')?.value||'', originalLibrary=document.getElementById('myBooks')?.innerHTML||'';
+      try{
+        books=[
+          {isbn:'author-1',title:'作者テストA 1',author:'冨樫義博',publisher:'出版社A',date:'2020-01-01'},
+          {isbn:'author-2',title:'作者テストA 2',author:'冨樫 義博',publisher:'出版社A',date:'2020-02-01'},
+          {isbn:'author-3',title:'作者テストB 1',author:'原作：冨樫　義博, 作画：別作者',publisher:'出版社B',date:'2021-01-01'},
+          {isbn:'author-4',title:'作者テストC 1',author:'別作者',publisher:'出版社C',date:'2022-01-01'}
+        ];
+        refreshLibraryFilters();
+        const sel=document.getElementById('filterAuthor');
+        const options=[...sel.options].map(o=>({value:o.value,text:o.textContent}));
+        const keys=authorFilterKey(books[0]);
+        const sameKey=keys.length===1&&authorFilterKey(books[1])[0]===keys[0]&&authorFilterKey(books[2]).includes(keys[0]);
+        const authorOptions=options.filter(o=>o.value===keys[0]);
+        sel.value=keys[0]; renderLibrary();
+        const summary=document.getElementById('filterSummary')?.textContent||'';
+        const cardText=document.getElementById('myBooks')?.textContent||'';
+        const selectedBooks=cardText.includes('作者テストA 1')&&cardText.includes('作者テストA 2')&&cardText.includes('作者テストB 1')&&!cardText.includes('作者テストC 1');
+        const rawUnchanged=books[1].author==='冨樫 義博'&&books[2].author==='原作：冨樫　義博, 作画：別作者';
+        return {ok:sameKey&&authorOptions.length===1&&/3冊/.test(summary)&&selectedBooks&&rawUnchanged, sameKey,authorOptions,summary,selectedBooks,rawUnchanged,options};
+      }finally{
+        books=originalBooks; if(document.getElementById('filterAuthor'))document.getElementById('filterAuthor').value=originalAuthor; if(document.getElementById('myBooks'))document.getElementById('myBooks').innerHTML=originalLibrary; renderLibrary();
+      }
+    })()`) ;
+    check('E2E-LIB-AUTHOR-001 author filter uses normalized identity and keeps multiple authors selectable',authorFilterSmoke?.ok===true,JSON.stringify(authorFilterSmoke));
     const concurrencySmoke=await evalJS(`(async()=>{
       const first=runSearchSingleFlight('guard-search-a','guard-concurrency',null,async token=>{await sleep(80);return isCurrentSearch('guard-concurrency',token)});
       await sleep(10);
