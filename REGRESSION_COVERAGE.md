@@ -296,3 +296,13 @@ Chromiumを使ったUI回帰では390×844で小・中・大フォントをレ�
 | 構造化authorNames優先 | Providerの複数作者配列と表示author文字列の不一致でも作者候補を正しく保持 | adapter + E2E |
 | 生没年形式の作者欄混入 | `1966-` 等を作者候補にしない | boundary logic + Browser E2E |
 
+
+
+## v4.13.165 作者フィルター典拠ID回帰
+| 仕様 | 回帰確認 | 方法 |
+|---|---|---|
+| 同一典拠IDの名称差 | `佐賀崎,しげる` / `佐賀崎 しげる` | property logic |
+| 同名異人の分離 | 同一正規化名＋異なるNDL典拠ID | boundary logic |
+| 典拠なし旧データの安全な橋渡し | 典拠が1つだけなら橋渡し、複数なら未確定のまま | property logic |
+| 典拠URI非表示 | UI候補に内部URIが出ない | Browser E2E |
+| 保存値不変 | `author` before/after一致 | snapshot |

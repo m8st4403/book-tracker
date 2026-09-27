@@ -338,6 +338,33 @@
     const records=[...doc.getElementsByTagNameNS("*","record")];
     return records.map(rec=>normalizeNDLRecord(rec,hint)).filter(x=>x?.title);
   }
+  // NDL Search/DC-NDL may attach an authority/name-entity URI to creator.
+  // Keep that identifier as bibliographic evidence; do not invent an identity
+  // when the provider only gives a plain creator string.
+  function normalizeNDLAuthorityUri(value){
+    const s=String(value||"").trim();
+    if(!s)return "";
+    const m=s.match(/https?:\/\/id\.ndl\.go\.jp\/auth\/(ndlna|entity)\/(\d+)/i);
+    return m?`http://id.ndl.go.jp/auth/${m[1].toLowerCase()}/${m[2]}`:"";
+  }
+  function extractNDLCreatorEntities(rec){
+    const out=[];
+    const nodes=[...rec.getElementsByTagNameNS("*","creator")];
+    for(const node of nodes){
+      let name=String(node.textContent||"").replace(/\s+/g," ").trim();
+      let resource=node.getAttribute("rdf:resource")||node.getAttribute("resource")||"";
+      if(!resource){
+        const child=[...node.getElementsByTagName("*")].find(x=>x.getAttribute("rdf:resource")||x.getAttribute("resource"));
+        resource=child?.getAttribute("rdf:resource")||child?.getAttribute("resource")||"";
+      }
+      const entityId=normalizeNDLAuthorityUri(resource);
+      if(!name&&!entityId)continue;
+      const authorityId=entityId.replace("/entity/","/ndlna/");
+      out.push({name,authorityId:authorityId||null,entityId:entityId||null,source:"ndl"});
+    }
+    const seen=new Set();
+    return out.filter(x=>{const k=`${x.authorityId||""}|${x.entityId||""}|${x.name||""}`;if(seen.has(k))return false;seen.add(k);return true});
+  }
   function normalizeNDLOpenSearch(xml){
     const doc=new DOMParser().parseFromString(xml,"application/xml");
     if(doc.querySelector("parsererror"))throw Error("NDL OpenSearch XMLを解析できませんでした。");
@@ -366,7 +393,8 @@
       const volumeNumber=volumeParsed?parseInt(volumeParsed[0],10):(parsed.volume!=null?parsed.volume:null);
       const seriesFallback=volumeNumber!=null?String(title||"").replace(/[.．。\s]+$/g,"").trim():"";
       const seriesName=(seriesTitle||seriesMatch?.[1]||"").trim();
-      const out={isbn:isbnId,title,subtitle:"",author:creators.join(", "),authorNames:creators.slice(),publisher,date:issued,cover:"",description,categories:[],source:"ndl",series:seriesName?{id:"",name:seriesName,volumeNumber,displayVolume:volumeNumber!=null?String(volumeNumber):"",bookType:""}:null,priceMeta:null,identifiers:{ndlRecordId:link||"",ndlIdentifiers:rawIdentifierValues},fieldEvidence:{}};
+      const creatorEntities=creators.map(name=>({name,authorityId:null,entityId:null,source:"ndl"}));
+      const out={isbn:isbnId,title,subtitle:"",author:creators.join(", "),authorNames:creators.slice(),authorEntities:creatorEntities,publisher,date:issued,cover:"",description,categories:[],source:"ndl",series:seriesName?{id:"",name:seriesName,volumeNumber,displayVolume:volumeNumber!=null?String(volumeNumber):"",bookType:""}:null,priceMeta:null,identifiers:{ndlRecordId:link||"",ndlIdentifiers:rawIdentifierValues},fieldEvidence:{}};
       if(isbn)out.isbn=isbn;
       const match=!!isbn;
       for(const [field,value] of [["isbn13",/^97[89]\d{10}$/.test(String(out.isbn))?out.isbn:null],["title",out.title],["author",out.author],["publisher",out.publisher],["releaseDate",out.date],["seriesName",out.series?.name]])if(value)out.fieldEvidence[field]=evidenceFor(field,value,{identifierMatched:match,countryMatched:true});
@@ -396,7 +424,10 @@
     const volume=Number(String(volumeRaw).match(/\d+/)?.[0]||parsed.volume||"")||null;
     const priceRaw=firstLocalText(rec,"price");
     const price=Number(String(priceRaw).replace(/[^0-9.]/g,""));
-    const out={isbn:isbnFromId||hint,title,subtitle:"",author:creator,authorNames:creator?[creator]:[],publisher,date:issued,cover:"",description:firstLocalText(rec,"description")||firstLocalText(rec,"abstract"),categories:[],source:"ndl",series:seriesName?{id:"",name:seriesName,volumeNumber:volume,displayVolume:volume!=null?String(volume):"",bookType:""}:null,priceMeta:Number.isFinite(price)&&price>=0?{listPrice:price,currency:"JPY",taxIncluded:null}:null,identifiers:{ndlRecordId:rec.getAttribute("identifier")||""},fieldEvidence:{}};
+    const creatorEntities=extractNDLCreatorEntities(rec);
+    const entityNames=creatorEntities.map(x=>x.name).filter(Boolean);
+    const names=entityNames.length?entityNames:(creator?[creator]:[]);
+    const out={isbn:isbnFromId||hint,title,subtitle:"",author:names.join(", "),authorNames:names.slice(),authorEntities:creatorEntities,publisher,date:issued,cover:"",description:firstLocalText(rec,"description")||firstLocalText(rec,"abstract"),categories:[],source:"ndl",series:seriesName?{id:"",name:seriesName,volumeNumber:volume,displayVolume:volume!=null?String(volume):"",bookType:""}:null,priceMeta:Number.isFinite(price)&&price>=0?{listPrice:price,currency:"JPY",taxIncluded:null}:null,identifiers:{ndlRecordId:rec.getAttribute("identifier")||""},fieldEvidence:{}};
     const match=canonicalIsbn(out.isbn)===canonicalIsbn(hint)||!hint;
     for(const [field,value] of [["isbn13",/^97[89]\d{10}$/.test(String(out.isbn))?out.isbn:null],["title",out.title],["author",out.author],["publisher",out.publisher],["releaseDate",out.date],["seriesName",seriesName],["volumeNumber",volume]])if(value!==null&&value!==undefined&&value!=="")out.fieldEvidence[field]=evidenceFor(field,value,{identifierMatched:match,countryMatched:true});
     if(out.priceMeta?.listPrice!=null)out.fieldEvidence.listPrice=evidenceFor("listPrice",out.priceMeta.listPrice,{identifierMatched:match,countryMatched:true,taxIncludedConfirmed:false});
@@ -594,7 +625,17 @@
       }
     }
     const fields=["isbn13","title","author","publisher","releaseDate","seriesId","seriesName","volumeNumber","listPrice","taxIncluded","cover","description","categories"];
-    const out={isbn:ctx.isbn,title:"",author:"",authorNames:[],publisher:"",date:"",cover:"",description:"",categories:[],source:"apiManager",sources:[],series:null,priceMeta:null,price:0,currency:"JPY",identifiers:{},fieldEvidence:{},resolution:{version:VERSION,attempts,fields:{},providerResults:rows.map(r=>({provider:String(r?.source||""),isbn:canonicalIsbn(r?.isbn),title:String(r?.title||""),publisher:String(r?.publisher||""),authorNames:Array.isArray(r?.authorNames)?r.authorNames:[],seriesId:String(r?.series?.id||r?.identifiers?.googleSeriesId||""),seriesName:String(r?.series?.name||""),volume:r?.series?.volumeNumber??null,displayVolume:String(r?.series?.displayVolume||"")}))}};
+    const mergedAuthorEntities=[];
+    const authorEntitySeen=new Set();
+    for(const row of rows){
+      for(const entity of Array.isArray(row?.authorEntities)?row.authorEntities:[]){
+        const name=String(entity?.name||"").trim(),authorityId=normalizeNDLAuthorityUri(entity?.authorityId),entityId=normalizeNDLAuthorityUri(entity?.entityId);
+        const key=`${authorityId||""}|${entityId||""}|${name.normalize("NFKC").replace(/\s+/g,"").toUpperCase()}`;
+        if(!name&&!authorityId&&!entityId||authorEntitySeen.has(key))continue;
+        authorEntitySeen.add(key);mergedAuthorEntities.push({name,authorityId:authorityId||null,entityId:entityId||null,source:String(entity?.source||row?.source||"")});
+      }
+    }
+    const out={isbn:ctx.isbn,title:"",author:"",authorNames:[],authorEntities:mergedAuthorEntities,publisher:"",date:"",cover:"",description:"",categories:[],source:"apiManager",sources:[],series:null,priceMeta:null,price:0,currency:"JPY",identifiers:{},fieldEvidence:{},resolution:{version:VERSION,attempts,fields:{},providerResults:rows.map(r=>({provider:String(r?.source||""),isbn:canonicalIsbn(r?.isbn),title:String(r?.title||""),publisher:String(r?.publisher||""),authorNames:Array.isArray(r?.authorNames)?r.authorNames:[],authorEntities:Array.isArray(r?.authorEntities)?r.authorEntities:[],seriesId:String(r?.series?.id||r?.identifiers?.googleSeriesId||""),seriesName:String(r?.series?.name||""),volume:r?.series?.volumeNumber??null,displayVolume:String(r?.series?.displayVolume||"")}))}};
     for(const row of rows){out.sources.push({provider:row.source,fields:fieldsFor(row)});if(row.identifiers)Object.assign(out.identifiers,row.identifiers)}
     for(const field of fields){
       const cs=rows.map(r=>candidate(field,r,ctx)).filter(Boolean);

@@ -93,3 +93,14 @@ UIは「存在する」だけで完了としない。仕様が「読める」を
 - `姓,名` は表示用保存値を変更せず、フィルター内部で姓名表記へ正規化する。
 - 複数作者の連結書誌は、書誌上の区切りを尊重して候補を分離する。
 - 姓・名・フルネームだけの部分一致は同一人物確定の根拠にしない。
+
+
+## v4.13.165 作者フィルター典拠同一性
+
+| ID | ルール | 検証方法 | 状態 |
+|---|---|---|---|
+| FILTER-AUTHOR-011 | NDL典拠ID/名称実体URIを取得できた作者は表示名と分離して保持する | adapter + registration logic | CURRENT |
+| FILTER-AUTHOR-012 | 同一典拠IDは表示名が異なっても同一作者として扱う | property + Browser E2E | CURRENT |
+| FILTER-AUTHOR-013 | 同名に複数典拠IDがある場合は自動統合しない | boundary/property test | CURRENT |
+| FILTER-AUTHOR-014 | 典拠なし旧データを典拠へ橋渡しするのは同名に唯一の典拠IDが観測された場合だけ | property test | CURRENT |
+| FILTER-AUTHOR-015 | 典拠IDがない場合は既存の性質ベース正規化へフォールバックする | boundary test | CURRENT |

@@ -121,3 +121,16 @@
 | AUTH-FORMAT-002 | 連結 `姓,名` の分解 | CURRENT |
 | AUTH-SAFETY-001 | 姓だけ／名だけとフルネームの部分一致による自動統合を禁止 | CURRENT |
 | AUTH-UX-001 | 候補名と冊数だけを表示し内部キーを見せない | CURRENT |
+
+
+## v4.13.165 作者典拠連携（CURRENT）
+
+| ID | 契約 | 状態 |
+|---|---|---|
+| AUTHORITY-001 | NDL Search/DC-NDLの作者典拠・名称実体URIを保持 | CURRENT |
+| AUTHORITY-002 | 典拠IDを作者フィルターの強い同一性キーとして使用 | CURRENT |
+| AUTHORITY-003 | 同名異人を複数典拠IDで自動統合しない | CURRENT |
+| AUTHORITY-004 | 典拠なしデータは唯一の典拠観測時だけ安全に橋渡し | CURRENT |
+| AUTHORITY-005 | 典拠取得失敗時も既存の性質ベースフィルターを維持 | CURRENT |
+
+次工程では、代表ISBNのNDL書誌レスポンスで実際に典拠URIが返る範囲を調査し、取得率・応答時間・利用条件を実測してから自動典拠解決を常時通信するか判断する。
