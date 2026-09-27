@@ -161,7 +161,7 @@ UIの見た目はブラウザE2Eで別途検査する。新機能を追加する
 - 復帰後に再試行可能なランタイム状態を維持する。
 
 
-## v4.13.163 Author identity / library filter
+## v4.13.164 Author identity / library filter
 
 - 作者フィルターはraw `author`完全一致ではなく正規化キーで一致させる。
 - NFKC、空白、全角半角、役割接頭辞の差を同一作者として扱う。
