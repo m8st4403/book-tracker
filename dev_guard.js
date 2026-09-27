@@ -349,28 +349,38 @@ async function main(){
       const originalBooks=books, originalAuthor=document.getElementById('filterAuthor')?.value||'', originalLibrary=document.getElementById('myBooks')?.innerHTML||'';
       try{
         books=[
-          {isbn:'author-1',title:'作者テストA 1',author:'冨樫義博',publisher:'出版社A',date:'2020-01-01'},
+          {isbn:'author-1',title:'作者テストA 1',author:'冨樫義博',authorNames:['冨樫義博'],publisher:'出版社A',date:'2020-01-01'},
           {isbn:'author-2',title:'作者テストA 2',author:'冨樫 義博',publisher:'出版社A',date:'2020-02-01'},
-          {isbn:'author-3',title:'作者テストB 1',author:'原作：冨樫　義博, 作画：別作者',publisher:'出版社B',date:'2021-01-01'},
-          {isbn:'author-4',title:'作者テストC 1',author:'別作者',publisher:'出版社C',date:'2022-01-01'}
+          {isbn:'author-3',title:'作者テストB 1',author:'原作：冨樫　義博, 作画：別作者',authorNames:['冨樫義博','別作者'],publisher:'出版社B',date:'2021-01-01'},
+          {isbn:'author-4',title:'作者テストC 1',author:'別作者',publisher:'出版社C',date:'2022-01-01'},
+          {isbn:'author-5',title:'連結作者 1',author:'佐賀崎 しげる',authorNames:['佐賀崎 しげる'],publisher:'出版社D',date:'2023-01-01'},
+          {isbn:'author-6',title:'連結作者 2',author:'佐賀崎 しげる 鍋島テツヒロ ハザマササミ 四谷ゼンジ',publisher:'出版社D',date:'2023-02-01'},
+          {isbn:'author-7',title:'連結作者 3',author:'佐賀崎 しげる 鍋島テツヒロ 空路恵 渡辺樹',publisher:'出版社D',date:'2023-03-01'},
+          {isbn:'author-8',title:'誤混入テスト',author:'1966-',publisher:'出版社E',date:'2023-04-01'}
         ];
         refreshLibraryFilters();
         const sel=document.getElementById('filterAuthor');
         const options=[...sel.options].map(o=>({value:o.value,text:o.textContent}));
-        const keys=authorFilterKey(books[0]);
-        const sameKey=keys.length===1&&authorFilterKey(books[1])[0]===keys[0]&&authorFilterKey(books[2]).includes(keys[0]);
+        const authorIndex=buildAuthorFilterIndex();
+        const keys=authorFilterKey(books[0],authorIndex);
+        const sameKey=keys.length===1&&authorFilterKey(books[1],authorIndex)[0]===keys[0]&&authorFilterKey(books[2],authorIndex).includes(keys[0]);
         const authorOptions=options.filter(o=>o.value===keys[0]);
+        const combinedKey=normalizeAuthorIdentityName('佐賀崎 しげる');
+        const combinedOptions=options.filter(o=>o.value===combinedKey);
+        const malformedYearLeak=options.some(o=>o.text==='1966-'||o.text.startsWith('1966-（'));
+        const combinedBooks=books.filter(b=>authorFilterKey(b,authorIndex).includes(combinedKey)).length;
+        const rawCombinedLeak=options.some(o=>o.text.includes('鍋島テツヒロ ハザマササミ 四谷ゼンジ')||o.text.includes('鍋島テツヒロ 空路恵 渡辺樹'));
         sel.value=keys[0]; renderLibrary();
         const summary=document.getElementById('filterSummary')?.textContent||'';
         const cardText=document.getElementById('myBooks')?.textContent||'';
         const selectedBooks=cardText.includes('作者テストA 1')&&cardText.includes('作者テストA 2')&&cardText.includes('作者テストB 1')&&!cardText.includes('作者テストC 1');
-        const rawUnchanged=books[1].author==='冨樫 義博'&&books[2].author==='原作：冨樫　義博, 作画：別作者';
-        return {ok:sameKey&&authorOptions.length===1&&/3冊/.test(summary)&&selectedBooks&&rawUnchanged, sameKey,authorOptions,summary,selectedBooks,rawUnchanged,options};
-      }finally{
+        const rawUnchanged=books[1].author==='冨樫 義博'&&books[2].author==='原作：冨樫　義博, 作画：別作者'&&books[6].author.includes('空路恵 渡辺樹');
+        return {ok:sameKey&&authorOptions.length===1&&/3冊/.test(summary)&&selectedBooks&&rawUnchanged&&combinedOptions.length===1&&combinedBooks===3&&!rawCombinedLeak&&!malformedYearLeak, sameKey,authorOptions,summary,selectedBooks,rawUnchanged,combinedOptions,combinedBooks,rawCombinedLeak,malformedYearLeak,options};
+      }catch(e){return {ok:false,error:String(e?.message||e),stack:String(e?.stack||'')}}finally{
         books=originalBooks; if(document.getElementById('filterAuthor'))document.getElementById('filterAuthor').value=originalAuthor; if(document.getElementById('myBooks'))document.getElementById('myBooks').innerHTML=originalLibrary; renderLibrary();
       }
     })()`) ;
-    check('E2E-LIB-AUTHOR-001 author filter uses normalized identity and keeps multiple authors selectable',authorFilterSmoke?.ok===true,JSON.stringify(authorFilterSmoke));
+    check('E2E-LIB-AUTHOR-001 author filter uses normalized identity and keeps multiple authors selectable',authorFilterSmoke?.ok===true,authorFilterSmoke?JSON.stringify(authorFilterSmoke):'authorFilterSmoke unavailable');
     const concurrencySmoke=await evalJS(`(async()=>{
       const first=runSearchSingleFlight('guard-search-a','guard-concurrency',null,async token=>{await sleep(80);return isCurrentSearch('guard-concurrency',token)});
       await sleep(10);

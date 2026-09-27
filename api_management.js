@@ -1,4 +1,4 @@
-/* API Management v1.3 — Phase 4/5.
+/* API Management v1.3 — Phase 4/5. Author identity metadata is retained separately from display author text.
  * Bundled adapters normalize provider responses, then a field-wise resolver
  * validates evidence and merges compatible sources. Remote configuration may
  * change data values only; it must never supply executable code.
@@ -325,7 +325,7 @@
     const x=raw?.item||raw||{},isbn=canonicalIsbn(x.isbn||"");
     const parsed=parseVolumeTitle(x.title||"");
     const seriesName=textOf(x.seriesName);
-    const out={isbn: x.isbn||"",title:textOf(x.title),subtitle:textOf(x.subTitle),author:textOf(x.author),publisher:textOf(x.publisherName),date:textOf(x.salesDate),cover:textOf(x.largeImageUrl||x.mediumImageUrl||x.smallImageUrl),description:textOf(x.itemCaption),categories:x.booksGenreId?[String(x.booksGenreId)]:[],source:"rakuten",series:seriesName?{id:"",name:seriesName,volumeNumber:null,displayVolume:"",bookType:""}:null,priceMeta:{listPrice:null,salePrice:Number.isFinite(Number(x.itemPrice))?Number(x.itemPrice):null,currency:"JPY",taxIncluded:Number.isFinite(Number(x.itemPrice))?true:null},identifiers:{rakutenItemId:textOf(x.itemCode||x.itemUrl)},fieldEvidence:{}};
+    const out={isbn: x.isbn||"",title:textOf(x.title),subtitle:textOf(x.subTitle),author:textOf(x.author),authorNames:textOf(x.author)?[textOf(x.author)]:[],publisher:textOf(x.publisherName),date:textOf(x.salesDate),cover:textOf(x.largeImageUrl||x.mediumImageUrl||x.smallImageUrl),description:textOf(x.itemCaption),categories:x.booksGenreId?[String(x.booksGenreId)]:[],source:"rakuten",series:seriesName?{id:"",name:seriesName,volumeNumber:null,displayVolume:"",bookType:""}:null,priceMeta:{listPrice:null,salePrice:Number.isFinite(Number(x.itemPrice))?Number(x.itemPrice):null,currency:"JPY",taxIncluded:Number.isFinite(Number(x.itemPrice))?true:null},identifiers:{rakutenItemId:textOf(x.itemCode||x.itemUrl)},fieldEvidence:{}};
     if(out.series&&parsed.volume!=null){out.series.volumeNumber=parsed.volume;out.series.displayVolume=String(parsed.volume);}
     const match=canonicalIsbn(out.isbn)===isbn;
     for(const [field,value] of [["isbn13",/^97[89]\d{10}$/.test(out.isbn)?out.isbn:null],["title",out.title],["author",out.author],["publisher",out.publisher],["releaseDate",out.date],["seriesName",seriesName]])if(value)out.fieldEvidence[field]=evidenceFor(field,value,{identifierMatched:match,countryMatched:true});
@@ -366,7 +366,7 @@
       const volumeNumber=volumeParsed?parseInt(volumeParsed[0],10):(parsed.volume!=null?parsed.volume:null);
       const seriesFallback=volumeNumber!=null?String(title||"").replace(/[.．。\s]+$/g,"").trim():"";
       const seriesName=(seriesTitle||seriesMatch?.[1]||"").trim();
-      const out={isbn:isbnId,title,subtitle:"",author:creators.join(", "),publisher,date:issued,cover:"",description,categories:[],source:"ndl",series:seriesName?{id:"",name:seriesName,volumeNumber,displayVolume:volumeNumber!=null?String(volumeNumber):"",bookType:""}:null,priceMeta:null,identifiers:{ndlRecordId:link||"",ndlIdentifiers:rawIdentifierValues},fieldEvidence:{}};
+      const out={isbn:isbnId,title,subtitle:"",author:creators.join(", "),authorNames:creators.slice(),publisher,date:issued,cover:"",description,categories:[],source:"ndl",series:seriesName?{id:"",name:seriesName,volumeNumber,displayVolume:volumeNumber!=null?String(volumeNumber):"",bookType:""}:null,priceMeta:null,identifiers:{ndlRecordId:link||"",ndlIdentifiers:rawIdentifierValues},fieldEvidence:{}};
       if(isbn)out.isbn=isbn;
       const match=!!isbn;
       for(const [field,value] of [["isbn13",/^97[89]\d{10}$/.test(String(out.isbn))?out.isbn:null],["title",out.title],["author",out.author],["publisher",out.publisher],["releaseDate",out.date],["seriesName",out.series?.name]])if(value)out.fieldEvidence[field]=evidenceFor(field,value,{identifierMatched:match,countryMatched:true});
@@ -396,7 +396,7 @@
     const volume=Number(String(volumeRaw).match(/\d+/)?.[0]||parsed.volume||"")||null;
     const priceRaw=firstLocalText(rec,"price");
     const price=Number(String(priceRaw).replace(/[^0-9.]/g,""));
-    const out={isbn:isbnFromId||hint,title,subtitle:"",author:creator,publisher,date:issued,cover:"",description:firstLocalText(rec,"description")||firstLocalText(rec,"abstract"),categories:[],source:"ndl",series:seriesName?{id:"",name:seriesName,volumeNumber:volume,displayVolume:volume!=null?String(volume):"",bookType:""}:null,priceMeta:Number.isFinite(price)&&price>=0?{listPrice:price,currency:"JPY",taxIncluded:null}:null,identifiers:{ndlRecordId:rec.getAttribute("identifier")||""},fieldEvidence:{}};
+    const out={isbn:isbnFromId||hint,title,subtitle:"",author:creator,authorNames:creator?[creator]:[],publisher,date:issued,cover:"",description:firstLocalText(rec,"description")||firstLocalText(rec,"abstract"),categories:[],source:"ndl",series:seriesName?{id:"",name:seriesName,volumeNumber:volume,displayVolume:volume!=null?String(volume):"",bookType:""}:null,priceMeta:Number.isFinite(price)&&price>=0?{listPrice:price,currency:"JPY",taxIncluded:null}:null,identifiers:{ndlRecordId:rec.getAttribute("identifier")||""},fieldEvidence:{}};
     const match=canonicalIsbn(out.isbn)===canonicalIsbn(hint)||!hint;
     for(const [field,value] of [["isbn13",/^97[89]\d{10}$/.test(String(out.isbn))?out.isbn:null],["title",out.title],["author",out.author],["publisher",out.publisher],["releaseDate",out.date],["seriesName",seriesName],["volumeNumber",volume]])if(value!==null&&value!==undefined&&value!=="")out.fieldEvidence[field]=evidenceFor(field,value,{identifierMatched:match,countryMatched:true});
     if(out.priceMeta?.listPrice!=null)out.fieldEvidence.listPrice=evidenceFor("listPrice",out.priceMeta.listPrice,{identifierMatched:match,countryMatched:true,taxIncludedConfirmed:false});
@@ -420,7 +420,7 @@
     const s=raw?.summary||{},isbn=s.isbn||hint,match=canonicalIsbn(isbn)===canonicalIsbn(hint);
     const series=extractOpenBDSeries(raw);
     const price=extractOpenBDListPrice(raw);
-    const out={isbn,title:s.title||"",author:s.author||"",publisher:s.publisher||"",date:s.pubdate||"",cover:s.cover||"",price:price?.amount??0,currency:price?.currency||"JPY",upcoming:[],source:"openBD",raw,series,priceMeta:price,identifiers:{},fieldEvidence:{}};
+    const out={isbn,title:s.title||"",author:s.author||"",authorNames:s.author?[String(s.author).trim()]:[],publisher:s.publisher||"",date:s.pubdate||"",cover:s.cover||"",price:price?.amount??0,currency:price?.currency||"JPY",upcoming:[],source:"openBD",raw,series,priceMeta:price,identifiers:{},fieldEvidence:{}};
     for(const [field,value] of [["isbn13",/^97[89]\d{10}$/.test(String(isbn))?isbn:null],["title",out.title],["author",out.author],["publisher",out.publisher],["releaseDate",out.date],["seriesName",series?.name],["volumeNumber",series?.volumeNumber]])if(value!==null&&value!==undefined&&value!=="")out.fieldEvidence[field]=evidenceFor(field,value,{identifierMatched:match,countryMatched:true});
     if(price?.listPrice!=null)out.fieldEvidence.listPrice=evidenceFor("listPrice",price.listPrice,{identifierMatched:match,countryMatched:true,taxIncludedConfirmed:price.taxIncluded===true});
     out.fieldEvidence.taxIncluded=evidenceFor("taxIncluded",price?.taxIncluded,{identifierMatched:match,countryMatched:true,taxIncludedConfirmed:price?.taxIncluded===true});
@@ -594,7 +594,7 @@
       }
     }
     const fields=["isbn13","title","author","publisher","releaseDate","seriesId","seriesName","volumeNumber","listPrice","taxIncluded","cover","description","categories"];
-    const out={isbn:ctx.isbn,title:"",author:"",publisher:"",date:"",cover:"",description:"",categories:[],source:"apiManager",sources:[],series:null,priceMeta:null,price:0,currency:"JPY",identifiers:{},fieldEvidence:{},resolution:{version:VERSION,attempts,fields:{},providerResults:rows.map(r=>({provider:String(r?.source||""),isbn:canonicalIsbn(r?.isbn),title:String(r?.title||""),publisher:String(r?.publisher||""),seriesId:String(r?.series?.id||r?.identifiers?.googleSeriesId||""),seriesName:String(r?.series?.name||""),volume:r?.series?.volumeNumber??null,displayVolume:String(r?.series?.displayVolume||"")}))}};
+    const out={isbn:ctx.isbn,title:"",author:"",authorNames:[],publisher:"",date:"",cover:"",description:"",categories:[],source:"apiManager",sources:[],series:null,priceMeta:null,price:0,currency:"JPY",identifiers:{},fieldEvidence:{},resolution:{version:VERSION,attempts,fields:{},providerResults:rows.map(r=>({provider:String(r?.source||""),isbn:canonicalIsbn(r?.isbn),title:String(r?.title||""),publisher:String(r?.publisher||""),authorNames:Array.isArray(r?.authorNames)?r.authorNames:[],seriesId:String(r?.series?.id||r?.identifiers?.googleSeriesId||""),seriesName:String(r?.series?.name||""),volume:r?.series?.volumeNumber??null,displayVolume:String(r?.series?.displayVolume||"")}))}};
     for(const row of rows){out.sources.push({provider:row.source,fields:fieldsFor(row)});if(row.identifiers)Object.assign(out.identifiers,row.identifiers)}
     for(const field of fields){
       const cs=rows.map(r=>candidate(field,r,ctx)).filter(Boolean);
@@ -609,7 +609,7 @@
         out.series.confidence[field]=win.confidence;
       } else if(field==="isbn13")out.isbn=win.value;
       else if(field==="title")out.title=win.value;
-      else if(field==="author")out.author=win.value;
+      else if(field==="author"){out.author=win.value;out.authorNames=Array.isArray(win.row?.authorNames)?win.row.authorNames:[];}
       else if(field==="publisher")out.publisher=win.value;
       else if(field==="releaseDate")out.date=win.value;
       else if(field==="cover")out.cover=win.value;

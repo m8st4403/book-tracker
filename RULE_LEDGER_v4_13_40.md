@@ -77,3 +77,13 @@ UIは「存在する」だけで完了としない。仕様が「読める」を
 | FILTER-AUTHOR-004 | 作者フィルター正規化で保存済み書誌値を変更しない | snapshot + persistence | CURRENT |
 | FILTER-AUTHOR-005 | 内部作者キーをUIへ表示しない | Browser E2E | CURRENT |
 
+
+## v4.13.163 作者フィルター書誌同一性
+
+| ID | ルール | 検証方法 | 状態 |
+|---|---|---|---|
+| FILTER-AUTHOR-006 | 構造化`authorNames`を表示用`author`から分離して保持する | adapter + registration logic | CURRENT |
+| FILTER-AUTHOR-007 | 区切りなし連結作者は観測された候補の書籍集合が完全一致する場合のみ冗長表記を統合する | property logic + Browser E2E | CURRENT |
+| FILTER-AUTHOR-008 | 部分一致だけで別作者を同一化しない | boundary/property test | CURRENT |
+| FILTER-AUTHOR-009 | 作者候補の内部キーはUIへ表示しない | Browser E2E | CURRENT |
+| FILTER-AUTHOR-010 | 生没年形式など明らかな非作者文字列を候補化しない | boundary/property test | CURRENT |
