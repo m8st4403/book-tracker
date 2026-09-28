@@ -25,7 +25,8 @@ const cases=[
   ['UI generic overflow',()=>runMutation('UI generic overflow',uiMutation)],
   ['API trust',()=>runMutation('API trust',source,apiMutation)],
   ['Purchase-group atomicity',()=>runMutation('Purchase-group atomicity',atomicMutation)],
-  ['Author parser trailing comma',()=>runMutation('Author parser trailing comma',authorParserMutation)]
+  ['Author parser trailing comma',()=>runMutation('Author parser trailing comma',authorParserMutation)],
+  ['Library filter change wiring',()=>runMutation('Library filter change wiring',source.replace('["filterAuthor","filterPublisher","filterYear","filterRelease","filterReading","filterFavorite","filterPrice"].forEach(id=>$(id)?.addEventListener("change",renderLibrary));','["filterAuthor","filterPublisher","filterYear","filterRelease","filterReading","filterFavorite","filterPrice"].forEach(id=>$(id)?.addEventListener("change",()=>{}));'))]
 ];
 let ok=true;
 for(const [name,fn] of cases){const r=fn();console.log(`${r.caught?'PASS':'FAIL'} | MUTATION-${name} | intentional defect ${r.caught?'detected':'NOT detected'}`);if(!r.caught){ok=false;console.log(r.output)}}
