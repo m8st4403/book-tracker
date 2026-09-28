@@ -67,7 +67,8 @@ check('STATIC-003 required six tabs', ['home','add','library','search','calendar
 check('STATIC-004 price filter exists', /id=["']filterPrice["']/.test(html), 'library price filter');
 check('STATIC-055 publisher identity key contract', /function normalizePublisherIdentityName\(value\)/.test(html) && /function publisherFilterKey\(value\)/.test(html) && /function buildPublisherFilterIndex\(\)/.test(html) && /publisherFilterKey\(b\.publisher\)===fp/.test(html), 'publisher display/key separation with conservative normalization');
 check('STATIC-056 series display/key separation contract', /function seriesKey\(b\)/.test(html) && /function seriesDisplayLabel\(name,items=\[\]\)/.test(html), 'series grouping key is separate from user-facing label');
-check('STATIC-057 bibliographic identity audit docs', /v4\.13\.167/.test(readmeText) && /v4\.13\.167/.test(specText), 'current identity audit is documented');
+check('STATIC-057 bibliographic identity audit docs', /v4\.13\.167/.test(readmeText) && /v4\.13\.167/.test(specText), 'historical identity audit remains documented');
+check('STATIC-058 library filter text-copy contract', /id=["']copyLibraryFilterStateBtn["']/.test(html) && /function buildLibraryFilterStateReport\(\)/.test(html) && /function copyLibraryFilterState\(button\)/.test(html), 'library filter state can be copied as user-facing text');
 check('STATIC-005 canonical registration routes exist', /window\.addBook\s*=/.test(html) && /window\.bulkAdd\s*=/.test(html), 'addBook/bulkAdd');
 const addBookStart=html.indexOf('window.addBook=async');
 const addBookEnd=html.indexOf('window.addAllFound=',addBookStart);
@@ -173,7 +174,7 @@ async function main(){
     const tabContracts={
       home:['homeBookCount','homeBookTotal','homePurchaseCount','homeUnreadCount','homeFavoriteCount','homeUpcomingBooks'],
       add:['scan','isbnRows','isbnSearch','work','vol','workSearch'],
-      library:['libraryStats','libraryFilter','libraryFilterToggle','seriesViewToggle','librarySort','filterAuthor','filterPublisher','filterYear','filterRelease','filterReading','filterFavorite','filterPrice','filterReset','myBooks','seriesCheckBtn','shareDiagnosticReportBtn','seriesRepairBtn','unreadOnlyBtn'],
+      library:['libraryStats','libraryFilter','libraryFilterToggle','seriesViewToggle','librarySort','filterAuthor','filterPublisher','filterYear','filterRelease','filterReading','filterFavorite','filterPrice','filterReset','copyLibraryFilterStateBtn','myBooks','seriesCheckBtn','shareDiagnosticReportBtn','seriesRepairBtn','unreadOnlyBtn'],
       search:['searchModeBook','searchModeAuthor','query','searchBtn','searchUnownedOnly','searchResults','similarBox','similarBtn','author','authorBtn','authorNewBtn','authorResults'],
       calendar:['calendarMonthCard','prevMonth','todayMonth','monthTitle','nextMonth','calHead','calendarGrid','calendarDayCard','calendarMonthReleasedCard','ics'],
       settings:['profileName','profileGenre','profileAuthor','profileMemo','profileSave','themeCurrent','fontCurrent','theme-choice','font-choice','skinSave','skinApply','bgImageInput','bgImageRemove','autoTextContrast','backupDataBtn','restoreDataBtn','setSearchCount','setSearchSort','setWeekStart','setICS']
@@ -388,6 +389,8 @@ async function main(){
       }
     })()`) ;
     check('E2E-LIB-AUTHOR-001 author filter uses normalized identity and keeps multiple authors selectable',authorFilterSmoke?.ok===true,authorFilterSmoke?JSON.stringify(authorFilterSmoke):'authorFilterSmoke unavailable');
+    const filterCopySmoke=await evalJS(`(()=>{try{const t=buildLibraryFilterStateReport();return {ok:typeof t==='string'&&t.includes('本棚スケジュール 蔵書フィルター状態')&&t.includes('【作者フィルター候補】')&&t.includes('【出版社フィルター候補】')&&!t.includes('publisherFilterKey')&&!t.includes('authorEntities'),length:t.length};}catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
+    check('E2E-LIB-FILTER-COPY-001 filter state report is user-facing and hides internal keys',filterCopySmoke?.ok===true,filterCopySmoke?JSON.stringify(filterCopySmoke):'filterCopySmoke unavailable');
     const concurrencySmoke=await evalJS(`(async()=>{
       const first=runSearchSingleFlight('guard-search-a','guard-concurrency',null,async token=>{await sleep(80);return isCurrentSearch('guard-concurrency',token)});
       await sleep(10);

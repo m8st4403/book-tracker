@@ -112,3 +112,8 @@ UIは「存在する」だけで完了としない。仕様が「読める」を
 | FILTER-AUTHOR-016 | NDL OpenSearch/SRU creatorの典拠URIを構造化して保持する | adapter fixture | CURRENT |
 | FILTER-AUTHOR-017 | URIがない作者から典拠IDを推測生成しない | boundary/property | CURRENT |
 | FILTER-AUTHOR-018 | 典拠取得は表示用author値を変更しない | snapshot | CURRENT |
+
+
+## v4.13.168 フィルター状態共有
+- UI検証時のスクリーンショット依存を減らすため、蔵書フィルター状態と候補一覧をテキストで取得可能にする。
+- 共有テキストは表示用名称を使い、内部同一性キーを露出しない。
