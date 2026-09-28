@@ -176,3 +176,8 @@ NDL SearchのAPIはSRU/OpenSearch/OpenURLを提供するが、利用目的やデ
 | REG-NORMALIZE-005 | 新しい登録入口は個別例外ではなく共通契約へ接続する | rule audit |
 
 個別作品・出版社・Providerを追加してテストを増やすのではなく、登録入口の構造的不変条件を監査する。新しい失敗が発生した場合は、まず共通契約のどの不変条件を破ったかを特定する。
+
+## v4.13.174 品質基盤CURRENT
+- Property population：合成データで同値変形／分離変形／欠損／複合条件を網羅する。
+- Mutation contract：正規化、フィルター、保存、登録コミット等の意図的欠陥を検出する。
+- Real-path contract：合成テストPASSだけでは完了扱いにせず、実機E2Eを行う。

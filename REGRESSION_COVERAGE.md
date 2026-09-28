@@ -343,3 +343,6 @@ Chromiumを使ったUI回帰では390×844で小・中・大フォントをレ�
 | REG-NORMALIZE-002 | 一括可能な入口が共通commit経路を使用 | static + E2E |
 | REG-NORMALIZE-003 | 検索結果identityを再解決で破壊しない | logic + E2E |
 | REG-NORMALIZE-004 | 書誌欠損/解決失敗をblank保存しない | logic + mutation |
+
+## v4.13.174 品質保証方式の変更
+「不具合ごとにテストを1件追加する」方式を終了し、不変条件・合成データ・状態遷移・故障注入・実機E2Eを品質保証の母集団とする。

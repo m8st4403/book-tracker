@@ -420,6 +420,53 @@ async function main(){
       return {ok:got.every((x,i)=>x===want[i])&&got[1].split("|").length===1&&got[4].split("|").length===2&&source==="冨樫, 義博,",got,want};
     }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
     check('E2E-LIB-AUTHOR-002 equivalent Japanese surname/given-name encodings are normalized generically',authorFormatSmoke?.ok===true,JSON.stringify(authorFormatSmoke));
+
+    // v4.13.174: generic property-based suite. Synthetic data is deliberate:
+    // a new real title/publisher must not be the mechanism by which a regression
+    // becomes "fixed".
+    const genericPropertySmoke=await evalJS(`(()=>{
+      const originalBooks=books, originalMeta=bookMeta;
+      try{
+        const authors=['作者A','作者B','作者C','作者D'];
+        const publishers=['出版社A','出版社B','出版社C'];
+        const generated=[];
+        for(let i=0;i<48;i++){
+          const ai=i%authors.length, pi=i%publishers.length;
+          let author=authors[ai];
+          if(i%5===1)author=author.replace(/([A-Z])$/,' $1');
+          else if(i%5===2)author='原作：'+author;
+          else if(i%5===3)author=author.replace(/([A-Z])$/,', $1');
+          else if(i%5===4)author=author.replace(/([A-Z])$/, '，$1，');
+          if(i%8===0)author=author+' , '+authors[(ai+1)%authors.length];
+          generated.push({isbn:'property-'+i,title:'Property Book '+i,author,publisher:publishers[pi],date:'2020-01-'+String((i%28)+1).padStart(2,'0')});
+        }
+        generated.push({isbn:'property-year',title:'Property Year',author:'1966-',publisher:'出版社A',date:'2020-02-01'});
+        generated.push({isbn:'property-multi',title:'Property Multi',author:'作者A, 作者B',publisher:'出版社B',date:'2020-02-02'});
+        books=generated; bookMeta={};
+        refreshLibraryFilters();
+        const authorIndex=buildAuthorFilterIndex(), publisherIndex=buildPublisherFilterIndex();
+        const authorMap=authorFilterLabelMap(authorIndex);
+        const authorKeys=authors.map(normalizeAuthorIdentityName);
+        const optionValues=[...document.getElementById('filterAuthor').options].map(o=>o.value).filter(Boolean);
+        const noYearLeak=![...document.getElementById('filterAuthor').options].some(o=>o.textContent.includes('1966-'));
+        const authorCoverage=authorKeys.every(k=>authorMap.has(k)&&generated.some(b=>authorFilterKey(b,authorIndex).includes(k)));
+        const publisherCoverage=publishers.every(p=>publisherIndex.has(normalizePublisherIdentityName(p)));
+        const multi=generated.at(-1), multiSelectable=authorFilterKey(multi,authorIndex).includes(authorKeys[0])&&authorFilterKey(multi,authorIndex).includes(authorKeys[1]);
+        const before=generated.map(b=>b.author);
+        const exactSelection=authorKeys.every(k=>{
+          const expected=generated.map((b,i)=>authorFilterKey(b,authorIndex).includes(k)?i:null).filter(Number.isInteger);
+          const actual=generated.map((b,i)=>authorFilterKey(b,authorIndex).includes(k)?i:null).filter(Number.isInteger);
+          return expected.length===actual.length&&expected.every((v,i)=>v===actual[i]);
+        });
+        const ak=authorKeys[0], pk=normalizePublisherIdentityName('出版社A');
+        const left=generated.filter(b=>authorFilterKey(b,authorIndex).includes(ak)&&publisherFilterKey(b.publisher)===pk).map(b=>b.isbn).sort();
+        const right=generated.filter(b=>authorFilterKey(b,authorIndex).includes(ak)).filter(b=>publisherFilterKey(b.publisher)===pk).map(b=>b.isbn).sort();
+        const compositionStable=JSON.stringify(left)===JSON.stringify(right);
+        const storedUnchanged=generated.every((b,i)=>b.author===before[i]);
+        return {ok:authorCoverage&&publisherCoverage&&multiSelectable&&exactSelection&&compositionStable&&storedUnchanged&&noYearLeak&&optionValues.length>=authors.length,generated:generated.length,authorCoverage,publisherCoverage,multiSelectable,exactSelection,compositionStable,storedUnchanged,noYearLeak,optionCount:optionValues.length};
+      }catch(e){return {ok:false,error:String(e?.message||e),stack:String(e?.stack||'')}}finally{books=originalBooks;bookMeta=originalMeta;renderLibrary()}
+    })()`);
+    check('E2E-PROP-001 synthetic filter/identity invariants',genericPropertySmoke?.ok===true,JSON.stringify(genericPropertySmoke));
     const filterInteractionSmoke=await evalJS(`(()=>{
       const originalBooks=books, originalAuthor=document.getElementById('filterAuthor')?.value||'', originalPublisher=document.getElementById('filterPublisher')?.value||'', originalSummary=document.getElementById('filterSummary')?.textContent||'', originalLibrary=document.getElementById('myBooks')?.innerHTML||'';
       try{
