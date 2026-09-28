@@ -183,3 +183,10 @@ UIの見た目はブラウザE2Eで別途検査する。新機能を追加する
 - 典拠なし旧データは唯一の典拠IDが観測された場合のみ橋渡しし、複数典拠がある場合は橋渡ししない。
 - 典拠ID・entity URIをUIへ表示しない。
 - 保存済み`author`値を変更しない。
+
+
+## v4.13.166 Authority extraction
+- OpenSearch/SRUのcreator URIを構造化`authorEntities`へ変換する。
+- authorityIdとentityIdを表示用authorから分離する。
+- URIがないcreatorについてauthorityIdを推測しない。
+- 特定の作者名・出版社名・シリーズ名に依存しないfixtureで検証する。

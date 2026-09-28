@@ -104,3 +104,11 @@ UIは「存在する」だけで完了としない。仕様が「読める」を
 | FILTER-AUTHOR-013 | 同名に複数典拠IDがある場合は自動統合しない | boundary/property test | CURRENT |
 | FILTER-AUTHOR-014 | 典拠なし旧データを典拠へ橋渡しするのは同名に唯一の典拠IDが観測された場合だけ | property test | CURRENT |
 | FILTER-AUTHOR-015 | 典拠IDがない場合は既存の性質ベース正規化へフォールバックする | boundary test | CURRENT |
+
+
+## v4.13.166 作者典拠取得経路
+| ID | ルール | 検証方法 | 状態 |
+|---|---|---|---|
+| FILTER-AUTHOR-016 | NDL OpenSearch/SRU creatorの典拠URIを構造化して保持する | adapter fixture | CURRENT |
+| FILTER-AUTHOR-017 | URIがない作者から典拠IDを推測生成しない | boundary/property | CURRENT |
+| FILTER-AUTHOR-018 | 典拠取得は表示用author値を変更しない | snapshot | CURRENT |

@@ -306,3 +306,12 @@ Chromiumを使ったUI回帰では390×844で小・中・大フォントをレ�
 | 典拠なし旧データの安全な橋渡し | 典拠が1つだけなら橋渡し、複数なら未確定のまま | property logic |
 | 典拠URI非表示 | UI候補に内部URIが出ない | Browser E2E |
 | 保存値不変 | `author` before/after一致 | snapshot |
+
+
+## v4.13.166 作者典拠取得経路回帰
+| 仕様 | 回帰確認 | 方法 |
+|---|---|---|
+| NDL OpenSearch creator URI抽出 | authorityId/entityIdを保持 | adapter fixture |
+| NDL SRU creator URI抽出 | authorityIdを保持 | adapter fixture |
+| URIなしの作者 | 推測IDを生成しない | boundary logic |
+| 表示値と典拠IDの分離 | author保存値不変 | property/snapshot |

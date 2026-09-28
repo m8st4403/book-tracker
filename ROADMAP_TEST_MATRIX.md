@@ -123,7 +123,7 @@
 | AUTH-UX-001 | 候補名と冊数だけを表示し内部キーを見せない | CURRENT |
 
 
-## v4.13.165 作者典拠連携（CURRENT）
+## v4.13.165 作者典拠連携（COMPLETED）
 
 | ID | 契約 | 状態 |
 |---|---|---|
@@ -133,4 +133,21 @@
 | AUTHORITY-004 | 典拠なしデータは唯一の典拠観測時だけ安全に橋渡し | CURRENT |
 | AUTHORITY-005 | 典拠取得失敗時も既存の性質ベースフィルターを維持 | CURRENT |
 
-次工程では、代表ISBNのNDL書誌レスポンスで実際に典拠URIが返る範囲を調査し、取得率・応答時間・利用条件を実測してから自動典拠解決を常時通信するか判断する。
+v4.13.165で、書誌レスポンスから得られる典拠情報を作者同一性の強い根拠として扱う契約を固定した。常時追加通信は未採用。
+
+
+## v4.13.166 作者典拠取得経路・共通同一性基盤（CURRENT）
+
+| ID | 契約 | 必須検証 |
+|---|---|---|
+| AUTHORITY-PARSE-001 | NDL OpenSearchのcreatorから典拠URI/名称実体URIを抽出 | fixture/property |
+| AUTHORITY-PARSE-002 | NDL SRU/DC-NDLのcreatorから典拠URIを抽出 | fixture/property |
+| AUTHORITY-PARSE-003 | URIがない場合に推測で典拠IDを生成しない | boundary |
+| IDENTITY-ARCH-001 | 表示値と判定キーを分離する | static + logic |
+| IDENTITY-ARCH-002 | 作者・出版社・シリーズの個別例外追加を避ける | rule audit |
+| API-POLICY-001 | NDL Search利用条件を公開運用条件として明示する | documentation audit |
+
+### v4.13.166 判断
+NDL SearchのAPIはSRU/OpenSearch/OpenURLを提供するが、利用目的やデータ提供機関によって申請・許諾条件が変わる。Web NDL Authoritiesの典拠データはSPARQL等で取得できる一方、常時1冊ごとの追加照会は通信量・応答性能・運用条件を増やすため現時点では採用しない。まず書誌レスポンス内の典拠URIを利用し、未取得時は安全な正規化へフォールバックする。
+
+次工程では、作者フィルターで確立した「表示値／判定キー分離」を出版社・シリーズにも適用できるか監査し、実データの変更を伴わない性質ベース検証を追加する。

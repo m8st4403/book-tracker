@@ -352,10 +352,19 @@
     const nodes=[...rec.getElementsByTagNameNS("*","creator")];
     for(const node of nodes){
       let name=String(node.textContent||"").replace(/\s+/g," ").trim();
-      let resource=node.getAttribute("rdf:resource")||node.getAttribute("resource")||"";
+      const resourceOf=(el)=>{
+        if(!el)return "";
+        const direct=el.getAttributeNS?.("http://www.w3.org/1999/02/22-rdf-syntax-ns#","resource")||el.getAttribute?.("rdf:resource")||el.getAttribute?.("resource");
+        if(direct)return direct;
+        const attr=[...(el.attributes||[])].find(a=>String(a.localName||"").toLowerCase()==="resource"||String(a.name||"").toLowerCase()==="rdf:resource"||String(a.localName||"").toLowerCase()==="about"||String(a.name||"").toLowerCase()==="rdf:about");
+        if(attr?.value)return attr.value;
+        const serialized=String(el.outerHTML||"");
+        return serialized.match(/https?:\/\/id\.ndl\.go\.jp\/auth\/(?:ndlna|entity)\/\d+/i)?.[0]||"";
+      };
+      let resource=resourceOf(node);
       if(!resource){
-        const child=[...node.getElementsByTagName("*")].find(x=>x.getAttribute("rdf:resource")||x.getAttribute("resource"));
-        resource=child?.getAttribute("rdf:resource")||child?.getAttribute("resource")||"";
+        const child=[...node.getElementsByTagName("*")].find(x=>resourceOf(x));
+        resource=resourceOf(child);
       }
       const entityId=normalizeNDLAuthorityUri(resource);
       if(!name&&!entityId)continue;
@@ -393,8 +402,10 @@
       const volumeNumber=volumeParsed?parseInt(volumeParsed[0],10):(parsed.volume!=null?parsed.volume:null);
       const seriesFallback=volumeNumber!=null?String(title||"").replace(/[.．。\s]+$/g,"").trim():"";
       const seriesName=(seriesTitle||seriesMatch?.[1]||"").trim();
-      const creatorEntities=creators.map(name=>({name,authorityId:null,entityId:null,source:"ndl"}));
-      const out={isbn:isbnId,title,subtitle:"",author:creators.join(", "),authorNames:creators.slice(),authorEntities:creatorEntities,publisher,date:issued,cover:"",description,categories:[],source:"ndl",series:seriesName?{id:"",name:seriesName,volumeNumber,displayVolume:volumeNumber!=null?String(volumeNumber):"",bookType:""}:null,priceMeta:null,identifiers:{ndlRecordId:link||"",ndlIdentifiers:rawIdentifierValues},fieldEvidence:{}};
+      const creatorEntities=extractNDLCreatorEntities(item);
+      const entityNames=creatorEntities.map(x=>x.name).filter(Boolean);
+      const names=entityNames.length?entityNames:creators;
+      const out={isbn:isbnId,title,subtitle:"",author:names.join(", "),authorNames:names.slice(),authorEntities:creatorEntities,publisher,date:issued,cover:"",description,categories:[],source:"ndl",series:seriesName?{id:"",name:seriesName,volumeNumber,displayVolume:volumeNumber!=null?String(volumeNumber):"",bookType:""}:null,priceMeta:null,identifiers:{ndlRecordId:link||"",ndlIdentifiers:rawIdentifierValues},fieldEvidence:{}};
       if(isbn)out.isbn=isbn;
       const match=!!isbn;
       for(const [field,value] of [["isbn13",/^97[89]\d{10}$/.test(String(out.isbn))?out.isbn:null],["title",out.title],["author",out.author],["publisher",out.publisher],["releaseDate",out.date],["seriesName",out.series?.name]])if(value)out.fieldEvidence[field]=evidenceFor(field,value,{identifierMatched:match,countryMatched:true});
@@ -673,5 +684,5 @@
     return {value:null,confidence:"UNKNOWN",provider:null,evidence:null,attempts};
   }
   function config(){return {version:VERSION,runtimePolicy:JSON.parse(JSON.stringify(runtimePolicy)),providerHealth:JSON.parse(JSON.stringify(Object.fromEntries(providerHealth))),providers:JSON.parse(JSON.stringify(providers)),priority:JSON.parse(JSON.stringify(priority)),thresholds:JSON.parse(JSON.stringify(thresholds))}}
-  window.bookTrackerApiManagement={VERSION,CONFIDENCE:CONF,CRITICAL_FIELDS:[...CRITICAL],providers,priority,thresholds,adapters,evidenceFor,acceptable,listPriceAccepted,runField,resolveIsbn,seriesAcceptable,mergeCandidates,config,normalizeRakuten,normalizeNDLFixture,normalizeNDLOpenSearch,buildNDLSruSearchUrl,providerHealth,runtimePolicy,providerEnabled,providerTemporarilyDisabled,search,clearResolverCache,cacheInfo,cachePolicy};
+  window.bookTrackerApiManagement={VERSION,CONFIDENCE:CONF,CRITICAL_FIELDS:[...CRITICAL],providers,priority,thresholds,adapters,evidenceFor,acceptable,listPriceAccepted,runField,resolveIsbn,seriesAcceptable,mergeCandidates,config,normalizeRakuten,normalizeNDLFixture,normalizeNDLOpenSearch,extractNDLCreatorEntities,buildNDLSruSearchUrl,providerHealth,runtimePolicy,providerEnabled,providerTemporarilyDisabled,search,clearResolverCache,cacheInfo,cachePolicy};
 })();
