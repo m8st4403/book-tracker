@@ -334,3 +334,12 @@ Chromiumを使ったUI回帰では390×844で小・中・大フォントをレ�
 - 複数作者の `姓,名 姓,名` を各作者へ分離する。
 - 旧実データで発生した `姓,` と `名,` への誤分割を再現可能な性質テストで検出する。
 - 保存済み `author` は正規化前後で不変とする。
+
+
+## v4.13.173 登録経路共通正規化回帰
+| ID | 回帰条件 | 検証 |
+|---|---|---|
+| REG-NORMALIZE-001 | 全登録入口が共通prepare経路を使用 | static + E2E |
+| REG-NORMALIZE-002 | 一括可能な入口が共通commit経路を使用 | static + E2E |
+| REG-NORMALIZE-003 | 検索結果identityを再解決で破壊しない | logic + E2E |
+| REG-NORMALIZE-004 | 書誌欠損/解決失敗をblank保存しない | logic + mutation |

@@ -217,3 +217,9 @@ UIの見た目はブラウザE2Eで別途検査する。新機能を追加する
 | AUTH-STORAGE-001 | 正規化処理で保存済み `author` を変更しない | snapshot |
 
 固定ISBN・出版社・シリーズの追加ではなく、書誌文字列の同値変形を入力にした性質テストで検出する。
+
+
+## v4.13.173 Registration normalization architecture
+- 全登録入口の共通prepare/commit接続を構造として検証する。
+- 検索結果のidentity保持と、欠損時の限定的補完を分離する。
+- blank/placeholder保存禁止を個別ISBNではなく全候補に対する不変条件として扱う。

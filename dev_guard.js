@@ -70,6 +70,22 @@ check('STATIC-056 series display/key separation contract', /function seriesKey\(
 check('STATIC-057 bibliographic identity audit docs', /v4\.13\.167/.test(readmeText) && /v4\.13\.167/.test(specText), 'historical identity audit remains documented');
 check('STATIC-058 library filter text-copy contract', /id=["']copyLibraryFilterStateBtn["']/.test(html) && /function buildLibraryFilterStateReport\(\)/.test(html) && /function copyLibraryFilterState\(button\)/.test(html), 'library filter state can be copied as user-facing text');
 check('STATIC-005 canonical registration routes exist', /window\.addBook\s*=/.test(html) && /window\.bulkAdd\s*=/.test(html), 'addBook/bulkAdd');
+check('STATIC-059 registration routes share canonical preparation path',
+  /window\.addBook=async[\s\S]*?prepareRegistrationBook\(b,\{interactive:true\}\)/.test(html) &&
+  /window\.bulkAdd=async[\s\S]*?prepareRegistrationBatch\(candidates\)/.test(html) &&
+  /window\.addAllFound=\(\)=>[\s\S]*?prepareRegistrationBatch\(candidates\)/.test(html) &&
+  /registerCheckedIsbnRows[\s\S]*?prepareRegistrationBatch\(candidates\)/.test(html) &&
+  /window\.addBookFromCalendar=async function\(e,k\)[\s\S]*?window\.addBook\(b,options\)/.test(html) &&
+  /detailRegisterBook[\s\S]*?window\.addBook\(d,options\)/.test(html) &&
+  /registerFromCardButton[\s\S]*?window\.addBook\(book,options\)/.test(html),
+  'single/bulk/ISBN/calendar/detail/card routes converge on canonical registration preparation');
+check('STATIC-060 canonical commit path is shared',
+  /function commitBulkPreparedBooks\(/.test(html) &&
+  /window\.addBook=async[\s\S]*?commitBulkPreparedBooks\(\[b\],\[prepared\]/.test(html) &&
+  /window\.bulkAdd=async[\s\S]*?commitBulkPreparedBooks\(candidates,preparedList/.test(html) &&
+  /registerCheckedIsbnRows[\s\S]*?commitBulkPreparedBooks\(candidates,preparedList/.test(html),
+  'all bulk-capable routes share the canonical commit path');
+
 const addBookStart=html.indexOf('window.addBook=async');
 const addBookEnd=html.indexOf('window.addAllFound=',addBookStart);
 const addBookBody=addBookStart>=0&&addBookEnd>addBookStart?html.slice(addBookStart,addBookEnd):'';
