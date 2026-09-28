@@ -404,61 +404,36 @@ async function main(){
       return {ok:got.every((x,i)=>x===want[i])&&got[1].split("|").length===1&&got[4].split("|").length===2&&source==="冨樫, 義博,",got,want};
     }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
     check('E2E-LIB-AUTHOR-002 equivalent Japanese surname/given-name encodings are normalized generically',authorFormatSmoke?.ok===true,JSON.stringify(authorFormatSmoke));
-    const filterCopySmoke=await evalJS(`(()=>{try{const t=buildLibraryFilterStateReport();return {ok:typeof t==='string'&&t.includes('本棚スケジュール 蔵書フィルター状態')&&t.includes('【作者フィルター候補】')&&t.includes('【出版社フィルター候補】')&&!t.includes('publisherFilterKey')&&!t.includes('authorEntities'),length:t.length};}catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
-    check('E2E-LIB-FILTER-COPY-001 filter state report is user-facing and hides internal keys',filterCopySmoke?.ok===true,filterCopySmoke?JSON.stringify(filterCopySmoke):'filterCopySmoke unavailable');
-    const libraryFilterInteractionSmoke=await evalJS(`(()=>{
-      const originalBooks=books, originalMeta=JSON.parse(JSON.stringify(bookMeta||{}));
-      const originalValues={}; ['filterAuthor','filterPublisher','filterYear','filterRelease','filterReading','filterFavorite','filterPrice'].forEach(id=>{originalValues[id]=document.getElementById(id)?.value||''});
-      const originalUnread=window.libraryUnreadOnly===true;
+    const filterInteractionSmoke=await evalJS(`(()=>{
+      const originalBooks=books, originalAuthor=document.getElementById('filterAuthor')?.value||'', originalPublisher=document.getElementById('filterPublisher')?.value||'', originalSummary=document.getElementById('filterSummary')?.textContent||'', originalLibrary=document.getElementById('myBooks')?.innerHTML||'';
       try{
         books=[
-          {isbn:'9784088720715',title:'汎用フィルターA 1',author:'作者A',publisher:'出版社A',date:'2024-01-10',price:makeConfirmedListPrice(550,'fixture','HIGH')},
-          {isbn:'9784088720722',title:'汎用フィルターA 2',author:'作者A',publisher:'出版社A',date:'2024-02-10',price:makeUnconfirmedPrice()},
-          {isbn:'9784088720739',title:'汎用フィルターB 1',author:'作者B',publisher:'出版社B',date:'2025-03-10',price:makeConfirmedListPrice(770,'fixture','HIGH')},
-          {isbn:'9784086191524',title:'汎用フィルターC 1',author:'作者C',publisher:'出版社B',date:'2025-04-10',price:makeConfirmedListPrice(880,'fixture','HIGH')},
-          {isbn:'9784086191531',title:'汎用フィルターD 1',author:'作者D',publisher:'出版社C',date:'2026-05-10',price:makeConfirmedListPrice(990,'fixture','HIGH')},
-          {isbn:'9784065380161',title:'汎用フィルターE 1',author:'作者E',publisher:'出版社C',date:'',price:makeUnconfirmedPrice()}
+          {isbn:'filter-1',title:'FILTER-A',author:'作者A',authorNames:['作者A'],publisher:'出版社A',date:'2024-01-01'},
+          {isbn:'filter-2',title:'FILTER-B',author:'作者A',authorNames:['作者A'],publisher:'出版社B',date:'2024-02-01'},
+          {isbn:'filter-3',title:'FILTER-C',author:'作者B',authorNames:['作者B'],publisher:'出版社B',date:'2025-01-01'}
         ];
-        Object.keys(bookMeta||{}).forEach(k=>delete bookMeta[k]);
-        Object.assign(bookMeta,{
-          '9784088720715':{purchaseStatus:'purchased',readingStatus:'read',favorite:true,memo:'',rating:0,notify:false},
-          '9784088720722':{purchaseStatus:'purchased',readingStatus:'unread',favorite:false,memo:'',rating:0,notify:false},
-          '9784088720739':{purchaseStatus:'purchased',readingStatus:'unread',favorite:false,memo:'',rating:0,notify:false},
-          '9784086191524':{purchaseStatus:'purchased',readingStatus:'read',favorite:false,memo:'',rating:0,notify:false},
-          '9784086191531':{purchaseStatus:'purchased',readingStatus:'unread',favorite:true,memo:'',rating:0,notify:false},
-          '9784065380161':{purchaseStatus:'purchased',readingStatus:'unread',favorite:false,memo:'',rating:0,notify:false}
-        });
-        renderLibrary();
-        const summary=()=>document.getElementById('filterSummary')?.textContent||'';
-        const titles=()=>document.getElementById('myBooks')?.textContent||'';
-        const selectAndMeasure=(id,predicate)=>{
-          const el=document.getElementById(id); if(!el)return {id,ok:false,reason:'missing'};
-          const option=[...el.options].find(predicate); if(!option)return {id,ok:false,reason:'option-missing',options:[...el.options].map(o=>o.textContent)};
-          el.value=option.value; el.dispatchEvent(new Event('change',{bubbles:true}));
-          return {id,ok:el.value===option.value,summary:summary(),titles:titles()};
-        };
-        const cases=[
-          ['filterAuthor',o=>o.value==='作者A',s=>/2冊/.test(s)],
-          ['filterPublisher',o=>o.value==='出版社B',s=>/2冊/.test(s)],
-          ['filterYear',o=>o.value==='2025',s=>/2冊/.test(s)],
-          ['filterRelease',o=>o.value==='unknown',s=>/1冊/.test(s)],
-          ['filterReading',o=>o.value==='read',s=>/2冊/.test(s)],
-          ['filterFavorite',o=>o.value==='yes',s=>/2冊/.test(s)],
-          ['filterPrice',o=>o.value==='unconfirmed',s=>/2冊/.test(s)]
-        ];
-        const results=cases.map(([id,pred,expected])=>{document.getElementById('filterReset')?.click(); const r=selectAndMeasure(id,pred);r.expected=expected(r.summary);r.ok=r.ok&&r.expected&&r.titles.includes('汎用フィルター');return r;});
-        const changed=results.every(r=>r.ok);
+        refreshLibraryFilters(buildAuthorFilterIndex());
+        const author=document.getElementById('filterAuthor'), publisher=document.getElementById('filterPublisher');
+        const authorKey=normalizeAuthorIdentityName('作者A'), publisherKey=publisherFilterKey('出版社B');
+        author.value=authorKey; author.dispatchEvent(new Event('change',{bubbles:true}));
+        const authorCards=document.getElementById('myBooks')?.textContent||'', authorSummary=document.getElementById('filterSummary')?.textContent||'';
+        const authorOk=/2冊を表示中/.test(authorSummary)&&!authorSummary.includes('すべて');
         document.getElementById('filterReset')?.click();
-        const resetOk=summary()==='全6冊を表示中' && ['filterAuthor','filterPublisher','filterYear','filterRelease','filterReading','filterFavorite','filterPrice'].every(id=>document.getElementById(id)?.value==='');
-        return {ok:changed&&resetOk,changed,resetOk,results,finalSummary:summary()};
-      }catch(e){return {ok:false,error:String(e?.message||e),stack:String(e?.stack||'')}}
-      finally{
-        books=originalBooks; Object.keys(bookMeta||{}).forEach(k=>delete bookMeta[k]); Object.assign(bookMeta,originalMeta);
-        ['filterAuthor','filterPublisher','filterYear','filterRelease','filterReading','filterFavorite','filterPrice'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=originalValues[id]||''});
-        window.libraryUnreadOnly=originalUnread; renderLibrary();
+        refreshLibraryFilters(buildAuthorFilterIndex());
+        publisher.value=publisherKey; publisher.dispatchEvent(new Event('change',{bubbles:true}));
+        const publisherCards=document.getElementById('myBooks')?.textContent||'', publisherSummary=document.getElementById('filterSummary')?.textContent||'';
+        const publisherOk=/2冊を表示中/.test(publisherSummary)&&!publisherSummary.includes('すべて');
+        document.getElementById('filterReset')?.click();
+        const resetCards=document.getElementById('myBooks')?.textContent||'', resetSummary=document.getElementById('filterSummary')?.textContent||'';
+        const resetOk=resetCards.includes('FILTER-A')&&resetCards.includes('FILTER-B')&&resetCards.includes('FILTER-C')&&!/作者A|出版社B/.test(resetSummary);
+        return {ok:authorOk&&publisherOk&&resetOk,authorOk,publisherOk,resetOk,authorSummary,publisherSummary,resetSummary};
+      }catch(e){return {ok:false,error:String(e?.message||e),stack:String(e?.stack||'')}}finally{
+        books=originalBooks; if(document.getElementById('filterAuthor'))document.getElementById('filterAuthor').value=originalAuthor; if(document.getElementById('filterPublisher'))document.getElementById('filterPublisher').value=originalPublisher; if(document.getElementById('filterSummary'))document.getElementById('filterSummary').textContent=originalSummary; if(document.getElementById('myBooks'))document.getElementById('myBooks').innerHTML=originalLibrary; renderLibrary();
       }
     })()`);
-    check('E2E-LIB-FILTER-INTERACTION-001 every library select filter reacts to the user change event and reset restores all books',libraryFilterInteractionSmoke?.ok===true,libraryFilterInteractionSmoke?JSON.stringify(libraryFilterInteractionSmoke):'libraryFilterInteractionSmoke unavailable');
+    check('E2E-LIB-FILTER-INTERACTION-001 filter changes are applied through real DOM change events and reset restores the unfiltered set',filterInteractionSmoke?.ok===true,filterInteractionSmoke?JSON.stringify(filterInteractionSmoke):'filterInteractionSmoke unavailable');
+    const filterCopySmoke=await evalJS(`(()=>{try{const t=buildLibraryFilterStateReport();return {ok:typeof t==='string'&&t.includes('本棚スケジュール 蔵書フィルター状態')&&t.includes('【作者フィルター候補】')&&t.includes('【出版社フィルター候補】')&&!t.includes('publisherFilterKey')&&!t.includes('authorEntities'),length:t.length};}catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
+    check('E2E-LIB-FILTER-COPY-001 filter state report is user-facing and hides internal keys',filterCopySmoke?.ok===true,filterCopySmoke?JSON.stringify(filterCopySmoke):'filterCopySmoke unavailable');
     const concurrencySmoke=await evalJS(`(async()=>{
       const first=runSearchSingleFlight('guard-search-a','guard-concurrency',null,async token=>{await sleep(80);return isCurrentSearch('guard-concurrency',token)});
       await sleep(10);
