@@ -181,3 +181,9 @@ NDL SearchのAPIはSRU/OpenSearch/OpenURLを提供するが、利用目的やデ
 - Property population：合成データで同値変形／分離変形／欠損／複合条件を網羅する。
 - Mutation contract：正規化、フィルター、保存、登録コミット等の意図的欠陥を検出する。
 - Real-path contract：合成テストPASSだけでは完了扱いにせず、実機E2Eを行う。
+
+
+## v4.13.175 次工程契約
+- v4.13.174で確立したProperty→Mutation→E2E方式を発売日エンジンにも適用する。
+- 日付そのものだけでなく、精度・確度・出典・通知/ICS適用可否の関係を不変条件として検証する。
+- 実在作品の追加ではなく、合成日付母集団と故障注入を基本とする。
