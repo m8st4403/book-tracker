@@ -106,7 +106,7 @@ UIは「存在する」だけで完了としない。仕様が「読める」を
 | FILTER-AUTHOR-015 | 典拠IDがない場合は既存の性質ベース正規化へフォールバックする | boundary test | CURRENT |
 
 
-## v4.13.166 作者典拠取得経路
+## v4.13.167 作者典拠取得経路
 | ID | ルール | 検証方法 | 状態 |
 |---|---|---|---|
 | FILTER-AUTHOR-016 | NDL OpenSearch/SRU creatorの典拠URIを構造化して保持する | adapter fixture | CURRENT |

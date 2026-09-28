@@ -65,6 +65,9 @@ check('STATIC-022 search measurement operation labels are explicit', ['追加：
 
 check('STATIC-003 required six tabs', ['home','add','library','search','calendar','settings'].every(id=>new RegExp(`id=["']${id}["']`).test(html)), 'home/add/library/search/calendar/settings');
 check('STATIC-004 price filter exists', /id=["']filterPrice["']/.test(html), 'library price filter');
+check('STATIC-055 publisher identity key contract', /function normalizePublisherIdentityName\(value\)/.test(html) && /function publisherFilterKey\(value\)/.test(html) && /function buildPublisherFilterIndex\(\)/.test(html) && /publisherFilterKey\(b\.publisher\)===fp/.test(html), 'publisher display/key separation with conservative normalization');
+check('STATIC-056 series display/key separation contract', /function seriesKey\(b\)/.test(html) && /function seriesDisplayLabel\(name,items=\[\]\)/.test(html), 'series grouping key is separate from user-facing label');
+check('STATIC-057 bibliographic identity audit docs', /v4\.13\.167/.test(readmeText) && /v4\.13\.167/.test(specText), 'current identity audit is documented');
 check('STATIC-005 canonical registration routes exist', /window\.addBook\s*=/.test(html) && /window\.bulkAdd\s*=/.test(html), 'addBook/bulkAdd');
 const addBookStart=html.indexOf('window.addBook=async');
 const addBookEnd=html.indexOf('window.addAllFound=',addBookStart);
@@ -653,6 +656,9 @@ check('E2E-UI-006 diagnostic copy/clear hierarchy works',diagnosticCopyClearUi?.
       return out;
     })()`);
     check('E2E-SMOKE-001 cross-tab state transitions',smoke.searchModeAuthor&&smoke.searchModeBook&&smoke.libraryFilterOpen&&smoke.calendarMonthChanges&&smoke.fontLarge,JSON.stringify(smoke));
+    const identityAudit=await evalJS(`(()=>{try{const saved=books.slice();books=[{publisher:'集英社'},{publisher:' 集英社 '},{publisher:'集英社　'},{publisher:'集英社文庫'}];const k1=publisherFilterKey(books[0].publisher),k2=publisherFilterKey(books[1].publisher),k3=publisherFilterKey(books[2].publisher),k4=publisherFilterKey(books[3].publisher);const pidx=buildPublisherFilterIndex();const groups={};books.forEach(b=>(groups[seriesKey(b)]??=[]).push(b));const seriesSafe=Object.keys(groups).every(k=>!String(seriesDisplayLabel(k,groups[k].map(b=>({b})))).includes('series-work:')&&!String(seriesDisplayLabel(k,groups[k].map(b=>({b})))).includes('series-scope:'));books=saved;renderLibrary();return {publisherSame:k1===k2&&k2===k3,publisherDistinct:k1!==k4,publisherCount:pidx.get(k1)?.books.size===3,seriesDisplaySafe:seriesSafe}}catch(e){return {error:String(e?.message||e)}}})()`);
+    check('E2E-IDENTITY-001 publisher/series display-key separation',identityAudit?.publisherSame&&identityAudit?.publisherDistinct&&identityAudit?.publisherCount&&identityAudit?.seriesDisplaySafe,JSON.stringify(identityAudit));
+
 
     // Font-size sweep on every tab. The test is intentionally generic: it detects regressions in any new UI, not only known bugs.
     for(const font of ['small','medium','large']){

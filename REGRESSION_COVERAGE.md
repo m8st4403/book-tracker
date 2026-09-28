@@ -308,10 +308,15 @@ Chromiumを使ったUI回帰では390×844で小・中・大フォントをレ�
 | 保存値不変 | `author` before/after一致 | snapshot |
 
 
-## v4.13.166 作者典拠取得経路回帰
+## v4.13.167 作者典拠取得経路回帰
 | 仕様 | 回帰確認 | 方法 |
 |---|---|---|
 | NDL OpenSearch creator URI抽出 | authorityId/entityIdを保持 | adapter fixture |
 | NDL SRU creator URI抽出 | authorityIdを保持 | adapter fixture |
 | URIなしの作者 | 推測IDを生成しない | boundary logic |
 | 表示値と典拠IDの分離 | author保存値不変 | property/snapshot |
+
+
+## v4.13.167 書誌同一性監査
+- 出版社：表示値／判定キー分離、NFKC・空白正規化、異なる出版社の分離、保存値不変。
+- シリーズ：判定キー／表示ラベル分離、内部キー非表示、保存metadata不変。

@@ -185,8 +185,15 @@ UIの見た目はブラウザE2Eで別途検査する。新機能を追加する
 - 保存済み`author`値を変更しない。
 
 
-## v4.13.166 Authority extraction
+## v4.13.167 Authority extraction
 - OpenSearch/SRUのcreator URIを構造化`authorEntities`へ変換する。
 - authorityIdとentityIdを表示用authorから分離する。
 - URIがないcreatorについてauthorityIdを推測しない。
 - 特定の作者名・出版社名・シリーズ名に依存しないfixtureで検証する。
+
+
+## v4.13.167 書誌同一性
+- 出版社フィルターはNFKC/空白差だけを吸収し、異なる出版社名を推測統合しない。
+- 出版社表示値と判定キーを分離し、保存値を変更しない。
+- シリーズ判定キーと表示ラベルを分離し、内部分類キーをUIへ漏出させない。
+- 作者・出版社・シリーズの同一性ロジックは個別出版社・作品追加ではなく性質ベースで検証する。
