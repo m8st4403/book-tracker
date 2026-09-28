@@ -176,7 +176,7 @@ UIの見た目はブラウザE2Eで別途検査する。新機能を追加する
 - 生没年形式など作者ではない明らかな年号文字列を作者候補へ昇格させない。
 
 
-## v4.13.165 Author authority identity
+## v4.13.170 Author authority identity
 
 - NDL典拠IDが同一で表示名が異なる作者を1候補へ統合する。
 - 同一正規化名に複数の典拠IDが存在する場合は同名異人として分離する。
@@ -199,8 +199,21 @@ UIの見た目はブラウザE2Eで別途検査する。新機能を追加する
 - 作者・出版社・シリーズの同一性ロジックは個別出版社・作品追加ではなく性質ベースで検証する。
 
 
-## v4.13.169 Library filter report
+## v4.13.170 Library filter report
 - `buildLibraryFilterStateReport()` が現在のフィルター状態を利用者向け名称で出力する。
 - 作者・出版社候補と冊数を含む。
 - 内部判定キーを出力しない。
 - コピー操作は状態変更を発生させない。
+
+## v4.13.170 作者姓名表記の性質ベース回帰
+
+| ID | 契約 | 回帰方法 |
+|---|---|---|
+| AUTH-FORMAT-003 | `姓,名` と `姓, 名,` は同一作者キー | property logic |
+| AUTH-FORMAT-004 | ASCIIカンマ／全角カンマを同一作者キーとして扱う | property logic |
+| AUTH-FORMAT-005 | 末尾カンマを作者名の別人・別候補として残さない | boundary logic |
+| AUTH-FORMAT-006 | `姓,名 姓,名` の複数作者を2候補へ分離する | property logic |
+| AUTH-SAFETY-002 | 姓だけ／名だけへの誤分割を発生させない | fault/property logic |
+| AUTH-STORAGE-001 | 正規化処理で保存済み `author` を変更しない | snapshot |
+
+固定ISBN・出版社・シリーズの追加ではなく、書誌文字列の同値変形を入力にした性質テストで検出する。

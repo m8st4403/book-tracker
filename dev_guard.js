@@ -389,6 +389,21 @@ async function main(){
       }
     })()`) ;
     check('E2E-LIB-AUTHOR-001 author filter uses normalized identity and keeps multiple authors selectable',authorFilterSmoke?.ok===true,authorFilterSmoke?JSON.stringify(authorFilterSmoke):'authorFilterSmoke unavailable');
+    const authorFormatSmoke=await evalJS(`(()=>{try{
+      const cases=[
+        ["冨樫,義博","冨樫 義博"],
+        ["冨樫, 義博,","冨樫 義博"],
+        ["冨樫，義博，","冨樫 義博"],
+        ["  冨樫 ,  義博  ","冨樫 義博"],
+        ["佐賀崎,しげる 乍藤,和樹","佐賀崎 しげる|乍藤 和樹"],
+        ["佐賀崎，しげる， 乍藤，和樹，","佐賀崎 しげる|乍藤 和樹"]
+      ];
+      const got=cases.map(([raw])=>parseLegacyAuthorNames(raw).map(x=>normalizeAuthorIdentityName(x)).join("|"));
+      const want=cases.map(([,expected])=>expected.split("|").map(x=>normalizeAuthorIdentityName(x)).join("|"));
+      const source="冨樫, 義博,"; normalizeJapaneseBibliographicAuthorDisplay(source);
+      return {ok:got.every((x,i)=>x===want[i])&&got[1].split("|").length===1&&got[4].split("|").length===2&&source==="冨樫, 義博,",got,want};
+    }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
+    check('E2E-LIB-AUTHOR-002 equivalent Japanese surname/given-name encodings are normalized generically',authorFormatSmoke?.ok===true,JSON.stringify(authorFormatSmoke));
     const filterCopySmoke=await evalJS(`(()=>{try{const t=buildLibraryFilterStateReport();return {ok:typeof t==='string'&&t.includes('本棚スケジュール 蔵書フィルター状態')&&t.includes('【作者フィルター候補】')&&t.includes('【出版社フィルター候補】')&&!t.includes('publisherFilterKey')&&!t.includes('authorEntities'),length:t.length};}catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
     check('E2E-LIB-FILTER-COPY-001 filter state report is user-facing and hides internal keys',filterCopySmoke?.ok===true,filterCopySmoke?JSON.stringify(filterCopySmoke):'filterCopySmoke unavailable');
     const concurrencySmoke=await evalJS(`(async()=>{
