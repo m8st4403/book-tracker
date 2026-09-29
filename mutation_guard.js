@@ -38,6 +38,7 @@ const seriesCoalescingMutation=source.replace('groups.get(targetKey).push(...gen
 const registrationAtomicMutation=source.replace('if(failedPreparations.length||added.length!==candidates.length-skippedDuplicates.length){','if(false){');
 const registrationRollbackMutation=source.replace('if(saveFailed){books=oldBooks;calendarExtras=oldExtras;bookMeta=oldMeta;saveMeta();persistBooks();persistCalendarExtras();metrics?.traceStep("保存失敗・ロールバック"','if(saveFailed){metrics?.traceStep("保存失敗・ロールバック"');
 const registrationDuplicateMutation=source.replace('if(usableExisting&&!isRicherBookRecord(prepared,usableExisting)){skippedDuplicates.push(preparedIsbn||key);return;}','if(false){skippedDuplicates.push(preparedIsbn||key);return;}');
+const registrationPersistenceMutation=source.replace('function persistBooks(){try{localStorage.setItem(KEY,JSON.stringify(books));return true}catch(e){console.error("books save",e);return false}}','function persistBooks(){return true}');
 
 const genericMutationCase=  ['Generic author identity normalization',()=>runMutation('Generic author identity normalization',genericIdentityMutation)];
 const authorFragmentMutationCase=['Author fragment suppression',()=>runMutation('Author fragment suppression',authorFragmentMutation)];
@@ -64,6 +65,7 @@ const cases=[
   ['Registration atomic commit',()=>runMutation('Registration atomic commit',registrationAtomicMutation)],
   ['Registration rollback on save failure',()=>runMutation('Registration rollback on save failure',registrationRollbackMutation)],
   ['Registration duplicate protection',()=>runMutation('Registration duplicate protection',registrationDuplicateMutation)],
+  ['Registration persistence',()=>runMutation('Registration persistence',registrationPersistenceMutation)],
   ['Series redundant-scope coalescing',()=>runMutation('Series redundant-scope coalescing',seriesCoalescingMutation)]
 ];
 let ok=true;

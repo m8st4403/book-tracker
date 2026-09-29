@@ -269,6 +269,23 @@ async function main(){
     check('E2E-REG-008 preparation failure is atomic',registrationQuality?.prepFailureInvariant===true,JSON.stringify(registrationQuality));
     check('E2E-REG-009 persistence failure fully rolls back',registrationQuality?.saveFailureInvariant===true,JSON.stringify(registrationQuality));
     check('E2E-REG-010 non-richer duplicate leaves library unchanged',registrationQuality?.duplicateInvariant===true,JSON.stringify(registrationQuality));
+    // v4.13.185: registration quality continues through persistence and boot-read.
+    const registrationPersistence=await evalJS(`(()=>{try{
+      const saved={books:books.slice(),calendarExtras:calendarExtras.slice(),bookMeta:JSON.parse(JSON.stringify(bookMeta))};
+      const isbn='9784000000998'; books=[];calendarExtras=[];bookMeta={}; __guardStorage.removeItem(KEY);
+      const candidate={isbn,title:'登録永続化テスト本'};
+      const prepared={isbn,title:'登録永続化テスト本',author:'永続化作家',publisher:'永続化出版社',date:'2026-09-30'};
+      const result=commitBulkPreparedBooks([candidate],[prepared],null);
+      const raw=__guardStorage.getItem(KEY); const stored=raw?JSON.parse(raw):[];
+      const storedBook=stored.find(b=>canonicalIsbn(b.isbn)===canonicalIsbn(isbn));
+      const persistenceInvariant=!!storedBook && storedBook.title==='登録永続化テスト本';
+      const boot=readJSONStorage(KEY,[]); const bootBook=boot.find(b=>canonicalIsbn(b.isbn)===canonicalIsbn(isbn));
+      const reloadInvariant=!!bootBook && bootBook.title==='登録永続化テスト本' && bootBook.author==='永続化作家' && bootBook.publisher==='永続化出版社';
+      books=saved.books;calendarExtras=saved.calendarExtras;bookMeta=saved.bookMeta;
+      return {persistenceInvariant,reloadInvariant,rawPresent:!!raw,storedCount:stored.length,bootCount:boot.length};
+    }catch(e){return {persistenceInvariant:false,reloadInvariant:false,error:String(e?.message||e)}}})()`);
+    check('E2E-REG-011 registration commit persists the registered book',registrationPersistence?.persistenceInvariant===true,JSON.stringify(registrationPersistence));
+    check('E2E-REG-012 persisted registration survives boot-read',registrationPersistence?.reloadInvariant===true,JSON.stringify(registrationPersistence));
 
     // Phase 5/6: real resolver/search routing is tested with deterministic adapter doubles.
     const failoverSmoke=await evalJS(`(async()=>{try{
