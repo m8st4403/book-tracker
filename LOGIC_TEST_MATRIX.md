@@ -37,7 +37,7 @@ UIの見た目はブラウザE2Eで別途検査する。新機能を追加する
 
 ## Series
 
-### Series grouping oracle / redundant bibliographic scope gate (v4.13.181)
+### Series grouping oracle / redundant bibliographic scope gate (v4.13.182)
 
 - `seriesName`が作品名そのものになっている書誌は、出版シリーズ境界を示すscopeとして扱わない。
 - 同一作品内で明示的な出版シリーズscopeが1つだけの場合、scopeなし／冗長scopeの巻をそのscopeへ集合化する。
@@ -267,3 +267,16 @@ UIの見た目はブラウザE2Eで別途検査する。新機能を追加する
 - 検索、作者、出版社、年、発売日有無、読書状態、お気に入り、定価、積読、複合AND、リセットを同一契約で検証する。
 - 価格は未登録／確定／確定0円を状態契約として維持する。
 - 期待値計算にproduction predicateを利用しない。
+
+
+## v4.13.182 登録処理のProperty→Mutation契約
+
+| ID | 不変条件 | 検証 |
+|---|---|---|
+| REG-ATOMIC-001 | 1件でも書誌準備に失敗したら状態全体が不変 | E2E independent oracle |
+| REG-COMMIT-001 | 成功後のISBN集合が期待集合と一致 | E2E independent oracle |
+| REG-ROLLBACK-001 | 保存失敗時にbooks/calendarExtras/bookMetaが復元 | E2E fault injection |
+| REG-DUP-001 | 非リッチ重複は既存状態を変更しない | E2E independent snapshot |
+| REG-MUTATION-001 | atomic/rollback/duplicateの欠陥を検出 | Mutation |
+
+期待値は登録実装の内部predicateを再利用しない。

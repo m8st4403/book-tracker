@@ -222,6 +222,54 @@ async function main(){
     check('E2E-SEARCH-007 API取得巻数を検索結果タイトルへ表示',searchTitleVolumeContract?.ok===true,JSON.stringify(searchTitleVolumeContract));
     const registerButtonContract=await evalJS(`(()=>{const s=registerFromCardButton?.toString?.()||'';return {ok:s.includes('succeeded=result===true')&&s.includes("cardEl.outerHTML=card(book,true,'result',index)")&&!s.includes('finally{if(document.body.contains(btn)){btn.disabled=false;btn.dataset.busy="0";btn.textContent=oldText}}')}})()`);
     check('E2E-REG-006 単冊登録成功後のボタン状態更新',registerButtonContract?.ok===true,JSON.stringify(registerButtonContract));
+    // v4.13.182: registration commit quality contract. These tests use an independent
+    // expected ISBN set and before/after snapshots; they do not reuse commit predicates
+    // to calculate the expected result.
+    const registrationQuality=await evalJS(`(async()=>{
+      const clone=v=>JSON.parse(JSON.stringify(v));
+      const snapshot=()=>({books:clone(books),calendarExtras:clone(calendarExtras),bookMeta:clone(bookMeta)});
+      const sameJson=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+      const saved={books:books.slice(),calendarExtras:calendarExtras.slice(),bookMeta:clone(bookMeta),saveMetaFn:saveMeta,persistBooksFn:persistBooks,persistCalendarExtrasFn:persistCalendarExtras,alertFn:window.alert};
+      try{
+        window.alert=()=>{};
+        saveMeta=()=>true; persistBooks=()=>true; persistCalendarExtras=()=>true;
+        books=[{isbn:'seed-1',title:'既存本',author:'A',publisher:'P'}];
+        calendarExtras=[]; bookMeta={};
+        const candidates=[{isbn:'9780000000001',title:'追加本A'},{isbn:'9780000000002',title:'追加本B'}];
+        const prepared=[{isbn:'9780000000001',title:'追加本A',author:'A',publisher:'P'},{isbn:'9780000000002',title:'追加本B',author:'B',publisher:'Q'}];
+        const success=await commitBulkPreparedBooks(candidates,prepared,null);
+        const expectedSuccess=new Set(['SEED1','9780000000001','9780000000002']);
+        const actualSuccess=new Set(books.map(b=>canonicalIsbn(b.isbn)));
+        const successInvariant=success.ok && [...expectedSuccess].every(x=>actualSuccess.has(x)) && actualSuccess.size===expectedSuccess.size && books.length===expectedSuccess.size && books.every(b=>String(b.title||'').trim());
+
+        books=[{isbn:'seed-2',title:'既存本',author:'A',publisher:'P'}]; calendarExtras=[]; bookMeta={};
+        const beforePrepFail=snapshot();
+        const failCandidates=[{isbn:'9780000000011',title:'正常本'},{isbn:'9780000000012',title:'失敗本'}];
+        const failPrepared=[{isbn:'9780000000011',title:'正常本',author:'A',publisher:'P'},{error:'書誌解決失敗'}];
+        const prepFail=await commitBulkPreparedBooks(failCandidates,failPrepared,null);
+        const prepFailureInvariant=prepFail.ok===false && prepFail.atomicAborted===true && sameJson(snapshot(),beforePrepFail);
+
+        books=[{isbn:'seed-3',title:'既存本',author:'A',publisher:'P'}]; calendarExtras=[]; bookMeta={};
+        const beforeSaveFail=snapshot();
+        persistBooks=()=>false;
+        const saveFail=await commitBulkPreparedBooks([{isbn:'9780000000021',title:'保存失敗本'}],[{isbn:'9780000000021',title:'保存失敗本',author:'A',publisher:'P'}],null);
+        const saveFailureInvariant=saveFail.ok===false && sameJson(snapshot(),beforeSaveFail);
+
+        saveMeta=()=>true; persistBooks=()=>true; persistCalendarExtras=()=>true;
+        books=[{isbn:'9780000000031',title:'既存本',author:'A',publisher:'P'}]; calendarExtras=[]; bookMeta={};
+        const beforeDuplicate=snapshot();
+        const dup=await commitBulkPreparedBooks([{isbn:'9780000000031',title:'既存本'}],[{isbn:'9780000000031',title:'既存本',author:'A',publisher:'P'}],null);
+        const duplicateInvariant=dup.ok===true && dup.skippedDuplicates.length===1 && sameJson(snapshot(),beforeDuplicate);
+
+        return {successInvariant,prepFailureInvariant,saveFailureInvariant,duplicateInvariant};
+      }catch(e){return {error:String(e?.message||e)}}
+      finally{books=saved.books;calendarExtras=saved.calendarExtras;bookMeta=saved.bookMeta;saveMeta=saved.saveMetaFn;persistBooks=saved.persistBooksFn;persistCalendarExtras=saved.persistCalendarExtrasFn;window.alert=saved.alertFn;}
+    })()`);
+    check('E2E-REG-007 successful commit matches independent expected set',registrationQuality?.successInvariant===true,JSON.stringify(registrationQuality));
+    check('E2E-REG-008 preparation failure is atomic',registrationQuality?.prepFailureInvariant===true,JSON.stringify(registrationQuality));
+    check('E2E-REG-009 persistence failure fully rolls back',registrationQuality?.saveFailureInvariant===true,JSON.stringify(registrationQuality));
+    check('E2E-REG-010 non-richer duplicate leaves library unchanged',registrationQuality?.duplicateInvariant===true,JSON.stringify(registrationQuality));
+
     // Phase 5/6: real resolver/search routing is tested with deterministic adapter doubles.
     const failoverSmoke=await evalJS(`(async()=>{try{
       const api=window.bookTrackerApiManagement, old={google:api.adapters.googleBooks.isbn,rak:api.adapters.rakuten.isbn,searchG:api.adapters.googleBooks.search,searchR:api.adapters.rakuten.search};

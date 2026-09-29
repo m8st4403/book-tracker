@@ -35,6 +35,9 @@ const libraryPricePredicateMutation=source.replace('&&matchesListPriceFilter(b,f
 const librarySearchPredicateMutation=source.replace('return (!q||[b.title,b.author,b.isbn,b.publisher].join(" ").toLowerCase().includes(q))','return (!q||true)');
 const libraryUnreadOnlyPredicateMutation=source.replace('&&(!unreadOnly||meta.readingStatus!=="read")','&&true');
 const seriesCoalescingMutation=source.replace('groups.get(targetKey).push(...genericItems);','groups.get(targetKey);');
+const registrationAtomicMutation=source.replace('if(failedPreparations.length||added.length!==candidates.length-skippedDuplicates.length){','if(false){');
+const registrationRollbackMutation=source.replace('if(saveFailed){books=oldBooks;calendarExtras=oldExtras;bookMeta=oldMeta;saveMeta();persistBooks();persistCalendarExtras();metrics?.traceStep("保存失敗・ロールバック"','if(saveFailed){metrics?.traceStep("保存失敗・ロールバック"');
+const registrationDuplicateMutation=source.replace('if(usableExisting&&!isRicherBookRecord(prepared,usableExisting)){skippedDuplicates.push(preparedIsbn||key);return;}','if(false){skippedDuplicates.push(preparedIsbn||key);return;}');
 
 const genericMutationCase=  ['Generic author identity normalization',()=>runMutation('Generic author identity normalization',genericIdentityMutation)];
 const authorFragmentMutationCase=['Author fragment suppression',()=>runMutation('Author fragment suppression',authorFragmentMutation)];
@@ -58,6 +61,9 @@ const cases=[
   ['Library price predicate',()=>runMutation('Library price predicate',libraryPricePredicateMutation)],
   ['Library text-search predicate',()=>runMutation('Library text-search predicate',librarySearchPredicateMutation)],
   ['Library unread-only predicate',()=>runMutation('Library unread-only predicate',libraryUnreadOnlyPredicateMutation)],
+  ['Registration atomic commit',()=>runMutation('Registration atomic commit',registrationAtomicMutation)],
+  ['Registration rollback on save failure',()=>runMutation('Registration rollback on save failure',registrationRollbackMutation)],
+  ['Registration duplicate protection',()=>runMutation('Registration duplicate protection',registrationDuplicateMutation)],
   ['Series redundant-scope coalescing',()=>runMutation('Series redundant-scope coalescing',seriesCoalescingMutation)]
 ];
 let ok=true;
