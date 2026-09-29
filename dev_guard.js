@@ -270,7 +270,7 @@ async function main(){
     check('E2E-REG-008 preparation failure is atomic',registrationQuality?.prepFailureInvariant===true,JSON.stringify(registrationQuality));
     check('E2E-REG-009 persistence failure fully rolls back',registrationQuality?.saveFailureInvariant===true,JSON.stringify(registrationQuality));
     check('E2E-REG-010 non-richer duplicate leaves library unchanged',registrationQuality?.duplicateInvariant===true,JSON.stringify(registrationQuality));
-    // v4.13.187: registration quality continues through persistence and boot-read.
+    // v4.13.188: registration quality continues through persistence and boot-read.
     const registrationPersistence=await evalJS(`(()=>{try{
       const saved={books:books.slice(),calendarExtras:calendarExtras.slice(),bookMeta:JSON.parse(JSON.stringify(bookMeta))};
       const isbn='9784000000998'; books=[];calendarExtras=[];bookMeta={}; __guardStorage.removeItem(KEY);

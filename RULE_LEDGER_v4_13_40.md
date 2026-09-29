@@ -10,6 +10,7 @@
 | SERIES-001 | 巻数表記は表示上「作品名＋数字」に正規化 | logic + UI | CURRENT |
 | SERIES-002 | 外伝・短編集・スピンオフ等を主系列へ自動統合しない | boundary | CURRENT |
 | SERIES-003 | 正式series.idを最優先 | adapter contract | CURRENT |
+| SERIES-004 | series.volumeNumberは既知なら1以上の整数、未知／巻数なしはnull。0・負数・非整数を有効巻数として保存しない | logic + migration + property/mutation | CURRENT |
 | SORT-001 | 指定した並び順を第一キー | comparator test | CURRENT |
 | SORT-002 | 同値なら作品名→数値巻数→登録順 | comparator test | CURRENT |
 | PRICE-001 | 蔵書総額は保存済み定価（税込）のみ | logic + persistence | CURRENT |

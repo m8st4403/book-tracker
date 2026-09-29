@@ -35,6 +35,7 @@ const libraryPricePredicateMutation=source.replace('&&matchesListPriceFilter(b,f
 const librarySearchPredicateMutation=source.replace('return (!q||[b.title,b.author,b.isbn,b.publisher].join(" ").toLowerCase().includes(q))','return (!q||true)');
 const libraryUnreadOnlyPredicateMutation=source.replace('&&(!unreadOnly||meta.readingStatus!=="read")','&&true');
 const seriesCoalescingMutation=source.replace('groups.get(targetKey).push(...genericItems);','groups.get(targetKey);');
+const volumeInvariantMutation=source.replace('Number.isInteger(n)&&n>=1?n:null','Number.isInteger(n)&&n>=0?n:null');
 const registrationAtomicMutation=source.replace('if(failedPreparations.length||added.length!==candidates.length-skippedDuplicates.length){','if(false){');
 const registrationRollbackMutation=source.replace('if(saveFailed){books=oldBooks;calendarExtras=oldExtras;bookMeta=oldMeta;saveMeta();persistBooks();persistCalendarExtras();metrics?.traceStep("保存失敗・ロールバック"','if(saveFailed){metrics?.traceStep("保存失敗・ロールバック"');
 const registrationDuplicateMutation=source.replace('if(usableExisting&&!isRicherBookRecord(prepared,usableExisting)){skippedDuplicates.push(preparedIsbn||key);return;}','if(false){skippedDuplicates.push(preparedIsbn||key);return;}');
@@ -68,7 +69,8 @@ const cases=[
   ['Registration duplicate protection',()=>runMutation('Registration duplicate protection',registrationDuplicateMutation)],
   ['Registration persistence',()=>runMutation('Registration persistence',registrationPersistenceMutation)],
   ['Registration user-wait timing',()=>runMutation('Registration user-wait timing',registrationUserWaitMutation)],
-  ['Series redundant-scope coalescing',()=>runMutation('Series redundant-scope coalescing',seriesCoalescingMutation)]
+  ['Series redundant-scope coalescing',()=>runMutation('Series redundant-scope coalescing',seriesCoalescingMutation)],
+  ['Series volume invariant',()=>runMutation('Series volume invariant',volumeInvariantMutation)]
 ];
 let ok=true;
 for(const [name,fn] of cases){const r=fn();console.log(`${r.caught?'PASS':'FAIL'} | MUTATION-${name} | intentional defect ${r.caught?'detected':'NOT detected'}`);if(!r.caught){ok=false;console.log(r.output)}}
