@@ -37,6 +37,16 @@ UIの見た目はブラウザE2Eで別途検査する。新機能を追加する
 
 ## Series
 
+### Series grouping oracle / redundant bibliographic scope gate (v4.13.181)
+
+- `seriesName`が作品名そのものになっている書誌は、出版シリーズ境界を示すscopeとして扱わない。
+- 同一作品内で明示的な出版シリーズscopeが1つだけの場合、scopeなし／冗長scopeの巻をそのscopeへ集合化する。
+- 明示scopeが複数ある場合は推測統合せず、誤統合を防止する。
+- レベルEのジャンプ・コミックスと集英社文庫のような明示的に異なる出版シリーズは分離を維持する。
+- 蔵書表示・巻抜けチェック・シリーズ診断は同じ`buildSeriesGroups`を使用する。
+- Mutationで集合化処理を無効化した場合、Dev GuardがFAILすることを必須とする。
+
+
 ### Series classification sampling gate (v4.13.115)
 
 汎用性の検証は現在の蔵書だけを母集団にしない。実在書誌で発生する分類境界を代表する固定サンプルを回帰対象とする。

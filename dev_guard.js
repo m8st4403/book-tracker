@@ -325,6 +325,18 @@ async function main(){
       const vols=[['作品 1巻',1],['作品 第2巻',2],['作品 3集',3],['作品 (4)',4],['作品 （5）',5],['作品 6',6]];
       out.volumeNormalization=vols.every(([t,n])=>parseVolumeTitle(t).volume===n && displayBookTitle({title:t})==='作品 '+n);
       out.seriesGrouping=new Set(vols.map(([t])=>seriesKey({title:t}))).size===1;
+      const seriesCoalesce=buildSeriesGroups([
+        {b:{isbn:'series-main-1',title:'片田舎のおっさん、剣聖になる 1',series:{name:'片田舎のおっさん、剣聖になる'}}},
+        {b:{isbn:'series-main-2',title:'片田舎のおっさん、剣聖になる 2',series:{name:'ヤングチャンピオン・コミックス'}}},
+        {b:{isbn:'series-main-3',title:'片田舎のおっさん、剣聖になる 3',series:{name:'ヤングチャンピオン・コミックス'}}}
+      ]);
+      out.seriesRedundantScopeCoalescing=seriesCoalesce.size===1&&[...seriesCoalesce.values()][0].length===3;
+      const editionSplit=buildSeriesGroups([
+        {b:{title:'同名作品 1',series:{name:'Aコミックス'}}},
+        {b:{title:'同名作品 2',series:{name:'Aコミックス'}}},
+        {b:{title:'同名作品 1',series:{name:'B文庫'}}}
+      ]);
+      out.seriesDistinctScopesRemainSeparated=editionSplit.size===2;
       const u={isbn:'logic-u',price:makeUnconfirmedPrice()},z={isbn:'logic-z',price:makeConfirmedZeroPrice()},k={isbn:'logic-k',price:makeConfirmedListPrice(550,'manual','HIGH')};
       const saved=books.slice(); books=[u,z,k]; const st=deriveLibraryStats(); books.splice(0,books.length,...saved);
       out.priceSemantics=st.total===550 && st.priceConfirmedCount===2 && st.pricedCount===1;
@@ -367,7 +379,17 @@ async function main(){
       const bunkoHtml=renderSeriesLibraryGroup(bunkoKeys[0],bunkoItems);
       const bunkoLabel=seriesDisplayLabel(bunkoKeys[0],bunkoItems);
       const bunkoVisible=bunkoHtml.includes('<span class="series-cyclic-title">レベルE / 集英社文庫</span>');
-      return {ok:new Set(keys).size===1&&scope==='ジャンプ・コミックス'&&label==='レベルE / ジャンプ・コミックス'&&visibleTitle==='レベルE / ジャンプ・コミックス'&&new Set(bunkoKeys).size===1&&bunkoScope==='集英社文庫'&&bunkoLabel==='レベルE / 集英社文庫'&&bunkoVisible,grouped:new Set(keys).size===1,scope,label,visibleTitle,bunkoGrouped:new Set(bunkoKeys).size===1,bunkoScope,bunkoLabel,bunkoVisible};
+      const redundantScopeItems=[
+        {i:0,b:{isbn:'series-main-1',title:'片田舎のおっさん、剣聖になる 1',series:{name:'片田舎のおっさん、剣聖になる'}}},
+        {i:1,b:{isbn:'series-main-2',title:'片田舎のおっさん、剣聖になる 2',series:{name:'ヤングチャンピオン・コミックス'}}},
+        {i:2,b:{isbn:'series-main-3',title:'片田舎のおっさん、剣聖になる 3',series:{name:'ヤングチャンピオン・コミックス'}}}
+      ];
+      const coalesced=buildSeriesGroups(redundantScopeItems);
+      const coalescedKey=[...coalesced.keys()][0]||'';
+      const coalescedHtml=renderSeriesLibraryGroup(coalescedKey,redundantScopeItems);
+      const coalescedLabel=seriesDisplayLabel(coalescedKey,redundantScopeItems);
+      const coalescedVisible=coalescedHtml.includes('3冊')&&coalescedLabel==='片田舎のおっさん、剣聖になる / ヤングチャンピオン・コミックス';
+      return {ok:new Set(keys).size===1&&scope==='ジャンプ・コミックス'&&label==='レベルE / ジャンプ・コミックス'&&visibleTitle==='レベルE / ジャンプ・コミックス'&&new Set(bunkoKeys).size===1&&bunkoScope==='集英社文庫'&&bunkoLabel==='レベルE / 集英社文庫'&&bunkoVisible&&coalesced.size===1&&coalescedLabel==='片田舎のおっさん、剣聖になる / ヤングチャンピオン・コミックス'&&coalescedVisible,grouped:new Set(keys).size===1,scope,label,visibleTitle,bunkoGrouped:new Set(bunkoKeys).size===1,bunkoScope,bunkoLabel,bunkoVisible,coalescedSize:coalesced.size,coalescedLabel,coalescedVisible};
     }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
     check('E2E-UI-SERIES-001 series header hides internal key and deduplicates bibliography spelling',seriesUiContract?.ok===true,JSON.stringify(seriesUiContract));
     const authorFilterSmoke=await evalJS(`(()=>{

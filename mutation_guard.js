@@ -34,6 +34,7 @@ const libraryFavoritePredicateMutation=source.replace('&&(!ff||(ff==="yes"?meta.
 const libraryPricePredicateMutation=source.replace('&&matchesListPriceFilter(b,fprice)','&&true');
 const librarySearchPredicateMutation=source.replace('return (!q||[b.title,b.author,b.isbn,b.publisher].join(" ").toLowerCase().includes(q))','return (!q||true)');
 const libraryUnreadOnlyPredicateMutation=source.replace('&&(!unreadOnly||meta.readingStatus!=="read")','&&true');
+const seriesCoalescingMutation=source.replace('groups.get(targetKey).push(...genericItems);','groups.get(targetKey);');
 
 const genericMutationCase=  ['Generic author identity normalization',()=>runMutation('Generic author identity normalization',genericIdentityMutation)];
 const authorFragmentMutationCase=['Author fragment suppression',()=>runMutation('Author fragment suppression',authorFragmentMutation)];
@@ -56,7 +57,8 @@ const cases=[
   ['Library favorite predicate',()=>runMutation('Library favorite predicate',libraryFavoritePredicateMutation)],
   ['Library price predicate',()=>runMutation('Library price predicate',libraryPricePredicateMutation)],
   ['Library text-search predicate',()=>runMutation('Library text-search predicate',librarySearchPredicateMutation)],
-  ['Library unread-only predicate',()=>runMutation('Library unread-only predicate',libraryUnreadOnlyPredicateMutation)]
+  ['Library unread-only predicate',()=>runMutation('Library unread-only predicate',libraryUnreadOnlyPredicateMutation)],
+  ['Series redundant-scope coalescing',()=>runMutation('Series redundant-scope coalescing',seriesCoalescingMutation)]
 ];
 let ok=true;
 for(const [name,fn] of cases){const r=fn();console.log(`${r.caught?'PASS':'FAIL'} | MUTATION-${name} | intentional defect ${r.caught?'detected':'NOT detected'}`);if(!r.caught){ok=false;console.log(r.output)}}
