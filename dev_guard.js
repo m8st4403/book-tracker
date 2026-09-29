@@ -92,6 +92,7 @@ const addBookEnd=html.indexOf('window.addAllFound=',addBookStart);
 const addBookBody=addBookStart>=0&&addBookEnd>addBookStart?html.slice(addBookStart,addBookEnd):'';
 check('STATIC-023 addBook does not finish caller-owned metrics', addBookBody.length>0&&!/bookTrackerRegistrationMetrics\?\.finish/.test(addBookBody), 'single-book registration metrics are finalized by operation entry points');
 check('STATIC-024 processing excludes API measurement', /measureProcessing/.test(html) && !/metrics\.processingMs\+=/.test(html), 'data-processing timing excludes API communication timing');
+check('STATIC-027 processing excludes user interaction wait', /userWaitMs/.test(html) && /beginUserWait/.test(html) && /endUserWait/.test(html) && /waitDelta/.test(html) && /elapsed-apiDelta-waitDelta/.test(html), 'data-processing timing excludes user-driven prompt/input wait');
 check('STATIC-026 single-book notices are deferred until metrics finish', /deferNotice:true/.test(html) && /if\(options\.notice\)alert\(options\.notice\)/.test(html) && !/metrics\?\.renderMs\+=\(performance\.now\(\)-rt\);alert\("登録しました/.test(html), 'single-book user notices are shown after caller-owned metric finish');
 check('STATIC-025 processing measurement receives token', /window\.bookTrackerRegistrationMetrics\.measureProcessing\(metrics,/.test(html) && !/metrics\.measureProcessing\(metrics,/.test(html), 'processing measurement API is called with the registration token');
 check('STATIC-009 global registration lock contract', /registrationBusy/.test(html) && /runRegistrationAction/.test(html) && /data-register-action/.test(html), 'individual/bulk/detail/calendar registration shares one lock');
@@ -269,7 +270,7 @@ async function main(){
     check('E2E-REG-008 preparation failure is atomic',registrationQuality?.prepFailureInvariant===true,JSON.stringify(registrationQuality));
     check('E2E-REG-009 persistence failure fully rolls back',registrationQuality?.saveFailureInvariant===true,JSON.stringify(registrationQuality));
     check('E2E-REG-010 non-richer duplicate leaves library unchanged',registrationQuality?.duplicateInvariant===true,JSON.stringify(registrationQuality));
-    // v4.13.185: registration quality continues through persistence and boot-read.
+    // v4.13.187: registration quality continues through persistence and boot-read.
     const registrationPersistence=await evalJS(`(()=>{try{
       const saved={books:books.slice(),calendarExtras:calendarExtras.slice(),bookMeta:JSON.parse(JSON.stringify(bookMeta))};
       const isbn='9784000000998'; books=[];calendarExtras=[];bookMeta={}; __guardStorage.removeItem(KEY);
