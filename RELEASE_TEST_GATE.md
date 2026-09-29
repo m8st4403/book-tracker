@@ -175,6 +175,11 @@ ISBNシリーズ供給源診断は「有効API」の意味を実際のProvider�
 - 単独条件と複合AND条件、リセット後の全件復帰、候補集合の生成を確認する。
 - 年／発売日／読書状態／お気に入り／定価／検索／積読の各predicateをMutationして、全てゲートが検出することを確認する。
 - 実機確認は代表的な複合条件を1回実施し、固定作品を増やす方式へ戻らない。
+## v4.13.184 検索処理品質ゲート
+- 検索結果集合、Provider fallback、timeout/429、stale response、検索結果identity受け渡しを共通契約として検証する。
+- 合成データの独立oracleを使用し、重複排除と0件fallbackをMutationで破壊して検出できることを必須化する。
+- 実機確認は代表経路を1回実施し、個別ISBNのテスト増殖を行わない。
+
 ## v4.13.182 シリーズ分類品質ゲート
 
 - 同一作品＋冗長seriesName＋単一明示scopeの合成ケースを3冊で検証。
@@ -192,3 +197,11 @@ ISBNシリーズ供給源診断は「有効API」の意味を実際のProvider�
 - 非リッチ重複登録で蔵書状態が変化しないことを検証する。
 - `Registration atomic commit`、`Registration rollback on save failure`、`Registration duplicate protection`のMutationを全件検出できなければ配布不可。
 - 実機では登録入口を個別に増やすのではなく、共通prepare/commit契約へ接続された代表操作を確認する。
+
+## v4.13.184 品質基盤統合ゲート
+
+- 通常の品質ゲート（Static/Logic/Browser E2E）とMutation Guardを必須経路として実行する。
+- リリース成果物のArtifact Guardを`npm run test:release`から必ず実行し、テスト済み成果物と配布成果物を分離しない。
+- Artifact GuardはGitHubアップロード側への過去CHANGELOG・監査資料・次工程資料の混入、バージョン不一致、README/CHANGELOG配置、ZIP直下構造を検査する。
+- `npm run test`のみのPASSをリリース合格とは扱わない。配布前は`npm run test:release`を完了させる。
+- 239件などのテスト件数は品質指標にしない。重要不変条件について、独立Oracle・Mutation・実機E2E・成果物検査まで接続されていることを合格条件とする。

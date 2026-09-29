@@ -1,3 +1,10 @@
+# v4.13.184 検索処理品質契約
+
+- Search result set oracle is independent of implementation predicates.
+- Provider fallback is required for zero-result and timeout/error paths.
+- Duplicate ISBN results collapse to one canonical result.
+- Stale responses cannot overwrite the latest search generation.
+
 # Book Tracker — Logic Test Matrix v4.13.31
 
 ロジックテストは「過去にバグが出た箇所」ではなく、現在の仕様で守るべき不変条件を母集団とする。
