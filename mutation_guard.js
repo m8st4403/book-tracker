@@ -21,6 +21,9 @@ const apiMutation=apiSource.replace(' && (field!=="listPrice" || e.taxIncludedCo
 const authorParserMutation=source.replace('[,，]?', '');
 const atomicMutation=source.replace(' if(persistPurchaseGroups())return true;\n purchaseGroups=before;\n return false;', ' return persistPurchaseGroups();');
 const filterEventMutation=source.replace('["filterAuthor","filterPublisher","filterYear","filterRelease","filterReading","filterFavorite","filterPrice"].forEach(id=>$(id)?.addEventListener("change",renderLibrary));','');
+const authorFilterPredicateMutation=source.replace('&&(!fa||authorFilterKey(b,authorIndex).includes(fa))','&&(!fa||true)');
+const publisherFilterPredicateMutation=source.replace('&&(!fp||publisherFilterKey(b.publisher)===fp)','&&(!fp||true)');
+const compoundFilterAndMutation=source.replace('&&(!fy||String(b.date||"").slice(0,4)===fy)&&(!fr||','&&(!fy||String(b.date||"").slice(0,4)===fy)||(!fr||');
 const genericIdentityMutation=source.replace('return raw.replace(/[\s\u00a0]+/g,"" ).toUpperCase();','return raw.toUpperCase();');
 const authorFragmentMutation=source.replace('if(tokens.length===2)add(part);','tokens.forEach(add);');
 const structuredMultiAuthorMutation=source.replace('authorSourceNames(book).forEach(add);','structured.map(x=>normalizeJapaneseBibliographicAuthorDisplay(x)).filter(Boolean).forEach(add);');
@@ -33,6 +36,9 @@ const cases=[
   ['API trust',()=>runMutation('API trust',source,apiMutation)],
   ['Purchase-group atomicity',()=>runMutation('Purchase-group atomicity',atomicMutation)],
   ['Filter change event',()=>runMutation('Filter change event',filterEventMutation)],
+  ['Author filter predicate',()=>runMutation('Author filter predicate',authorFilterPredicateMutation)],
+  ['Publisher filter predicate',()=>runMutation('Publisher filter predicate',publisherFilterPredicateMutation)],
+  ['Compound filter AND',()=>runMutation('Compound filter AND',compoundFilterAndMutation)],
   ['Author parser trailing comma',()=>runMutation('Author parser trailing comma',authorParserMutation)],
   genericMutationCase,
   authorFragmentMutationCase,
