@@ -420,6 +420,16 @@ async function main(){
       return {ok:got.every((x,i)=>x===want[i])&&got[1].split("|").length===1&&got[4].split("|").length===2&&source==="冨樫, 義博,",got,want};
     }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
     check('E2E-LIB-AUTHOR-002 equivalent Japanese surname/given-name encodings are normalized generically',authorFormatSmoke?.ok===true,JSON.stringify(authorFormatSmoke));
+    const structuredMultiAuthorSmoke=await evalJS(`(()=>{try{
+      const b={author:'佐賀崎,しげる 乍藤,和樹',authorNames:['佐賀崎,しげる 乍藤,和樹']};
+      const names=authorSourceNames(b);
+      const entries=authorIdentityEntries(b);
+      const labels=entries.map(x=>x.label);
+      const keys=entries.map(x=>x.key);
+      const ok=names.length===2&&names.includes('佐賀崎 しげる')&&names.includes('乍藤 和樹')&&entries.length===2&&!keys.some(k=>k.includes('佐賀崎しげる乍藤和樹'));
+      return {ok,names,labels,keys};
+    }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
+    check('E2E-LIB-AUTHOR-003 structured authorNames with multiple creators are split into an author set',structuredMultiAuthorSmoke?.ok===true,JSON.stringify(structuredMultiAuthorSmoke));
 
     // v4.13.174: generic property-based suite. Synthetic data is deliberate:
     // a new real title/publisher must not be the mechanism by which a regression

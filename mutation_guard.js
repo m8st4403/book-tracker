@@ -23,9 +23,11 @@ const atomicMutation=source.replace(' if(persistPurchaseGroups())return true;\n 
 const filterEventMutation=source.replace('["filterAuthor","filterPublisher","filterYear","filterRelease","filterReading","filterFavorite","filterPrice"].forEach(id=>$(id)?.addEventListener("change",renderLibrary));','');
 const genericIdentityMutation=source.replace('return raw.replace(/[\s\u00a0]+/g,"" ).toUpperCase();','return raw.toUpperCase();');
 const authorFragmentMutation=source.replace('if(tokens.length===2)add(part);','tokens.forEach(add);');
+const structuredMultiAuthorMutation=source.replace('authorSourceNames(book).forEach(add);','structured.map(x=>normalizeJapaneseBibliographicAuthorDisplay(x)).filter(Boolean).forEach(add);');
 
 const genericMutationCase=  ['Generic author identity normalization',()=>runMutation('Generic author identity normalization',genericIdentityMutation)];
 const authorFragmentMutationCase=['Author fragment suppression',()=>runMutation('Author fragment suppression',authorFragmentMutation)];
+const structuredMultiAuthorMutationCase=['Structured multi-author parsing',()=>runMutation('Structured multi-author parsing',structuredMultiAuthorMutation)];
 const cases=[
   ['UI generic overflow',()=>runMutation('UI generic overflow',uiMutation)],
   ['API trust',()=>runMutation('API trust',source,apiMutation)],
@@ -33,7 +35,8 @@ const cases=[
   ['Filter change event',()=>runMutation('Filter change event',filterEventMutation)],
   ['Author parser trailing comma',()=>runMutation('Author parser trailing comma',authorParserMutation)],
   genericMutationCase,
-  authorFragmentMutationCase
+  authorFragmentMutationCase,
+  structuredMultiAuthorMutationCase
 ];
 let ok=true;
 for(const [name,fn] of cases){const r=fn();console.log(`${r.caught?'PASS':'FAIL'} | MUTATION-${name} | intentional defect ${r.caught?'detected':'NOT detected'}`);if(!r.caught){ok=false;console.log(r.output)}}
