@@ -544,6 +544,78 @@ async function main(){
       }
     })()`);
     check('E2E-LIB-FILTER-INTERACTION-001 real DOM filter oracle covers author/publisher/compound/reset',filterInteractionSmoke?.ok===true,filterInteractionSmoke?JSON.stringify(filterInteractionSmoke):'filterInteractionSmoke unavailable');
+    // v4.13.179: one independent oracle covers every library filter dimension.
+    // This intentionally uses fixed expected ISBN sets derived from the fixture,
+    // never from production filter predicates. The goal is to catch regressions
+    // across dimensions without adding a new test for every real-world title.
+    const filterAllDimensionsSmoke=await evalJS(`(()=>{
+      const originalBooks=books, originalMeta=bookMeta, originalSeriesView=(()=>{try{return localStorage.getItem('seriesView_v444')}catch(e){return null}})();
+      try{
+        const fixture=[
+          {isbn:'9780000000001',title:'FILTER-ALPHA',author:'佐藤,太郎',authorNames:['佐藤,太郎'],publisher:'出版社A',date:'2024-01-10',price:makeConfirmedListPrice(500,'fixture','HIGH')},
+          {isbn:'9780000000002',title:'FILTER-BETA',author:'佐藤 太郎',authorNames:['佐藤 太郎'],publisher:'出版社B',date:'2024-02-11',price:makeUnconfirmedPrice('fixture')},
+          {isbn:'9780000000003',title:'FILTER-GAMMA',author:'鈴木,花子',authorNames:['鈴木,花子'],publisher:'出版社B',date:'2025-03-12',price:makeConfirmedZeroPrice('fixture')},
+          {isbn:'9780000000004',title:'FILTER-DELTA',author:'佐藤,太郎 鈴木,花子',authorNames:['佐藤,太郎 鈴木,花子'],publisher:'出版社A',date:'2025-04-13',price:makeConfirmedListPrice(700,'fixture','HIGH')},
+          {isbn:'9780000000005',title:'FILTER-EPSILON',author:'高橋,次郎,',authorNames:['高橋,次郎,'],publisher:'出版社C',date:'2023-05-14',price:makeConfirmedListPrice(800,'fixture','HIGH')},
+          {isbn:'9780000000006',title:'FILTER-ZETA',author:'高橋 次郎',authorNames:['高橋 次郎'],publisher:'出版社C',date:'2023',price:makeUnconfirmedPrice('fixture')},
+          {isbn:'9780000000007',title:'SEARCH-TARGET',author:'山田,一郎',authorNames:['山田,一郎'],publisher:'出版社D',date:'2022-06-16',price:makeConfirmedListPrice(900,'fixture','HIGH')}
+        ];
+        books=fixture; bookMeta={
+          '9780000000001':{readingStatus:'read',favorite:true},'9780000000002':{readingStatus:'unread',favorite:false},
+          '9780000000003':{readingStatus:'read',favorite:false},'9780000000004':{readingStatus:'unread',favorite:true},
+          '9780000000005':{readingStatus:'unread',favorite:false},'9780000000006':{readingStatus:'read',favorite:true},
+          '9780000000007':{readingStatus:'unread',favorite:false}
+        };
+        try{localStorage.setItem('seriesView_v444','off')}catch(e){}
+        const ids=['filterAuthor','filterPublisher','filterYear','filterRelease','filterReading','filterFavorite','filterPrice'];
+        const titleSet=()=>[...document.querySelectorAll('#myBooks .library-card .book-title-text')].map(x=>x.textContent.trim()).filter(Boolean).sort();
+        const run=(state)=>{
+          resetLibraryFilters({render:false});
+          if(state.q!==undefined){$('libraryFilter').value=state.q}
+          if(state.author)$('filterAuthor').value=normalizeAuthorIdentityName(state.author);
+          if(state.publisher)$('filterPublisher').value=publisherFilterKey(state.publisher);
+          if(state.year)$('filterYear').value=state.year;
+          if(state.release)$('filterRelease').value=state.release;
+          if(state.reading)$('filterReading').value=state.reading;
+          if(state.favorite)$('filterFavorite').value=state.favorite;
+          if(state.price)$('filterPrice').value=state.price;
+          window.libraryUnreadOnly=state.unreadOnly===true;
+          renderLibrary();
+          return {titles:titleSet(),summary:$('filterSummary')?.textContent||''};
+        };
+        const expected={
+          all:['FILTER-ALPHA','FILTER-BETA','FILTER-GAMMA','FILTER-DELTA','FILTER-EPSILON','FILTER-ZETA','SEARCH-TARGET'],
+          authorA:['FILTER-ALPHA','FILTER-BETA','FILTER-DELTA'], publisherA:['FILTER-ALPHA','FILTER-DELTA'],
+          year2023:['FILTER-EPSILON','FILTER-ZETA'], known:['FILTER-ALPHA','FILTER-BETA','FILTER-GAMMA','FILTER-DELTA','FILTER-EPSILON','SEARCH-TARGET'],
+          unknown:['FILTER-ZETA'], unread:['FILTER-BETA','FILTER-DELTA','FILTER-EPSILON','SEARCH-TARGET'], read:['FILTER-ALPHA','FILTER-GAMMA','FILTER-ZETA'],
+          favYes:['FILTER-ALPHA','FILTER-DELTA','FILTER-ZETA'], favNo:['FILTER-BETA','FILTER-GAMMA','FILTER-EPSILON','SEARCH-TARGET'],
+          confirmed:['FILTER-ALPHA','FILTER-GAMMA','FILTER-DELTA','FILTER-EPSILON','SEARCH-TARGET'], unconfirmed:['FILTER-BETA','FILTER-ZETA'],
+          query:['SEARCH-TARGET'], compound:['FILTER-DELTA'], unreadOnly:['FILTER-BETA','FILTER-DELTA','FILTER-EPSILON','SEARCH-TARGET']
+        };
+        const eq=(actual,want)=>JSON.stringify(actual)===JSON.stringify([...want].sort());
+        const cases=[
+          ['all',{},expected.all],['author',{author:'佐藤 太郎'},expected.authorA],['publisher',{publisher:'出版社A'},expected.publisherA],
+          ['year',{year:'2023'},expected.year2023],['release-known',{release:'known'},expected.known],['release-unknown',{release:'unknown'},expected.unknown],
+          ['reading-unread',{reading:'unread'},expected.unread],['reading-read',{reading:'read'},expected.read],
+          ['favorite-yes',{favorite:'yes'},expected.favYes],['favorite-no',{favorite:'no'},expected.favNo],
+          ['price-confirmed',{price:'confirmed'},expected.confirmed],['price-unconfirmed',{price:'unconfirmed'},expected.unconfirmed],
+          ['query',{q:'search-target'},expected.query],
+          ['unread-only',{unreadOnly:true},expected.unreadOnly],
+          ['compound',{author:'佐藤 太郎',publisher:'出版社A',year:'2025',release:'known',reading:'unread',favorite:'yes',price:'confirmed'},expected.compound]
+        ];
+        const outcomes=cases.map(([name,state,want])=>{const r=run(state);return {name,ok:eq(r.titles,want),actual:r.titles,expected:[...want].sort(),summary:r.summary}});
+        const allOk=outcomes.every(x=>x.ok)&&run({}).titles.length===expected.all.length;
+        const queryReset=run({q:'search-target'}); const reset=run({});
+        const resetOk=eq(reset.titles,expected.all)&&/全7冊を表示中/.test(reset.summary);
+        const options={years:[...$('filterYear').options].map(o=>o.value),release:[...$('filterRelease').options].map(o=>o.value),reading:[...$('filterReading').options].map(o=>o.value),favorite:[...$('filterFavorite').options].map(o=>o.value),price:[...$('filterPrice').options].map(o=>o.value)};
+        return {ok:allOk&&resetOk&&eq(queryReset.titles,expected.query),allOk,resetOk,outcomes,options};
+      }catch(e){return {ok:false,error:String(e?.message||e),stack:String(e?.stack||'')}}finally{
+        books=originalBooks;bookMeta=originalMeta;
+        try{if(originalSeriesView===null)localStorage.removeItem('seriesView_v444');else localStorage.setItem('seriesView_v444',originalSeriesView)}catch(e){}
+        renderLibrary();
+      }
+    })()`);
+    check('E2E-PROP-002 independent oracle covers all library filter dimensions',filterAllDimensionsSmoke?.ok===true,JSON.stringify(filterAllDimensionsSmoke));
     const filterCopySmoke=await evalJS(`(()=>{try{const t=buildLibraryFilterStateReport();return {ok:typeof t==='string'&&t.includes('本棚スケジュール 蔵書フィルター状態')&&t.includes('【作者フィルター候補】')&&t.includes('【出版社フィルター候補】')&&!t.includes('publisherFilterKey')&&!t.includes('authorEntities'),length:t.length};}catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
     check('E2E-LIB-FILTER-COPY-001 filter state report is user-facing and hides internal keys',filterCopySmoke?.ok===true,filterCopySmoke?JSON.stringify(filterCopySmoke):'filterCopySmoke unavailable');
     const concurrencySmoke=await evalJS(`(async()=>{

@@ -27,6 +27,13 @@ const compoundFilterAndMutation=source.replace('&&(!fy||String(b.date||"").slice
 const genericIdentityMutation=source.replace('return raw.replace(/[\s\u00a0]+/g,"" ).toUpperCase();','return raw.toUpperCase();');
 const authorFragmentMutation=source.replace('if(tokens.length===2)add(part);','tokens.forEach(add);');
 const structuredMultiAuthorMutation=source.replace('authorSourceNames(book).forEach(add);','structured.map(x=>normalizeJapaneseBibliographicAuthorDisplay(x)).filter(Boolean).forEach(add);');
+const libraryYearPredicateMutation=source.replace('&&(!fy||String(b.date||"").slice(0,4)===fy)','&&(!fy||true)');
+const libraryReleasePredicateMutation=source.replace('&&(!fr||(fr==="known"?known:!known))','&&(!fr||true)');
+const libraryReadingPredicateMutation=source.replace('&&(!fre||meta.readingStatus===fre)','&&(!fre||true)');
+const libraryFavoritePredicateMutation=source.replace('&&(!ff||(ff==="yes"?meta.favorite===true:meta.favorite!==true))','&&(!ff||true)');
+const libraryPricePredicateMutation=source.replace('&&matchesListPriceFilter(b,fprice)','&&true');
+const librarySearchPredicateMutation=source.replace('return (!q||[b.title,b.author,b.isbn,b.publisher].join(" ").toLowerCase().includes(q))','return (!q||true)');
+const libraryUnreadOnlyPredicateMutation=source.replace('&&(!unreadOnly||meta.readingStatus!=="read")','&&true');
 
 const genericMutationCase=  ['Generic author identity normalization',()=>runMutation('Generic author identity normalization',genericIdentityMutation)];
 const authorFragmentMutationCase=['Author fragment suppression',()=>runMutation('Author fragment suppression',authorFragmentMutation)];
@@ -42,7 +49,14 @@ const cases=[
   ['Author parser trailing comma',()=>runMutation('Author parser trailing comma',authorParserMutation)],
   genericMutationCase,
   authorFragmentMutationCase,
-  structuredMultiAuthorMutationCase
+  structuredMultiAuthorMutationCase,
+  ['Library year predicate',()=>runMutation('Library year predicate',libraryYearPredicateMutation)],
+  ['Library release-date predicate',()=>runMutation('Library release-date predicate',libraryReleasePredicateMutation)],
+  ['Library reading-status predicate',()=>runMutation('Library reading-status predicate',libraryReadingPredicateMutation)],
+  ['Library favorite predicate',()=>runMutation('Library favorite predicate',libraryFavoritePredicateMutation)],
+  ['Library price predicate',()=>runMutation('Library price predicate',libraryPricePredicateMutation)],
+  ['Library text-search predicate',()=>runMutation('Library text-search predicate',librarySearchPredicateMutation)],
+  ['Library unread-only predicate',()=>runMutation('Library unread-only predicate',libraryUnreadOnlyPredicateMutation)]
 ];
 let ok=true;
 for(const [name,fn] of cases){const r=fn();console.log(`${r.caught?'PASS':'FAIL'} | MUTATION-${name} | intentional defect ${r.caught?'detected':'NOT detected'}`);if(!r.caught){ok=false;console.log(r.output)}}
