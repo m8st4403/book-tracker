@@ -68,6 +68,7 @@ check('STATIC-004 price filter exists', /id=["']filterPrice["']/.test(html), 'li
 check('STATIC-055 publisher identity key contract', /function normalizePublisherIdentityName\(value\)/.test(html) && /function publisherFilterKey\(value\)/.test(html) && /function buildPublisherFilterIndex\(\)/.test(html) && /publisherFilterKey\(b\.publisher\)===fp/.test(html), 'publisher display/key separation with conservative normalization');
 check('STATIC-056 series display/key separation contract', /function seriesKey\(b\)/.test(html) && /function seriesDisplayLabel\(name,items=\[\]\)/.test(html), 'series grouping key is separate from user-facing label');
 check('STATIC-057 bibliographic identity audit docs', /v4\.13\.167/.test(readmeText) && /v4\.13\.167/.test(specText), 'historical identity audit remains documented');
+check('STATIC-061 past-fix quality audit exists', fs.existsSync(path.join(path.dirname(target),'PAST_FIX_QUALITY_AUDIT_v4_13_180.md')), 'past fixes are audited under the oracle/mutation/E2E quality model');
 check('STATIC-058 library filter text-copy contract', /id=["']copyLibraryFilterStateBtn["']/.test(html) && /function buildLibraryFilterStateReport\(\)/.test(html) && /function copyLibraryFilterState\(button\)/.test(html), 'library filter state can be copied as user-facing text');
 check('STATIC-005 canonical registration routes exist', /window\.addBook\s*=/.test(html) && /window\.bulkAdd\s*=/.test(html), 'addBook/bulkAdd');
 check('STATIC-059 registration routes share canonical preparation path',
