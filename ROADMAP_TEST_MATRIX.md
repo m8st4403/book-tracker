@@ -104,7 +104,7 @@
 
 
 
-## v4.13.197 書誌情報供給経路監査（CURRENT）
+## v4.13.198 書誌情報供給経路監査（CURRENT）
 | ID | 機能 | 必須テスト |
 |---|---|---|
 | CORE-BIB-PROVENANCE | Provider→Adapter→Resolver→保存→利用先 | 必須10系統について欠損・Provider差・既存値保持・補完・カレンダー投影を横断検査 |

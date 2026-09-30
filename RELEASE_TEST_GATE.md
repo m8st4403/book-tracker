@@ -1,4 +1,4 @@
-# Release Test Gate v4.13.197
+# Release Test Gate v4.13.199
 
 ## 正本
 
@@ -26,6 +26,7 @@
 - rollback
 - 検索競合
 - API trust / fallback
+- 書誌情報採用判定（Evidence / field policy / provider conflict）
 - 計測モデル
 
 期待値は可能な限り独立Oracleで生成する。
@@ -62,6 +63,8 @@
 
 - UI overflow
 - API trust
+- Provider間矛盾の自動採用禁止
+- 定価の税込根拠必須
 - フィルター各predicate
 - 作者同一性
 - 登録atomicity / rollback / duplicate / persistence
@@ -94,14 +97,14 @@
 自動Gateで検証できるものをユーザーへ繰り返し依頼しない。実機確認は、代表的なE2E・実API・UI表示・保存/再起動など、自動化だけでは代替できない確認へ限定する。
 
 
-## v4.13.197追加
+## v4.13.199追加
 
 - Homeの蔵書統計と蔵書状態の独立Oracle
 - Home表示更新を壊すMutationの検出
 - Home→蔵書のクロスビュー整合性
 
 
-## v4.13.197追加ゲート
+## v4.13.199追加ゲート
 - 10系統（ISBN/タイトル/作者/出版社/発売日/定価/シリーズ/巻数/読書状態/お気に入り等）を1つの横断E2E契約で検査する。
 - 各系統の既存Mutationと組み合わせ、重要predicate/identity/sort/state projectionの故障検出能力を維持する。
 - 「個別作品を手で触った結果」だけでは10系統のPASSとは認めない。

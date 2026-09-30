@@ -17,7 +17,8 @@ function runMutation(name,mutateIndex=source,mutateApi=apiSource){
   } finally { fs.rmSync(dir,{recursive:true,force:true}); }
 }
 const uiMutation=source.replace('</body>','<div id="mutationOverflow" style="position:fixed;left:0;top:0;width:1000px;height:20px">mutation</div></body>');
-const apiMutation=apiSource.replace(' && (field!=="listPrice" || e.taxIncludedConfirmed)','');
+const apiMutation=apiSource.replace('if(p.requireTaxIncluded&&e.taxIncludedConfirmed!==true)return {status:"HOLD",reason:"TAX_STATUS_UNKNOWN_OR_NOT_INCLUDED"};','');
+const apiConflictMutation=apiSource.replace('if(conflicting.length&&policy.conflict==="HOLD")return {...top,decision:{status:"HOLD",reason:"PROVIDER_CONFLICT",conflicts:conflicting.map(c=>({provider:c.provider,value:c.value,confidence:c.confidence}))}};','');
 const authorParserMutation=source.replace('[,，]?', '');
 const atomicMutation=source.replace(' if(persistPurchaseGroups())return true;\n purchaseGroups=before;\n return false;', ' return persistPurchaseGroups();');
 const filterEventMutation=source.replace('["filterAuthor","filterPublisher","filterYear","filterRelease","filterReading","filterFavorite","filterPrice"].forEach(id=>$(id)?.addEventListener("change",renderLibrary));','');
@@ -55,6 +56,7 @@ const cases=[releaseUnknownFirstMutationCase,
 
   ['UI generic overflow',()=>runMutation('UI generic overflow',uiMutation)],
   ['API trust',()=>runMutation('API trust',source,apiMutation)],
+  ['API provider conflict',()=>runMutation('API provider conflict',source,apiConflictMutation)],
   ['Purchase-group atomicity',()=>runMutation('Purchase-group atomicity',atomicMutation)],
   ['Filter change event',()=>runMutation('Filter change event',filterEventMutation)],
   ['Author filter predicate',()=>runMutation('Author filter predicate',authorFilterPredicateMutation)],

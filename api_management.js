@@ -5,9 +5,26 @@
  */
 (function(){
   "use strict";
-  const VERSION="1.6";
+  const VERSION="1.7";
   const CONF={UNKNOWN:0,LOW:1,MEDIUM:2,HIGH:3,VERIFIED:4};
-  const CRITICAL=new Set(["isbn13","seriesId","seriesName","volumeNumber","listPrice","taxIncluded"]);
+  const CRITICAL=new Set(["isbn13","seriesId","seriesName","volumeNumber","listPrice","taxIncluded","releaseDate"]);
+  // Field-specific adoption policy. Confidence is necessary but never sufficient by itself.
+  // The policy also evaluates evidence, semantic requirements, and cross-provider conflict.
+  const FIELD_POLICIES={
+    isbn13:{minConfidence:"VERIFIED",requireIdentifier:true,conflict:"HOLD"},
+    title:{minConfidence:"HIGH",requireIdentifier:true,conflict:"PREFER_STRONGEST"},
+    author:{minConfidence:"HIGH",requireIdentifier:true,conflict:"PREFER_STRONGEST"},
+    publisher:{minConfidence:"HIGH",requireIdentifier:true,conflict:"PREFER_STRONGEST"},
+    releaseDate:{minConfidence:"HIGH",requireIdentifier:true,requireSemantic:true,conflict:"HOLD"},
+    seriesId:{minConfidence:"HIGH",requireIdentifier:true,conflict:"HOLD"},
+    seriesName:{minConfidence:"HIGH",requireIdentifier:true,requireSemantic:true,conflict:"HOLD"},
+    volumeNumber:{minConfidence:"HIGH",requireIdentifier:true,requireSemantic:true,conflict:"HOLD"},
+    listPrice:{minConfidence:"HIGH",requireIdentifier:true,requireSemantic:true,requireTaxIncluded:true,conflict:"HOLD"},
+    taxIncluded:{minConfidence:"VERIFIED",requireIdentifier:true,requireSemantic:true,conflict:"HOLD"},
+    cover:{minConfidence:"MEDIUM",requireIdentifier:false,conflict:"PREFER_STRONGEST"},
+    description:{minConfidence:"MEDIUM",requireIdentifier:false,conflict:"PREFER_STRONGEST"},
+    categories:{minConfidence:"MEDIUM",requireIdentifier:false,conflict:"PREFER_STRONGEST"}
+  };
   const providers={
     googleBooks:{enabled:false,capabilities:{isbnSearch:true,titleSearch:true,bibliographicRecord:true,seriesId:true,seriesName:true,volumeNumber:true,listPrice:true,taxIncluded:false,releaseDate:true,cover:true,author:true,publisher:true,pages:true}},
     openBD:{enabled:true,capabilities:{isbnSearch:true,titleSearch:false,bibliographicRecord:true,seriesId:false,seriesName:true,volumeNumber:true,listPrice:true,taxIncluded:false,releaseDate:true,cover:true,author:true,publisher:true,pages:true}},
@@ -27,7 +44,7 @@
     bibliographicRecord:["ndl","openBD","googleBooks","rakuten"],
     cover:["googleBooks","openBD","ndl","rakuten"]
   };
-  const thresholds=Object.fromEntries(Object.keys(priority).map(k=>[k,CRITICAL.has(k)?"HIGH":"MEDIUM"]));
+  const thresholds=Object.fromEntries(Object.keys(priority).map(k=>[k,FIELD_POLICIES[k]?.minConfidence||(CRITICAL.has(k)?"HIGH":"MEDIUM")]));
   function rank(x){return CONF[String(x||"UNKNOWN")]??0}
   function evidenceFor(field,value,ctx={}){
     const e={
@@ -49,10 +66,18 @@
     else if(e.schemaValidated)confidence="LOW";
     return {value,confidence,evidence:e};
   }
-  function acceptable(field,result){
-    if(!result||result.value===null||result.value===undefined||result.value==="")return false;
-    return rank(result.confidence)>=rank(thresholds[field]||"MEDIUM");
+  function fieldPolicy(field){return FIELD_POLICIES[field]||{minConfidence:thresholds[field]||"MEDIUM",requireIdentifier:false,conflict:"PREFER_STRONGEST"};}
+  function evaluateFieldCandidate(field,result,ctx={}){
+    const p=fieldPolicy(field);
+    if(!result||result.value===null||result.value===undefined||result.value==="")return {status:"REJECT",reason:"VALUE_MISSING"};
+    const e=result.evidence||{};
+    if(rank(result.confidence)<rank(p.minConfidence))return {status:"HOLD",reason:"CONFIDENCE_BELOW_THRESHOLD",required:p.minConfidence,actual:result.confidence};
+    if(p.requireIdentifier&&e.identifierMatched!==true)return {status:"HOLD",reason:"IDENTIFIER_NOT_MATCHED"};
+    if(p.requireSemantic&&e.semanticValidated!==true)return {status:"HOLD",reason:"SEMANTIC_VALIDATION_FAILED"};
+    if(p.requireTaxIncluded&&e.taxIncludedConfirmed!==true)return {status:"HOLD",reason:"TAX_STATUS_UNKNOWN_OR_NOT_INCLUDED"};
+    return {status:"ACCEPT",reason:"POLICY_SATISFIED"};
   }
+  function acceptable(field,result,ctx={}){return evaluateFieldCandidate(field,result,ctx).status==="ACCEPT";}
   function providerEnabled(name){if(name==="rakuten")return !!providers[name]?.enabled&&!!getRakutenConfig();return !!providers[name]?.enabled}
   function hasCapability(name,cap){return providers[name]?.capabilities?.[cap]===true}
 
@@ -543,15 +568,23 @@
   function normalizeComparable(field,v){return field==="seriesName"?norm(v):field==="volumeNumber"?Number(v):String(v??"").trim()}
   function mergeCandidates(field,cands,ctx){
     if(!cands.length)return null;
+    const policy=fieldPolicy(field);
     const groups=new Map();
     for(const c of cands){const k=normalizeComparable(field,c.value);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(c)}
     for(const list of groups.values()){
       if(list.length>=2){
-        for(const c of list){c.evidence={...c.evidence,crossSourceAgreement:true};if(rank(c.confidence)<rank("VERIFIED")&&c.evidence.identifierMatched&&c.evidence.schemaValidated&&c.evidence.semanticValidated)c.confidence=field==="listPrice"&&!c.evidence.taxIncludedConfirmed?"HIGH":"VERIFIED";}
+        for(const c of list){c.evidence={...c.evidence,crossSourceAgreement:true};
+          if(rank(c.confidence)<rank("VERIFIED")&&c.evidence.identifierMatched&&c.evidence.schemaValidated&&c.evidence.semanticValidated&&(!(field==="listPrice")||c.evidence.taxIncludedConfirmed))c.confidence="VERIFIED";
+        }
       }
     }
-    cands.sort((a,b)=>rank(b.confidence)-rank(a.confidence)||a.priority-b.priority);
-    return cands[0];
+    const ranked=[...cands].sort((a,b)=>rank(b.confidence)-rank(a.confidence)||a.priority-b.priority);
+    const top=ranked[0];
+    const topRank=rank(top.confidence);
+    const conflicting=ranked.filter(c=>normalizeComparable(field,c.value)!==normalizeComparable(field,top.value)&&rank(c.confidence)>=topRank);
+    if(conflicting.length&&policy.conflict==="HOLD")return {...top,decision:{status:"HOLD",reason:"PROVIDER_CONFLICT",conflicts:conflicting.map(c=>({provider:c.provider,value:c.value,confidence:c.confidence}))}};
+    const decision=evaluateFieldCandidate(field,top,ctx);
+    return {...top,decision};
   }
   async function search(q,limit=20){
     const metrics=globalThis.bookTrackerSearchMetrics?.current?.();
@@ -666,8 +699,8 @@
     for(const field of fields){
       const cs=rows.map(r=>candidate(field,r,ctx)).filter(Boolean);
       const win=mergeCandidates(field,cs,ctx);if(!win)continue;
-      out.resolution.fields[field]={provider:win.provider,confidence:win.confidence,evidence:win.evidence,agreement:!!win.evidence.crossSourceAgreement};
-      out.fieldEvidence[field]={value:win.value,confidence:win.confidence,evidence:win.evidence};
+      out.resolution.fields[field]={provider:win.provider,confidence:win.confidence,evidence:win.evidence,agreement:!!win.evidence.crossSourceAgreement,decision:win.decision||evaluateFieldCandidate(field,win,ctx)};
+      out.fieldEvidence[field]={value:win.value,confidence:win.confidence,evidence:win.evidence,decision:win.decision||evaluateFieldCandidate(field,win,ctx)};
       if(field==="seriesId"||field==="seriesName"||field==="volumeNumber"){
         out.series??={id:"",name:"",volumeNumber:null,displayVolume:"",bookType:"",confidence:{}};
         if(field==="seriesId")out.series.id=win.value;
@@ -687,7 +720,10 @@
     }
     if(out.series&&!out.series.id&&!out.series.name)out.series=null;
     out.series?.confidence&&(out.series.confidence.overall=seriesConfidence(out.series));
-    out.resolution.accepted={series:!!out.series&&seriesAcceptable(out.series),listPrice:acceptable("listPrice",out.fieldEvidence.listPrice)};
+    out.resolution.accepted={};
+    for(const field of fields){const f=out.fieldEvidence[field];out.resolution.accepted[field]=!!f&&((f.decision?.status||"")==="ACCEPT");}
+    out.resolution.accepted.series=!!out.series&&seriesAcceptable(out.series)&&out.resolution.accepted.seriesName===true;
+    out.resolution.accepted.listPrice=!!out.fieldEvidence.listPrice&&out.resolution.accepted.listPrice===true;
     cacheSet(cacheKey,out);
     return cloneCached(out);
   }
@@ -699,5 +735,5 @@
     return {value:null,confidence:"UNKNOWN",provider:null,evidence:null,attempts};
   }
   function config(){return {version:VERSION,runtimePolicy:JSON.parse(JSON.stringify(runtimePolicy)),providerHealth:JSON.parse(JSON.stringify(Object.fromEntries(providerHealth))),providers:JSON.parse(JSON.stringify(providers)),priority:JSON.parse(JSON.stringify(priority)),thresholds:JSON.parse(JSON.stringify(thresholds))}}
-  window.bookTrackerApiManagement={VERSION,CONFIDENCE:CONF,CRITICAL_FIELDS:[...CRITICAL],providers,priority,thresholds,adapters,evidenceFor,acceptable,listPriceAccepted,runField,resolveIsbn,seriesAcceptable,mergeCandidates,config,normalizeRakuten,normalizeNDLFixture,normalizeNDLOpenSearch,extractNDLCreatorEntities,buildNDLSruSearchUrl,providerHealth,runtimePolicy,providerEnabled,providerTemporarilyDisabled,search,clearResolverCache,cacheInfo,cachePolicy};
+  window.bookTrackerApiManagement={VERSION,CONFIDENCE:CONF,CRITICAL_FIELDS:[...CRITICAL],FIELD_POLICIES,providers,priority,thresholds,adapters,evidenceFor,evaluateFieldCandidate,acceptable,listPriceAccepted,runField,resolveIsbn,seriesAcceptable,mergeCandidates,config,normalizeRakuten,normalizeNDLFixture,normalizeNDLOpenSearch,extractNDLCreatorEntities,buildNDLSruSearchUrl,providerHealth,runtimePolicy,providerEnabled,providerTemporarilyDisabled,search,clearResolverCache,cacheInfo,cachePolicy};
 })();
