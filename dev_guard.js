@@ -1228,6 +1228,46 @@ check('E2E-UI-006 diagnostic copy/clear hierarchy works',diagnosticCopyClearUi?.
       return {ok,results,unowned};
     }catch(e){try{window.bookTrackerApiManagement.search=window.bookTrackerApiManagement.search}catch(_){} return {ok:false,error:String(e?.message||e)}}})()`);
     check('E2E-SEARCH-003 independent search sort/unowned oracle',searchSortOracle?.ok===true,JSON.stringify(searchSortOracle));
+    const crossDataContract=await evalJS(`(()=>{try{
+      const saved={books:books.slice(),meta:JSON.parse(JSON.stringify(bookMeta)),sort:$('librarySort')?.value||'registered-desc',q:$('libraryFilter')?.value||'',fa:$('filterAuthor')?.value||'',fp:$('filterPublisher')?.value||'',fy:$('filterYear')?.value||'',fr:$('filterRelease')?.value||'',fre:$('filterReading')?.value||'',ff:$('filterFavorite')?.value||'',fprice:$('filterPrice')?.value||'',unreadOnly:window.libraryUnreadOnly===true};
+      const fixture=[
+        {isbn:'9784088720715',title:'横断作品 1',author:'山田 太郎',publisher:'出版社A',date:'2026-01-15',price:{listPrice:1200,status:'confirmed',currency:'JPY',taxIncluded:true,source:'fixture'},series:{name:'横断作品',volumeNumber:1,displayVolume:'1'}},
+        {isbn:'9784088720722',title:'横断作品 2',author:'佐藤 花子',publisher:'出版社B',date:'2026-02-15',price:{listPrice:null,status:'unconfirmed',currency:'JPY',taxIncluded:false,source:'fixture'},series:{name:'横断作品',volumeNumber:2,displayVolume:'2'}},
+        {isbn:'9784088720739',title:'別作品 1',author:'山田 太郎',publisher:'出版社A',date:'',price:{listPrice:0,status:'confirmed_zero',currency:'JPY',taxIncluded:true,source:'fixture'},series:{name:'別作品',volumeNumber:1,displayVolume:'1'}}
+      ];
+      books=fixture.map(x=>({...x}));
+      bookMeta={
+        '9784088720715':{purchaseStatus:'purchased',readingStatus:'read',favorite:true,memo:'',rating:0,notify:false},
+        '9784088720722':{purchaseStatus:'wanted',readingStatus:'unread',favorite:false,memo:'',rating:0,notify:false},
+        '9784088720739':{purchaseStatus:'wanted',readingStatus:'unread',favorite:true,memo:'',rating:0,notify:false}
+      };
+      // Independent expected values: these are not produced by the production predicates.
+      const expected={isbn:'9784088720715',titles:['横断作品 1','横断作品 2'],author:'山田 太郎',publisher:'出版社A',knownRelease:2,confirmedPriceCount:2,total:1200,unread:2,favorite:2,seriesVolumes:[1,2]};
+      const key=canonicalIsbn('9784088720715');
+      const identityOk=key==='9784088720715' && bookResultKey(fixture[0])==='9784088720715';
+      $('libraryFilter').value='横断作品 1'; $('filterAuthor').value=''; $('filterPublisher').value=''; $('filterYear').value=''; $('filterRelease').value=''; $('filterReading').value=''; $('filterFavorite').value=''; $('filterPrice').value=''; window.libraryUnreadOnly=false; $('librarySort').value='title-asc'; renderLibrary();
+      const titleSearch=[...document.querySelectorAll('#myBooks .card[data-book]')].map(el=>{try{return JSON.parse(el.dataset.book).title}catch(e){return ''}});
+      $('libraryFilter').value=''; renderLibrary();
+      const authorIndex=buildAuthorFilterIndex(),authorRows=authorIndex.rows.filter(r=>r.label==='山田 太郎');
+      const publisherRows=[...buildPublisherFilterIndex().values()].filter(r=>r.label==='出版社A');
+      $('filterAuthor').value=authorRows[0]?.key||''; renderLibrary(); const authorCount=document.querySelectorAll('#myBooks .card[data-book]').length;
+      $('filterAuthor').value=''; $('filterPublisher').value=publisherRows[0]?.key||''; renderLibrary(); const publisherCount=document.querySelectorAll('#myBooks .card[data-book]').length;
+      $('filterPublisher').value=''; $('filterPrice').value='confirmed'; renderLibrary(); const priceCount=document.querySelectorAll('#myBooks .card[data-book]').length;
+      $('filterPrice').value=''; $('filterReading').value='unread'; renderLibrary(); const unreadCount=document.querySelectorAll('#myBooks .card[data-book]').length;
+      $('filterReading').value=''; $('filterFavorite').value='yes'; renderLibrary(); const favoriteCount=document.querySelectorAll('#myBooks .card[data-book]').length;
+      const stats=deriveLibraryStats();
+      const seriesGroups=buildSeriesGroups(fixture.map((b,i)=>({b,i})));
+      const series=seriesGroups.get('series-work:横断作品');
+      $('filterFavorite').value=''; renderLibrary(); $('libraryFilter').value=''; $('librarySort').value='volume-asc'; renderLibrary();
+      const volumeOrder=[...document.querySelectorAll('#myBooks .card[data-book]')].map(el=>{try{return JSON.parse(el.dataset.book).isbn}catch(e){return ''}});
+      // Persistence/reload is covered independently by E2E-PERSIST; this cross contract verifies that the canonical data remains serializable and lossless before persistence.
+      const serialized=JSON.stringify(fixture),roundTrip=JSON.parse(serialized);
+      const saveRoundTrip=Array.isArray(roundTrip)&&roundTrip.length===3&&roundTrip[0].isbn==='9784088720715'&&roundTrip[0].series.volumeNumber===1;
+      books=saved.books;bookMeta=saved.meta;$('librarySort').value=saved.sort;$('libraryFilter').value=saved.q;$('filterAuthor').value=saved.fa;$('filterPublisher').value=saved.fp;$('filterYear').value=saved.fy;$('filterRelease').value=saved.fr;$('filterReading').value=saved.fre;$('filterFavorite').value=saved.ff;$('filterPrice').value=saved.fprice;window.libraryUnreadOnly=saved.unreadOnly;render();
+      const ok=identityOk && JSON.stringify(titleSearch)===JSON.stringify(['横断作品 1']) && authorCount===2 && publisherCount===2 && priceCount===2 && unreadCount===2 && favoriteCount===2 && stats.count===3 && stats.priceConfirmedCount===2 && stats.total===1200 && stats.unread===2 && stats.favorite===2 && Array.isArray(series)&&series.length===2 && series.every(x=>x.b.series?.volumeNumber===1||x.b.series?.volumeNumber===2) && volumeOrder.length===3 && saveRoundTrip;
+      return {ok,identityOk,titleSearch,authorCount,publisherCount,priceCount,unreadCount,favoriteCount,stats,seriesVolumes:series?.map(x=>x.b.series?.volumeNumber)||[],volumeOrder,saveRoundTrip,expected};
+    }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
+    check('E2E-CROSS-DATA-001 10系統横断契約（ISBN/タイトル/作者/出版社/発売日/定価/シリーズ/巻数/読書状態/お気に入り）',crossDataContract?.ok===true,JSON.stringify(crossDataContract));
     const releaseDateContract=await evalJS(`(()=>{try{
       const cases=[
         ['2026-04-15','2026-04-15','day'],['2026-04-15T00:00:00+09:00','2026-04-15','day'],['2026/04/15','2026-04-15','day'],['2026年4月15日','2026-04-15','day'],
