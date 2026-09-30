@@ -21,6 +21,43 @@ function fail(name, detail='') { results.push({name, ok:false, detail}); }
 function check(name, ok, detail='') { (ok ? pass : fail)(name, detail); }
 
 // ---------------- static contract checks ----------------
+
+// v4.13.200: Generic cross-tab operation inventory.
+// This is intentionally generic: it audits every button in the shipped DOM,
+// not only buttons introduced by a known regression.
+function auditInteractiveOperationCoverage(source) {
+  const buttonRe = /<button\b([^>]*)>([\s\S]*?)<\/button>/gi;
+  const items = [];
+  let m;
+  while ((m = buttonRe.exec(source))) {
+    const attrs = m[1] || '';
+    const id = (attrs.match(/\bid=["']([^"']+)["']/i)||[])[1] || '';
+    const classes = (attrs.match(/\bclass=["']([^"']+)["']/i)||[])[1] || '';
+    const inline = /\bonclick\s*=/.test(attrs);
+    const disabled = /\bdisabled(?:\s*=\s*(?:"disabled"|'disabled'|disabled))?\b/i.test(attrs);
+    const dataAttrs = [...attrs.matchAll(/\bdata-([a-z0-9_-]+)\s*=/gi)].map(x=>x[1]);
+    const idRefs = id ? (source.match(new RegExp(`(?:getElementById\\(["']${id}["']\\)|\\$\\(["']${id}["']\\)|#${id}\\b)`, 'g'))||[]).length : 0;
+    const handlerRef = id ? new RegExp(
+      `(?:getElementById\\(["']${id}["']\\)|\\$\\(["']${id}["']\\)|querySelector\\([^)]*#${id}\\b[^)]*\\))[^\\n]{0,500}(?:\\.onclick|addEventListener\\()`,
+      's'
+    ).test(source) : false;
+    const delegated = classes.split(/\s+/).filter(Boolean).some(cls =>
+      new RegExp(`(?:closest|querySelector(?:All)?|matches)\\([^)]*[.#]${cls}\\b`).test(source)
+      || (new RegExp(`class=["'][^"']*\\b${cls}\\b`).test(source) && /querySelectorAll\(["']button["']\)\.forEach/.test(source))
+    );
+    const covered = inline || disabled || dataAttrs.length > 0 || handlerRef || delegated;
+    items.push({id, classes, inline, disabled, dataAttrs, idRefs, handlerRef, delegated, covered});
+  }
+  const uncovered = items.filter(x=>!x.covered);
+  return {total:items.length, covered:items.length-uncovered.length, uncovered};
+}
+const operationCoverage = auditInteractiveOperationCoverage(html);
+check(
+  'STATIC-070 all shipped buttons have an operation path',
+  operationCoverage.uncovered.length===0,
+  JSON.stringify({total:operationCoverage.total,covered:operationCoverage.covered,uncovered:operationCoverage.uncovered.slice(0,20)})
+);
+
 const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
 const dupIds = [...new Set(ids.filter((id,i)=>ids.indexOf(id)!==i))];
 check('STATIC-001 unique DOM ids', dupIds.length===0, dupIds.join(', '));
@@ -190,7 +227,18 @@ async function main(){
 
     const requiredTabs=['home','add','library','search','calendar','settings'];
     const tabState=await evalJS(`(()=>{const ids=${JSON.stringify(requiredTabs)};return ids.map(id=>({id,exists:!!document.getElementById(id),hidden:document.getElementById(id)?.hidden}));})()`);
-    check('E2E-001 all six tabs exist', tabState.every(x=>x.exists), JSON.stringify(tabState));
+    
+const operationRuntimeAudit=await evalJS(`(()=>{try{
+  const buttons=[...document.querySelectorAll('button')];
+  const actionable=buttons.filter(b=>!b.disabled);
+  const unlabeled=actionable.filter(b=>!((b.textContent||'').trim()||b.getAttribute('aria-label')||b.title));
+  const noType=actionable.filter(b=>!b.getAttribute('type') && !b.closest('form'));
+  const duplicateIds=buttons.filter(b=>b.id).map(b=>b.id).filter((id,i,a)=>a.indexOf(id)!==i);
+  return {ok:unlabeled.length===0&&duplicateIds.length===0,buttonCount:buttons.length,actionable:actionable.length,unlabeled:unlabeled.map(b=>b.outerHTML.slice(0,180)),duplicateIds:[...new Set(duplicateIds)],noType:noType.length};
+}catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
+check('E2E-UI-OPS-001 generic interactive control inventory',operationRuntimeAudit?.ok===true,JSON.stringify(operationRuntimeAudit));
+
+check('E2E-001 all six tabs exist', tabState.every(x=>x.exists), JSON.stringify(tabState));
 
     const tabContracts={
       home:['homeBookCount','homeBookTotal','homePurchaseCount','homeUnreadCount','homeFavoriteCount','homeUpcomingBooks'],

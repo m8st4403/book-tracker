@@ -16,6 +16,8 @@ function runMutation(name,mutateIndex=source,mutateApi=apiSource){
     return {caught:r.status!==0,output:r.stdout+r.stderr};
   } finally { fs.rmSync(dir,{recursive:true,force:true}); }
 }
+const uiOperationWiringMutation=source.replace('$("homeUpcomingMore").onclick=()=>{document.querySelector(\'[data-s="calendar"]\').click()};','');
+
 const uiMutation=source.replace('</body>','<div id="mutationOverflow" style="position:fixed;left:0;top:0;width:1000px;height:20px">mutation</div></body>');
 const apiMutation=apiSource.replace('if(p.requireTaxIncluded&&e.taxIncludedConfirmed!==true)return {status:"HOLD",reason:"TAX_STATUS_UNKNOWN_OR_NOT_INCLUDED"};','');
 const apiConflictMutation=apiSource.replace('if(conflicting.length&&policy.conflict==="HOLD")return {...top,decision:{status:"HOLD",reason:"PROVIDER_CONFLICT",conflicts:conflicting.map(c=>({provider:c.provider,value:c.value,confidence:c.confidence}))}};','');
@@ -53,6 +55,7 @@ const genericMutationCase=  ['Generic author identity normalization',()=>runMuta
 const authorFragmentMutationCase=['Author fragment suppression',()=>runMutation('Author fragment suppression',authorFragmentMutation)];
 const structuredMultiAuthorMutationCase=['Structured multi-author parsing',()=>runMutation('Structured multi-author parsing',structuredMultiAuthorMutation)];
 const cases=[releaseUnknownFirstMutationCase,
+  ['UI operation wiring',()=>runMutation('UI operation wiring',uiOperationWiringMutation)],
 
   ['UI generic overflow',()=>runMutation('UI generic overflow',uiMutation)],
   ['API trust',()=>runMutation('API trust',source,apiMutation)],
