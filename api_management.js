@@ -5,7 +5,7 @@
  */
 (function(){
   "use strict";
-  const VERSION="1.5";
+  const VERSION="1.6";
   const CONF={UNKNOWN:0,LOW:1,MEDIUM:2,HIGH:3,VERIFIED:4};
   const CRITICAL=new Set(["isbn13","seriesId","seriesName","volumeNumber","listPrice","taxIncluded"]);
   const providers={
@@ -608,8 +608,23 @@
         if(usable.length){
           rows.push(...usable.map(r=>({...r,source:r.source||name})));attempts.push({provider:name,ok:true,count:usable.length,timeoutMs});recordProviderSuccess(name);
           if(opts.fast){
-            const hasSeries=usable.some(r=>r?.series?.name&&((r?.series?.volumeNumber!=null)||r?.series?.id));
-            if(hasSeries)break;
+            // FAST is allowed to stop only after the core bibliographic fields are
+            // sufficiently covered. A provider having series metadata alone is
+            // not enough: another provider may still be the only source for a
+            // release date, publisher, author, or price.
+            const have=(field)=>usable.some(r=>{
+              if(field==='releaseDate')return !!String(r?.date||'').trim();
+              if(field==='author')return !!String(r?.author||'').trim() || (Array.isArray(r?.authorNames)&&r.authorNames.length>0);
+              if(field==='publisher')return !!String(r?.publisher||'').trim();
+              if(field==='title')return !!String(r?.title||'').trim();
+              if(field==='seriesName')return !!String(r?.series?.name||'').trim();
+              if(field==='volumeNumber')return Number.isInteger(Number(r?.series?.volumeNumber))&&Number(r.series.volumeNumber)>=1;
+              if(field==='listPrice')return r?.priceMeta?.listPrice!=null;
+              return false;
+            });
+            const coreReady=['title','author','publisher','releaseDate'].every(have);
+            const seriesReady=have('seriesName')&&have('volumeNumber');
+            if(coreReady && (seriesReady || rows.length>=3))break;
           }
         }
         else { attempts.push({provider:name,ok:false,reason:"no matching record",timeoutMs}); recordProviderSuccess(name); }
