@@ -1161,6 +1161,37 @@ check('E2E-UI-006 diagnostic copy/clear hierarchy works',diagnosticCopyClearUi?.
     }catch(e){return {error:String(e?.message||e)}}})()`);
     check('E2E-NOTIFY-001 release notification window is today through +7 days',JSON.stringify(notificationWindow?.r)==='["9784000000100","9784000000101"]',JSON.stringify(notificationWindow));
 
+    // v4.13.193: Home statistics are a derived cross-tab projection of the same library state.
+    // The expected values are computed independently from the production stats helper so a stale
+    // or partially updated Home renderer cannot silently diverge from the library.
+    const homeStatsOracle=await evalJS(`(()=>{try{
+      const saved={books:books.slice(),bookMeta:JSON.parse(JSON.stringify(bookMeta)),calendarExtras:calendarExtras.slice()};
+      books=[
+        {isbn:'home-1',title:'HOME-A',price:{listPrice:500,status:'confirmed',taxIncluded:true},date:'2026-09-01'},
+        {isbn:'home-2',title:'HOME-B',price:{listPrice:null,status:'unknown'},date:'2026-09-02'},
+        {isbn:'home-3',title:'HOME-C',price:{listPrice:0,status:'confirmed_zero',taxIncluded:true},date:'2026-09-03'}
+      ];
+      bookMeta={
+        'HOME1':{readingStatus:'read',favorite:true,purchaseStatus:'purchased'},
+        'HOME2':{readingStatus:'unread',favorite:false,purchaseStatus:'wanted'},
+        'HOME3':{readingStatus:'unread',favorite:true,purchaseStatus:'none'}
+      };
+      calendarExtras=[];
+      const independent={count:3,pricedCount:1,priceConfirmedCount:2,total:500,unread:2,favorite:2};
+      renderHome();
+      const got={
+        count:$('homeBookCount')?.textContent||'',
+        total:$('homeBookTotal')?.textContent||'',
+        totalSub:$('homeBookTotalSub')?.textContent||'',
+        unread:$('homeUnreadCount')?.textContent||'',
+        favorite:$('homeFavoriteCount')?.textContent||''
+      };
+      const ok=got.count==='3冊'&&got.total==='¥500'&&got.totalSub==='定価確定：2/3冊・未確定：1冊'&&got.unread==='2冊'&&got.favorite==='2冊';
+      books=saved.books;bookMeta=saved.bookMeta;calendarExtras=saved.calendarExtras;render();
+      return {ok,independent,got};
+    }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
+    check('E2E-HOME-001 Home statistics match independent library-state oracle',homeStatsOracle?.ok===true,JSON.stringify(homeStatsOracle));
+
     // Restore the pristine document before the rest of the release gate so P1 fixtures cannot contaminate UI tests.
     await cdp.send('Page.setDocumentContent',{frameId:(await cdp.send('Page.getFrameTree')).frameTree.frame.id,html:browserHtml}); await wait(1000);
 
