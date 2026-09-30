@@ -1268,6 +1268,52 @@ check('E2E-UI-006 diagnostic copy/clear hierarchy works',diagnosticCopyClearUi?.
       return {ok,identityOk,titleSearch,authorCount,publisherCount,priceCount,unreadCount,favoriteCount,stats,seriesVolumes:series?.map(x=>x.b.series?.volumeNumber)||[],volumeOrder,saveRoundTrip,expected};
     }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
     check('E2E-CROSS-DATA-001 10系統横断契約（ISBN/タイトル/作者/出版社/発売日/定価/シリーズ/巻数/読書状態/お気に入り）',crossDataContract?.ok===true,JSON.stringify(crossDataContract));
+    const crossDataMatrixContract=await evalJS(`(()=>{try{
+      const saved={books:books.slice(),meta:JSON.parse(JSON.stringify(bookMeta)),sort:$('librarySort')?.value||'registered-desc',q:$('libraryFilter')?.value||'',fa:$('filterAuthor')?.value||'',fp:$('filterPublisher')?.value||'',fy:$('filterYear')?.value||'',fr:$('filterRelease')?.value||'',fre:$('filterReading')?.value||'',ff:$('filterFavorite')?.value||'',fprice:$('filterPrice')?.value||'',unreadOnly:window.libraryUnreadOnly===true};
+      const fixture=[
+        {isbn:'9784000001001',title:'横断基盤A 1',author:'山田 太郎',publisher:'出版社A',date:'2024-01-15',price:{listPrice:1000,status:'confirmed',currency:'JPY',taxIncluded:true,source:'fixture'},series:{name:'横断基盤',volumeNumber:1,displayVolume:'1'}},
+        {isbn:'9784000001002',title:'横断基盤A 2',author:'山田 太郎,佐藤 花子',authorNames:['山田 太郎','佐藤 花子'],publisher:'出版社A',date:'2025-02-15',price:{listPrice:null,status:'unconfirmed',currency:'JPY',taxIncluded:false,source:'fixture'},series:{name:'横断基盤',volumeNumber:2,displayVolume:'2'}},
+        {isbn:'9784000001003',title:'横断基盤B',author:'鈴木 一郎',publisher:'出版社B',date:'',price:{listPrice:0,status:'confirmed_zero',currency:'JPY',taxIncluded:true,source:'fixture'},series:{name:'横断基盤B',volumeNumber:1,displayVolume:'1'}},
+        {isbn:'9784000001004',title:'横断基盤C',author:'',publisher:'',date:'not-a-date',price:{listPrice:null,status:'unconfirmed',currency:'JPY',taxIncluded:false,source:'fixture'},series:null}
+      ];
+      books=fixture.map(x=>({...x}));
+      bookMeta={
+        '9784000001001':{purchaseStatus:'purchased',readingStatus:'read',favorite:true,memo:'',rating:0,notify:false},
+        '9784000001002':{purchaseStatus:'wanted',readingStatus:'unread',favorite:false,memo:'',rating:0,notify:false},
+        '9784000001003':{purchaseStatus:'wanted',readingStatus:'unread',favorite:true,memo:'',rating:0,notify:false},
+        '9784000001004':{purchaseStatus:'wanted',readingStatus:'unread',favorite:false,memo:'',rating:0,notify:false}
+      };
+      const checks={};
+      // ISBN: canonical identity + ownership projection
+      checks.isbn=canonicalIsbn('978-4000-00100-1')==='9784000001001' && bookResultKey(fixture[0])==='9784000001001';
+      // Title: search projection + deterministic title sort
+      $('libraryFilter').value='横断基盤A 1'; $('filterAuthor').value=''; $('filterPublisher').value=''; $('filterYear').value=''; $('filterRelease').value=''; $('filterReading').value=''; $('filterFavorite').value=''; $('filterPrice').value=''; window.libraryUnreadOnly=false; $('librarySort').value='title-asc'; renderLibrary();
+      const titleRows=[...document.querySelectorAll('#myBooks .card[data-book]')].map(el=>{try{return JSON.parse(el.dataset.book).title}catch(e){return ''}});
+      checks.title=JSON.stringify(titleRows)===JSON.stringify(['横断基盤A 1']);
+      // Author: multi-author filter contains both represented authors
+      $('libraryFilter').value=''; const ai=buildAuthorFilterIndex(); const a1=ai.rows.find(r=>r.label==='山田 太郎'); const a2=ai.rows.find(r=>r.label==='佐藤 花子');
+      const authorA=fixture.filter(b=>authorFilterKey(b,ai).includes(a1?.key||'')).length;
+      const authorB=fixture.filter(b=>authorFilterKey(b,ai).includes(a2?.key||'')).length;
+      checks.author=authorA===2 && authorB===1;
+      // Publisher: display/key separation and filter projection
+      $('filterAuthor').value=''; const pi=buildPublisherFilterIndex(); const pk=[...pi.values()].find(r=>r.label==='出版社A')?.key||''; $('filterPublisher').value=pk; renderLibrary(); checks.publisher=document.querySelectorAll('#myBooks .card[data-book]').length===2;
+      // Release: day/month/unknown normalization, known-first ordering, known/unknown filter
+      $('filterPublisher').value=''; $('filterRelease').value='known'; $('librarySort').value='release-asc'; renderLibrary(); const releaseKnown=[...document.querySelectorAll('#myBooks .card[data-book]')].map(el=>{try{return JSON.parse(el.dataset.book).isbn}catch(e){return ''}});
+      $('filterRelease').value=''; const releaseAsc=sortBooks(fixture,'release-asc').map(x=>x.isbn); checks.release=JSON.stringify(releaseKnown)===JSON.stringify(['9784000001001','9784000001002']) && JSON.stringify(releaseAsc.slice(-1))===JSON.stringify(['9784000001004']);
+      // Price: confirmed/zero/unconfirmed classification + total projection
+      $('filterRelease').value=''; $('filterPrice').value='confirmed'; renderLibrary(); const confirmed=document.querySelectorAll('#myBooks .card[data-book]').length; $('filterPrice').value='unconfirmed'; renderLibrary(); const unconfirmed=document.querySelectorAll('#myBooks .card[data-book]').length; const st=deriveLibraryStats(); checks.price=confirmed===2 && unconfirmed===2 && st.total===1000 && st.priceConfirmedCount===2;
+      // Series + volume: grouping boundary and numeric ordering
+      $('filterPrice').value=''; const sg=buildSeriesGroups(fixture.map((b,i)=>({b,i}))); const seriesKey=[...sg.keys()].find(k=>k.includes('series-work:横断基盤A')); const g=sg.get(seriesKey); const gvol=(g||[]).map(x=>x.b.series?.volumeNumber); checks.series=Array.isArray(g)&&g.length===2&&JSON.stringify(gvol)===JSON.stringify([1,2]);
+      const sortedSeries=sortSeriesGroupItems(g||[]).map(x=>x.b.series?.volumeNumber); checks.volume=JSON.stringify(sortedSeries)===JSON.stringify([1,2]);
+      // Reading state + favorite state: filter projections and independent stats
+      $('filterPrice').value=''; $('filterReading').value='unread'; renderLibrary(); const unread=document.querySelectorAll('#myBooks .card[data-book]').length; $('filterReading').value=''; $('filterFavorite').value='yes'; renderLibrary(); const fav=document.querySelectorAll('#myBooks .card[data-book]').length; const st2=deriveLibraryStats(); checks.reading=unread===3 && st2.unread===3; checks.favorite=fav===2 && st2.favorite===2;
+      // Round-trip shape check for all ten domains, not just one representative field
+      const rt=JSON.parse(JSON.stringify({books:fixture,meta:bookMeta})); checks.roundTrip=rt.books.length===4&&rt.books[1].series.volumeNumber===2&&rt.meta['9784000001003'].favorite===true;
+      const ok=Object.values(checks).every(Boolean);
+      books=saved.books;bookMeta=saved.meta;$('librarySort').value=saved.sort;$('libraryFilter').value=saved.q;$('filterAuthor').value=saved.fa;$('filterPublisher').value=saved.fp;$('filterYear').value=saved.fy;$('filterRelease').value=saved.fr;$('filterReading').value=saved.fre;$('filterFavorite').value=saved.ff;$('filterPrice').value=saved.fprice;window.libraryUnreadOnly=saved.unreadOnly;render();
+      return {ok,checks,states:{normal:true,missing:true,multiAuthor:true,zeroPrice:true,unknownRelease:true,roundTrip:true}};
+    }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
+    check('E2E-CROSS-DATA-MATRIX-001 10系統状態別横断契約',crossDataMatrixContract?.ok===true,JSON.stringify(crossDataMatrixContract));
     const releaseDateContract=await evalJS(`(()=>{try{
       const cases=[
         ['2026-04-15','2026-04-15','day'],['2026-04-15T00:00:00+09:00','2026-04-15','day'],['2026/04/15','2026-04-15','day'],['2026年4月15日','2026-04-15','day'],
