@@ -39,6 +39,7 @@ const seriesSortMutation=source.replace('items=sortSeriesGroupItems(items);','it
 const volumeInvariantMutation=source.replace('Number.isInteger(n)&&n>=1?n:null','Number.isInteger(n)&&n>=0?n:null');
 const librarySortOracleMutation=source.replace('else if(mode==="volume-asc")r=volumeCompare(x.b,y.b);','else if(mode==="volume-asc")r=0;')
 const searchSortMutation=source.replace('if(appSettings.search?.sort==="release-desc")a.sort((x,y)=>releaseTime(y)-releaseTime(x));','if(false)a.sort((x,y)=>releaseTime(y)-releaseTime(x));').replace('else if(appSettings.search?.sort==="release-asc")a.sort((x,y)=>releaseTime(x)-releaseTime(y));','else if(false)a.sort((x,y)=>releaseTime(x)-releaseTime(y));').replace('else a.sort((x,y)=>{','else if(false)a.sort((x,y)=>{')
+const releaseUnknownFirstMutation=source.replace('if(ta==null)return 1;if(tb==null)return -1;','if(ta==null)return -1;if(tb==null)return 1;');
 const homeStatsMutation=source.replace('if(homeStats)homeStats.innerHTML=renderStatBoxes(stats,"home");','if(homeStats)homeStats.innerHTML=renderStatBoxes({count:0,priceConfirmedCount:0,total:0,purchaseCount:0,unread:0,favorite:0},"home");').replace('updateSharedStats(stats);','updateSharedStats({count:0,priceConfirmedCount:0,total:0,purchaseCount:0,unread:0,favorite:0});')
 const registrationAtomicMutation=source.replace('if(failedPreparations.length||added.length!==candidates.length-skippedDuplicates.length){','if(false){');
 const registrationRollbackMutation=source.replace('if(saveFailed){books=oldBooks;calendarExtras=oldExtras;bookMeta=oldMeta;saveMeta();persistBooks();persistCalendarExtras();metrics?.traceStep("保存失敗・ロールバック"','if(saveFailed){metrics?.traceStep("保存失敗・ロールバック"');
@@ -46,10 +47,12 @@ const registrationDuplicateMutation=source.replace('if(usableExisting&&!isRicher
 const registrationUserWaitMutation=source.replace('waitDelta=Math.max(0,(Number(token?.userWaitMs)||0)-waitBefore);token.processingMs+=(Math.max(0,elapsed-apiDelta-waitDelta));','waitDelta=0;token.processingMs+=(Math.max(0,elapsed-apiDelta-waitDelta));');
 const registrationPersistenceMutation=source.replace('function persistBooks(){try{localStorage.setItem(KEY,JSON.stringify(books));return true}catch(e){console.error("books save",e);return false}}','function persistBooks(){return true}');
 
+const releaseUnknownFirstMutationCase=['Release-date unknown ordering',()=>runMutation('Release-date unknown ordering',releaseUnknownFirstMutation)];
 const genericMutationCase=  ['Generic author identity normalization',()=>runMutation('Generic author identity normalization',genericIdentityMutation)];
 const authorFragmentMutationCase=['Author fragment suppression',()=>runMutation('Author fragment suppression',authorFragmentMutation)];
 const structuredMultiAuthorMutationCase=['Structured multi-author parsing',()=>runMutation('Structured multi-author parsing',structuredMultiAuthorMutation)];
-const cases=[
+const cases=[releaseUnknownFirstMutationCase,
+
   ['UI generic overflow',()=>runMutation('UI generic overflow',uiMutation)],
   ['API trust',()=>runMutation('API trust',source,apiMutation)],
   ['Purchase-group atomicity',()=>runMutation('Purchase-group atomicity',atomicMutation)],

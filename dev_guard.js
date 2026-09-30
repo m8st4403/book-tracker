@@ -1228,6 +1228,23 @@ check('E2E-UI-006 diagnostic copy/clear hierarchy works',diagnosticCopyClearUi?.
       return {ok,results,unowned};
     }catch(e){try{window.bookTrackerApiManagement.search=window.bookTrackerApiManagement.search}catch(_){} return {ok:false,error:String(e?.message||e)}}})()`);
     check('E2E-SEARCH-003 independent search sort/unowned oracle',searchSortOracle?.ok===true,JSON.stringify(searchSortOracle));
+    const releaseDateContract=await evalJS(`(()=>{try{
+      const cases=[
+        ['2026-04-15','2026-04-15','day'],['2026-04-15T00:00:00+09:00','2026-04-15','day'],['2026/04/15','2026-04-15','day'],['2026年4月15日','2026-04-15','day'],
+        ['2026-04','', 'month'],['2026年4月','', 'month'],['2026','', 'year'],['not-a-date','', 'unknown'],['','', 'unknown']
+      ];
+      const normalized=cases.map(([input,date,precision])=>{const info=releaseDateInfo(input);return {input,date:canonicalReleaseDate(input),precision:info.precision,time:releaseTime({date:input})}});
+      const normalizedOk=normalized.every((x,i)=>x.date===cases[i][1]&&x.precision===cases[i][2]);
+      const rows=[{title:'unknown',date:'not-a-date'},{title:'old',date:'2025-01-01'},{title:'new',date:'2026-01-01'}];
+      const asc=sortBooks(rows,'release-asc').map(x=>x.title),desc=sortBooks(rows,'release-desc').map(x=>x.title);
+      const sortOk=JSON.stringify(asc)===JSON.stringify(['old','new','unknown'])&&JSON.stringify(desc)===JSON.stringify(['new','old','unknown']);
+      const oldBooks=books.slice(),oldExtras=calendarExtras.slice();
+      books=[{isbn:'date-cross-1',title:'ISO日付',date:'2026-04-15T00:00:00+09:00',upcoming:[]},{isbn:'date-cross-2',title:'月だけ',date:'2026-04',upcoming:[]}];calendarExtras=[];
+      const events=allEvents(true); const calendarOk=events.some(e=>e.isbn==='date-cross-1'&&e.date==='2026-04-15')&&!events.some(e=>e.isbn==='date-cross-2');
+      books=oldBooks;calendarExtras=oldExtras;
+      return {ok:normalizedOk&&sortOk&&calendarOk,normalized,asc,desc,calendarOk};
+    }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
+    check('E2E-CROSS-RELEASE-001 canonical release-date contract',releaseDateContract?.ok===true,JSON.stringify(releaseDateContract));
     const phaseMetricContract=await evalJS(`(()=>{try{const sm=window.bookTrackerSearchMetrics;const t=sm.start('計測テスト','phase');t.addApiPhase('googleBooks','fetch',12);sm.finish(t,true,'',0,[]);return {ok:t.apiPhases?.googleBooks?.fetch===12};}catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
     const postFinishPhaseContract=await evalJS(`(()=>{try{const sm=window.bookTrackerSearchMetrics;const t=sm.start('計測テスト','post-finish');sm.beginApi('googleBooks');sm.endApi('googleBooks',false);sm.finish(t,true,'',0,[]);t.addApiPhase('googleBooks','json',34);return {ok:t.apiPhases?.googleBooks?.json===34,rendered:document.getElementById('searchMetricsList')?.textContent?.includes('json：34 ms')};}catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
     check('E2E-SEARCH-001 provider phase attaches to search record',phaseMetricContract?.ok===true,JSON.stringify(phaseMetricContract));
