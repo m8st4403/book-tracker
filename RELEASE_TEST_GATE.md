@@ -1,207 +1,94 @@
-# Release Test Gate v4.13.31
+# Release Test Gate v4.13.190
 
-## 目的
+## 正本
 
-過去の不具合だけを再発防止するのではなく、今後追加される未知のUI・状態・機能についても、ユーザーの目視より前に問題を検出できるリリースゲートを作る。
+品質契約の正本は `QUALITY_CONTRACT.md`。この文書は配布判定の手順だけを定義する。
 
 ## Gate 1 — Static
 
-- JavaScript/HTML構文
-- 重複ID
-- 必須6タブ
-- 正規登録経路
-- SPEC/テスト文書の存在
-- Roadmap Test Matrix の存在
+- HTML/JavaScript構文
+- DOM ID重複
+- 6タブ
+- 現行バージョン一致
+- 共通登録経路
+- 品質契約の存在
+- Roadmap契約の存在
 
-## Gate 2 — Logic
+## Gate 2 — Logic / Property
 
-機能単位ではなく、仕様の不変条件をテストする。特に状態遷移、正規化、価格、API、シリーズ、フィルター、保存/復元を対象にする。
+- ISBN canonical化
+- 書誌同一性
+- シリーズ分類
+- 巻数不変条件
+- 全フィルター
+- ソート
+- 登録原子性
+- rollback
+- 検索競合
+- API trust / fallback
+- 計測モデル
 
-## Gate 3 — Integration
+期待値は可能な限り独立Oracleで生成する。
 
-複数機能を連結して検証する。例：セット購入→一部定価確定→蔵書総額→価格フィルター→バックアップ/復元。
+## Gate 3 — Integration / Persistence
+
+- 登録→保存→再表示
+- 設定保存→再読込
+- カレンダー保存失敗rollback
+- backup export/import
+- 状態変更と表示の一致
 
 ## Gate 4 — Browser E2E
 
-配布対象の `index.html` をChromiumで実際に開き、6タブを操作する。現在は390×844を基準にし、文字サイズ小/中/大を走査する。将来は375/414等も追加する。
+配布対象の `index.html` をChromiumで実際に開き、6タブ、代表操作、状態遷移、検索・登録・シリーズ・フィルター・カレンダー・設定を確認する。
 
 ## Gate 5 — Generic UI Invariants
 
-過去のバグ固有セレクタだけでなく、画面全体を走査する。
+過去のバグ固有セレクタだけに依存せず、画面全体について以下を検査する。
 
-- 水平方向の意図しないoverflow
-- 固定要素の画面外脱落
-- 文字のellipsis/nowrapによる意図しないclip
-- 画面切替後に表示されるべきsectionが非表示のままになっていないか
+- 意図しない水平overflow
+- viewport外への脱落
+- 文字clip
+- 小/中/大フォント
+- 375/390/414px相当
 - 主要操作要素の存在
+- 状態と表示の一致
 
-## Gate 6 — Visual Regression
+## Gate 6 — Mutation / Fault Injection
 
-主要画面・フォントサイズ・画面幅ごとのスクリーンショットを保存し、将来は基準画像との差分を自動比較する。単独の画像比較を唯一の合格条件にはせず、DOM実測と併用する。
+重要な品質契約を意図的に壊し、必ずFAILすることを確認する。
 
-## Gate 7 — Mutation / Fault Injection
+現行代表：
 
-テスト基盤が実際にバグを検出できることを確認する。代表例：
+- UI overflow
+- API trust
+- フィルター各predicate
+- 作者同一性
+- 登録atomicity / rollback / duplicate / persistence
+- user-wait計測
+- series coalescing
+- series display sort
+- volume invariant
 
-- 未確定価格を総額へ加算 → FAIL
-- 0円確定を未確定扱い → FAIL
-- retailPriceを定価に採用 → FAIL
-- 価格フィルターを逆転 → FAIL
-- 5列を6列へ変更 → FAIL
-- nowrap/ellipsisを意図しない表示要素へ付与 → FAIL
-- canonical ISBNを無視 → FAIL
+## Gate 7 — Artifact
 
-## Gate 8 — Package / ZIP
+`npm run test:release` で以下を確認する。
 
-1. リリースZIPを作成
-2. 別ディレクトリへ展開
-3. 展開後のファイルをテスト
-4. `dev_guard.js` 自体が含まれることを確認
-5. README/SPEC/テストバージョン一致
-6. 全Gate PASS後のみ配布可能
+- GitHubアップロードフォルダに現行実装と品質実行に必要なファイルだけがある
+- CHANGELOG / 過去監査 / 旧マトリクス / 操作カタログが混入していない
+- package / APP_VERSION / README / SPEC / 設定表示が一致
+- `QUALITY_CONTRACT.md` が含まれる
+- `アップロード不要` に現行CHANGELOGがある
+- ZIP再展開後も同じ構造を保つ
 
-## Gate 9 — Roadmap Contract
+## Gate 8 — Roadmap
 
-将来機能は `ROADMAP_TEST_MATRIX.md` に仕様と失敗条件を先に定義する。実装時にCURRENTへ昇格し、既存の全Gateへ接続する。
+未実装機能は `ROADMAP_TEST_MATRIX.md` に先に契約を定義する。実装時にCurrentへ昇格し、既存Gateへ接続する。
 
-## Fail-fast rule
+## Fail-fast
 
-どれか1つでもFAILしたリリースは「テスト済み」と扱わず、ユーザーへ渡さない。
+1件でもFAIL、または未監査が残る場合は配布不可。
 
-## v4.13.32 追加ゲート
+## ユーザー実機テスト
 
-既存蔵書シリーズ再整理は、series以外のデータを変更しないこと、外伝等を自動統合しないこと、二重実行しないことを満たさない限りリリース不可。
-
-## v4.13.46 — P1 calendar/settings/ICS/notification gate
-
-- E2E-SETTINGS-001/002: all persistent settings round-trip and failed writes roll back both memory and UI.
-- E2E-CALENDAR-001/002: temporary calendar filters re-sync from saved defaults; calendar-extra write failure rolls back.
-- E2E-ICS-001: release-date ICS uses VALUE=DATE, escaped text values, stable deterministic UIDs, and excludes invalid dates.
-- E2E-NOTIFY-001: notification target window is inclusive from today through seven days later; disabled/invalid dates are excluded.
-
-## v4.13.152 — 引き渡し前実動作必須ルール
-
-新規診断機能は静的配線チェックだけでは配布可としない。引き渡し前に、実際のBrowser E2Eで代表対象を最後まで処理する。
-
-必須確認：
-- 対象ISBNを5件以上、Providerを4経路以上、逐次処理すること
-- 処理中表示・操作ロック・完了表示を確認すること
-- 結果が途中で消えないこと
-- コピーが実際に結果本文を取得すること
-- クリアが実際に結果領域を空にすること
-- 診断中に蔵書データが変更されないこと
-- 失敗時にエラー表示して操作ロックを解除すること
-- 既存診断との排他制御を確認すること
-
-上記の実動作E2Eが未実施、またはFAILの場合は、他のGateが全PASSでも引き渡し不可。
-
-
-## v4.13.153 — Provider設定状態ゲート
-
-ISBNシリーズ供給源診断は「有効API」の意味を実際のProvider設定状態と一致させる。未設定の楽天BooksはSKIPPED（楽天Books未設定）、既定OFFのGoogle BooksはSKIPPED（Google Books無効）と表示し、未設定Providerへ通信してはならない。
-
-
-## v4.13.164追加ゲート
-- 作者フィルターは表記揺れだけでなく、構造化作者情報・連結書誌・候補集合の同一性をBrowser E2Eで確認する。
-- 同一作者の複数表記が1候補へ集約され、連結書誌でも同一作者を選択でき、別人は集合差がある限り統合されないことを確認する。
-- 作者フィルターの正規化で保存データが変更されないことを確認する。
-- 年号／生没年形式など明らかな非作者文字列が作者候補へ表示されないことを確認する。
-
-
-## v4.13.167 作者典拠取得経路ゲート
-- NDL OpenSearch/SRUのcreator URI抽出を共通fixtureで検証する。
-- 典拠URIがない書誌から典拠IDを推測生成しないことを検証する。
-- 作者表示値、authorNames、authorEntitiesを混同せず保存値を変更しない。
-- NDL Searchの利用条件を確認し、追加の常時SPARQL通信を実装しない判断を記録する。
-- 作者以外の出版社・シリーズを特定Providerの個別例で補正しない。
-
-
-## v4.13.167 追加ゲート
-- 書誌同一性の表示値／判定キー分離を作者・出版社・シリーズで監査する。
-- 異なる出版社・同名異人・別シリーズを推測統合しない。
-- 内部キーをUIへ表示せず、保存済み書誌値を変更しない。
-
-
-## v4.13.172 フィルター状態テキスト共有ゲート
-- 蔵書タブの「フィルター状態をコピー」が存在する。
-- コピー内容にフィルター状態・候補一覧・冊数が含まれる。
-- 内部判定キーが利用者向けテキストへ漏れない。
-- コピー前後で通常データが不変である。
-
-## v4.13.172 追加ゲート
-
-- 作者フィルターの姓名表記は固定作品テストではなく、同値変形（カンマ種別、空白、末尾カンマ、複数作者）を入力する性質ベーステストを必須とする。
-- `姓,` / `名,` のような誤分割候補を検出する境界ゲートを含める。
-- 作者フィルター修正後も出版社・シリーズ・読書状態など他フィルターの候補生成と絞り込みが変化しないことを確認する。
-
-
-## v4.13.173 登録経路共通化ゲート
-- ISBN直接、検索結果、検索結果カード、検索結果一括、ISBN一括、カレンダー、詳細の各入口が共通書誌準備経路へ接続されている。
-- 一括可能な入口が共通コミット経路を使用する。
-- 新規入口を追加する場合、入口固有の書誌正規化を先に実装せず、共通契約への接続を先に確認する。
-- blank/placeholder保存禁止を個別ISBNではなく全候補の不変条件として扱う。
-
-## v4.13.174 Property / Mutation Gate
-- 固定書籍を追加するだけの回帰テストでは配布可としない。
-- 合成母集団で候補集合・結果集合・複合条件・保存値不変を検証する。
-- 意図的欠陥を注入し、テストがFAILすることを毎リリース確認する。
-- テスト件数の増加ではなく、故障検出能力を品質向上の証拠とする。
-- 実機では選択→複合条件→解除→リセット→再表示を1状態遷移として確認する。
-
-
-## v4.13.175 次工程契約
-- v4.13.174で確立したProperty→Mutation→E2E方式を発売日エンジンにも適用する。
-- 日付そのものだけでなく、精度・確度・出典・通知/ICS適用可否の関係を不変条件として検証する。
-- 実在作品の追加ではなく、合成日付母集団と故障注入を基本とする。
-
-## v4.13.177 作者同一性連結書誌ゲート
-- 連結された旧書誌作者文字列から姓・名だけの断片を独立作者として生成しない。
-- ライブラリ内で独立観測された完全な作者名を、連結書誌へ集合として橋渡しする。
-- 構造化`authorNames`の1要素に複数の`姓,名`作者が含まれる場合も共通パーサーで分解する。
-- 保存済み`author`/`authorNames`文字列は変更しない。
-- 個別作品・出版社を追加するのではなく、合成母集団＋Mutation＋実機E2Eで検証する。
-
-## v4.13.178 フィルター品質ゲート
-
-- フィルター期待値は独立oracleで生成し、本番predicateを期待値計算に再利用しない。
-- 作者・出版社・複合条件・リセットを実DOMで連結検証する。
-- Mutationで作者条件・出版社条件・複合AND条件を壊した場合、必ずゲートがFAILすることを確認する。
-- 固定作品・出版社を増やすのではなく、表記揺れ・複数作者・欠損・複合条件を含む合成母集団で未知ケースを吸収する。
-- 品質指標はテスト件数ではなく、故障注入検出率と、同一不変条件で未知ケースを説明できる範囲とする。
-
-## v4.13.180 フィルター全項目品質ゲート
-
-- 作者・出版社・発売年・発売日有無・読書状態・お気に入り・定価・検索・積読を1つの独立oracleで検証する。
-- 単独条件と複合AND条件、リセット後の全件復帰、候補集合の生成を確認する。
-- 年／発売日／読書状態／お気に入り／定価／検索／積読の各predicateをMutationして、全てゲートが検出することを確認する。
-- 実機確認は代表的な複合条件を1回実施し、固定作品を増やす方式へ戻らない。
-## v4.13.184 検索処理品質ゲート
-- 検索結果集合、Provider fallback、timeout/429、stale response、検索結果identity受け渡しを共通契約として検証する。
-- 合成データの独立oracleを使用し、重複排除と0件fallbackをMutationで破壊して検出できることを必須化する。
-- 実機確認は代表経路を1回実施し、個別ISBNのテスト増殖を行わない。
-
-## v4.13.182 シリーズ分類品質ゲート
-
-- 同一作品＋冗長seriesName＋単一明示scopeの合成ケースを3冊で検証。
-- 異なる明示scopeを持つ同名作品は分離されることを検証。
-- UI表示・巻抜けチェック・シリーズ診断が同一の集合化ロジックを使用することを検証。
-- 集合化処理を意図的に無効化するMutationを注入し、GateがFAILを検出することを確認。
-
-
-
-## v4.13.182 登録処理品質ゲート
-
-- 成功時の蔵書集合を独立oracleで比較し、冊数・ISBN・必須表示情報の不変条件を検証する。
-- 書誌準備失敗時はbooksだけでなくbookMeta/calendarExtrasを含む状態全体が不変であることを検証する。
-- 保存失敗時は完全ロールバックを検証する。
-- 非リッチ重複登録で蔵書状態が変化しないことを検証する。
-- `Registration atomic commit`、`Registration rollback on save failure`、`Registration duplicate protection`のMutationを全件検出できなければ配布不可。
-- 実機では登録入口を個別に増やすのではなく、共通prepare/commit契約へ接続された代表操作を確認する。
-
-## v4.13.184 品質基盤統合ゲート
-
-- 通常の品質ゲート（Static/Logic/Browser E2E）とMutation Guardを必須経路として実行する。
-- リリース成果物のArtifact Guardを`npm run test:release`から必ず実行し、テスト済み成果物と配布成果物を分離しない。
-- Artifact GuardはGitHubアップロード側への過去CHANGELOG・監査資料・次工程資料の混入、バージョン不一致、README/CHANGELOG配置、ZIP直下構造を検査する。
-- `npm run test`のみのPASSをリリース合格とは扱わない。配布前は`npm run test:release`を完了させる。
-- 239件などのテスト件数は品質指標にしない。重要不変条件について、独立Oracle・Mutation・実機E2E・成果物検査まで接続されていることを合格条件とする。
+自動Gateで検証できるものをユーザーへ繰り返し依頼しない。実機確認は、代表的なE2E・実API・UI表示・保存/再起動など、自動化だけでは代替できない確認へ限定する。

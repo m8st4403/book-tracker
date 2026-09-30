@@ -36,6 +36,7 @@ const guardVersionMatch=html.match(/const DEV_GUARD_VERSION=\"([^\"]+)\"/);
 const readUtf8=p=>{try{return fs.readFileSync(p,'utf8')}catch(e){return ''}};
 const readmeText=readUtf8(path.join(path.dirname(target),'README.md'));
 const specText=readUtf8(path.join(path.dirname(target),'SPEC.md'));
+const qualityText=readUtf8(path.join(path.dirname(target),'QUALITY_CONTRACT.md'));
 const headerVersionMatch=html.match(/id="appHeaderSub">v([^<]+)<br\/>/);
 const currentDocVersion=(readmeText.match(/## 現在のリリース\s*\n\s*\*\*v([^*]+)\*\*/)||[])[1]||'';
 const specCurrentVersion=(specText.match(/^# v([^ ]+) 現行リリース契約/m)||[])[1]||'';
@@ -43,7 +44,7 @@ check('STATIC-018 version sources are consistent', !!packageVersion&&appVersionM
 check('STATIC-044 release version is consistent across package/app/docs', !!packageVersion&&headerVersionMatch?.[1]===packageVersion&&currentDocVersion===packageVersion&&specCurrentVersion===packageVersion, `package=${packageVersion} header=${headerVersionMatch?.[1]||''} README=${currentDocVersion} SPEC=${specCurrentVersion}`);
 
 const visibleVersionMatch=html.match(/id="appVersionText">バージョン：([0-9.]+)/);
-check('STATIC-046 visible appVersionText uses current release', !!packageVersion&&visibleVersionMatch?.[1]===packageVersion, `visible=${visibleVersionMatch?.[1]||''} package=${packageVersion}`);check('STATIC-019 persistence/backup gap audit exists', /永続化・バックアップ・rollback/.test(readmeText) && /品質ゲート対象/.test(readmeText), 'persistence/backup/priority contracts');
+check('STATIC-046 visible appVersionText uses current release', !!packageVersion&&visibleVersionMatch?.[1]===packageVersion, `visible=${visibleVersionMatch?.[1]||''} package=${packageVersion}`);check('STATIC-019 persistence/backup quality contract exists', /永続化/.test(qualityText) && /backup export\/import/.test(qualityText) && /rollback/.test(qualityText), 'persistence/backup/rollback are covered by the current quality contract');
 check('STATIC-020 backup schema validation contract', /Number\(d\.schemaVersion\)!==3/.test(html) && /function validateBackupData/.test(html) && /function restoreBackupData/.test(html), 'backup schemaVersion/key validation and atomic restore');
 check('STATIC-022 registration performance measurement contract', /bookTrackerRegistrationMetrics/.test(html) && /サンプルデータ：1冊登録/.test(html) && /検索結果：1冊登録/.test(html) && /検索結果：選択した本を一括登録/.test(html), 'operation label + timing metrics are explicit');
 check('STATIC-028 provider phase measurement is connected to active metric token', /token\.addApiPhase\s*=/.test(html) && /apiPhases/.test(html) && /rateLimitWait/.test(html) && /json/.test(html), 'phase durations are stored on the same metric token rendered in Settings');
@@ -67,8 +68,8 @@ check('STATIC-003 required six tabs', ['home','add','library','search','calendar
 check('STATIC-004 price filter exists', /id=["']filterPrice["']/.test(html), 'library price filter');
 check('STATIC-055 publisher identity key contract', /function normalizePublisherIdentityName\(value\)/.test(html) && /function publisherFilterKey\(value\)/.test(html) && /function buildPublisherFilterIndex\(\)/.test(html) && /publisherFilterKey\(b\.publisher\)===fp/.test(html), 'publisher display/key separation with conservative normalization');
 check('STATIC-056 series display/key separation contract', /function seriesKey\(b\)/.test(html) && /function seriesDisplayLabel\(name,items=\[\]\)/.test(html), 'series grouping key is separate from user-facing label');
-check('STATIC-057 bibliographic identity audit docs', /v4\.13\.167/.test(readmeText) && /v4\.13\.167/.test(specText), 'historical identity audit remains documented');
-check('STATIC-061 past-fix quality audit exists', /過去修正を個別テスト件数ではなく、独立oracle・Property・Mutation・実機E2E/.test(readmeText), 'past fixes are audited under the oracle/mutation/E2E quality model');
+check('STATIC-057 bibliographic identity contract exists', /表示値と判定キーの分離/.test(qualityText) && /seriesKey/.test(qualityText) && /作者/.test(qualityText), 'bibliographic identity separation is current quality contract');
+check('STATIC-061 past-fix quality audit exists', /不具合1件につきテスト1件を追加/.test(qualityText) && /独立Oracle/.test(qualityText) && /Mutation/.test(qualityText) && /Browser E2E/.test(qualityText), 'past fixes are audited under the oracle/mutation/E2E quality model');
 check('STATIC-058 library filter text-copy contract', /id=["']copyLibraryFilterStateBtn["']/.test(html) && /function buildLibraryFilterStateReport\(\)/.test(html) && /function copyLibraryFilterState\(button\)/.test(html), 'library filter state can be copied as user-facing text');
 check('STATIC-005 canonical registration routes exist', /window\.addBook\s*=/.test(html) && /window\.bulkAdd\s*=/.test(html), 'addBook/bulkAdd');
 check('STATIC-059 registration routes share canonical preparation path',
@@ -108,14 +109,14 @@ check('STATIC-052 ISBN series source diagnostic classifies provider outcomes', /
 check('STATIC-053 ISBN series source diagnostic is included in aggregate report and clear', /section\('ISBNシリーズ供給源診断','isbnSeriesSourceResults'\)/.test(html) && /clearIsbnSeriesSourceResult\(\)/.test(html), 'new diagnostic participates in aggregate report and clear-all flow');
 check('STATIC-012 series repair excludes demo records', /isDemoRecord\(b\)/.test(html) && /通常の蔵書/.test(html), 'demo/sample records are excluded from repair');
 check('STATIC-013 resolver session cache contract', /resolverCache/.test(fs.readFileSync(path.join(path.dirname(target),'api_management.js'),'utf8')), 'ISBN resolver results are cached per session');
-check('STATIC-014 rule/test ledger exists', fs.existsSync(path.join(path.dirname(target),'RULE_LEDGER_v4_13_40.md')) && fs.existsSync(path.join(path.dirname(target),'RULE_TEST_MATRIX_v4_13_40.md')), 'rule ledger and verification matrix');
+check('STATIC-014 quality contract exists', fs.existsSync(path.join(path.dirname(target),'QUALITY_CONTRACT.md')), 'quality contract is the single current quality source of truth');
 check('STATIC-015 UI display contract exists', /scrollWidth<=el\.clientWidth/.test(fs.readFileSync(path.join(path.dirname(target),'dev_guard.js'),'utf8')) && /E2E-UI-002 compact library statistics keep labels visible/.test(fs.readFileSync(path.join(path.dirname(target),'dev_guard.js'),'utf8')), 'visible/readable/clipping contract');
 check('STATIC-042 diagnostic output containment contract exists', /diagnostic-output\{[^}]*max-height:42vh;overflow:auto/.test(html) && /registration-trace\{[^}]*max-height:34vh;overflow:auto/.test(html), 'long investigation results are bounded and scrollable');
 check('STATIC-043 diagnostic copy controls exist', /copySeriesDiagnosticBtn/.test(html) && /copyDevGuardBtn/.test(html) && /copyRegistrationMetrics/.test(html) && /copySearchMetrics/.test(html) && /function copyElementText\(/.test(html), 'investigation results can be copied as full text');
 check('STATIC-054 bibliography comparison covers bunko ISBNs', /const isbns=\["9784088720715","9784088720722","9784088720739","9784086191524","9784086191531"\]/.test(html), 'ISBN/keyword bibliography comparison includes the two bunko ISBNs');
 check('STATIC-045 diagnostic copy/clear hierarchy exists', /copyLibraryDiagnosticReportBtn/.test(html) && /copySettingsDiagnosticReportBtn/.test(html) && /copyAllDiagnosticReportBtn/.test(html) && /clearSeriesDiagnosticBtn/.test(html) && /clearDevGuardBtn/.test(html) && /clearLibraryDiagnosticResultsBtn/.test(html) && /clearSettingsDiagnosticResultsBtn/.test(html) && /clearAllDiagnosticResultsBtn/.test(html) && /function clearAllDiagnosticResults\(/.test(html), 'individual/tab/session copy and clear controls are wired');
 check('STATIC-016 sort tie-break contract exists', /REG-002B/.test(fs.readFileSync(target,'utf8')), 'all sort modes use deterministic tie-breaks');
-check('STATIC-017 operation catalog exists', fs.existsSync(path.join(path.dirname(target),'OPERATION_CATALOG_v4_13_40.md')), 'data mutation operation catalog');
+check('STATIC-017 quality contract covers operation model', /全ユーザー操作|共通登録|計測品質契約/.test(fs.readFileSync(path.join(path.dirname(target),'QUALITY_CONTRACT.md'),'utf8')), 'operation and measurement contracts are centralized');
 
 
 check('STATIC-006 roadmap guard docs exist', fs.existsSync(path.join(path.dirname(target),'ROADMAP_TEST_MATRIX.md')), 'roadmap test matrix');
@@ -458,6 +459,36 @@ async function main(){
       return {ok:new Set(keys).size===1&&scope==='ジャンプ・コミックス'&&label==='レベルE / ジャンプ・コミックス'&&visibleTitle==='レベルE / ジャンプ・コミックス'&&new Set(bunkoKeys).size===1&&bunkoScope==='集英社文庫'&&bunkoLabel==='レベルE / 集英社文庫'&&bunkoVisible&&coalesced.size===1&&coalescedLabel==='片田舎のおっさん、剣聖になる / ヤングチャンピオン・コミックス'&&coalescedVisible,grouped:new Set(keys).size===1,scope,label,visibleTitle,bunkoGrouped:new Set(bunkoKeys).size===1,bunkoScope,bunkoLabel,bunkoVisible,coalescedSize:coalesced.size,coalescedLabel,coalescedVisible};
     }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
     check('E2E-UI-SERIES-001 series header hides internal key and deduplicates bibliography spelling',seriesUiContract?.ok===true,JSON.stringify(seriesUiContract));
+    const seriesSortSmoke=await evalJS(`(()=>{
+      try{
+        const makeCase=(genericVolume)=>[
+          {i:0,b:{isbn:'series-sort-1',title:'横断ソート検証 '+genericVolume,author:'検証著者',publisher:'検証社',date:'2020-01-01',series:{name:'横断ソート検証',volumeNumber:genericVolume}}},
+          {i:1,b:{isbn:'series-sort-2',title:'横断ソート検証 '+(genericVolume===1?2:1),author:'検証著者',publisher:'検証社',date:'2020-01-02',series:{name:'ヤングチャンピオン・コミックス',volumeNumber:(genericVolume===1?2:1)}}},
+          {i:2,b:{isbn:'series-sort-3',title:'横断ソート検証 '+(genericVolume===3?2:3),author:'検証著者',publisher:'検証社',date:'2020-01-03',series:{name:'ヤングチャンピオン・コミックス',volumeNumber:(genericVolume===3?2:3)}}}
+        ];
+        const cases=[makeCase(1),makeCase(3)];
+        const perms=(arr)=>{const out=[];const rec=(p,r)=>{if(!r.length){out.push(p);return}r.forEach((x,i)=>rec(p.concat(x),r.slice(0,i).concat(r.slice(i+1))))};rec([],arr);return out};
+        const expected=(mode)=>mode==='volume-asc'?[1,2,3]:[3,2,1];
+        const results=[];
+        for(const fixture of cases){
+          for(const mode of ['volume-asc','volume-desc']){
+            document.getElementById('librarySort').value=mode;
+            for(const order of perms(fixture)){
+              const initiallySorted=[...order].sort(compareLibraryItems);
+              const grouped=buildSeriesGroups(initiallySorted);
+              if(grouped.size!==1)throw Error('series fixture did not coalesce');
+              const [key,items]=[...grouped.entries()][0];
+              const finalItems=sortSeriesGroupItems(items);
+              const volumes=finalItems.map(x=>volumeNo(x.b));
+              results.push({genericVolume:fixture[0].b.series.volumeNumber,mode,input:order.map(x=>x.b.series.volumeNumber),initial:initiallySorted.map(x=>x.b.series.volumeNumber),groupKey:key,volumes});
+            }
+          }
+        }
+        const ok=results.length===24&&results.every(x=>JSON.stringify(x.volumes)===JSON.stringify(expected(x.mode)));
+        return {ok,cases:results.length,bad:results.filter(x=>JSON.stringify(x.volumes)!==JSON.stringify(expected(x.mode))).slice(0,6)};
+      }catch(e){return {ok:false,error:String(e?.message||e),stack:String(e?.stack||'')}}
+    })()`);
+    check('E2E-LIB-SERIES-SORT-001 series grouping preserves every selected volume sort across scope coalescing and input permutations',seriesSortSmoke?.ok===true,JSON.stringify(seriesSortSmoke));
     const authorFilterSmoke=await evalJS(`(()=>{
       const originalBooks=books, originalAuthor=document.getElementById('filterAuthor')?.value||'', originalLibrary=document.getElementById('myBooks')?.innerHTML||'';
       try{

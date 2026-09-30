@@ -4,7 +4,7 @@ const fs=require('fs'),path=require('path'),os=require('os'),{spawnSync}=require
 const root=__dirname;
 const source=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const apiSource=fs.readFileSync(path.join(root,'api_management.js'),'utf8');
-const docs=['README.md','SPEC.md','DEV_GUARD.md','REGRESSION_COVERAGE.md','ROADMAP_TEST_MATRIX.md','RELEASE_TEST_GATE.md','LOGIC_TEST_MATRIX.md','package.json'];
+const docs=['README.md','SPEC.md','DEV_GUARD.md','QUALITY_CONTRACT.md','ROADMAP_TEST_MATRIX.md','RELEASE_TEST_GATE.md','package.json'];
 function runMutation(name,mutateIndex=source,mutateApi=apiSource){
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'book-tracker-mutation-'));
   try{
@@ -35,6 +35,7 @@ const libraryPricePredicateMutation=source.replace('&&matchesListPriceFilter(b,f
 const librarySearchPredicateMutation=source.replace('return (!q||[b.title,b.author,b.isbn,b.publisher].join(" ").toLowerCase().includes(q))','return (!q||true)');
 const libraryUnreadOnlyPredicateMutation=source.replace('&&(!unreadOnly||meta.readingStatus!=="read")','&&true');
 const seriesCoalescingMutation=source.replace('groups.get(targetKey).push(...genericItems);','groups.get(targetKey);');
+const seriesSortMutation=source.replace('items=sortSeriesGroupItems(items);','items=[...items];');
 const volumeInvariantMutation=source.replace('Number.isInteger(n)&&n>=1?n:null','Number.isInteger(n)&&n>=0?n:null');
 const registrationAtomicMutation=source.replace('if(failedPreparations.length||added.length!==candidates.length-skippedDuplicates.length){','if(false){');
 const registrationRollbackMutation=source.replace('if(saveFailed){books=oldBooks;calendarExtras=oldExtras;bookMeta=oldMeta;saveMeta();persistBooks();persistCalendarExtras();metrics?.traceStep("保存失敗・ロールバック"','if(saveFailed){metrics?.traceStep("保存失敗・ロールバック"');
@@ -70,6 +71,7 @@ const cases=[
   ['Registration persistence',()=>runMutation('Registration persistence',registrationPersistenceMutation)],
   ['Registration user-wait timing',()=>runMutation('Registration user-wait timing',registrationUserWaitMutation)],
   ['Series redundant-scope coalescing',()=>runMutation('Series redundant-scope coalescing',seriesCoalescingMutation)],
+  ['Series display sort after scope coalescing',()=>runMutation('Series display sort after scope coalescing',seriesSortMutation)],
   ['Series volume invariant',()=>runMutation('Series volume invariant',volumeInvariantMutation)]
 ];
 let ok=true;
