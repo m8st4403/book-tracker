@@ -58,6 +58,41 @@ check(
   JSON.stringify({total:operationCoverage.total,covered:operationCoverage.covered,uncovered:operationCoverage.uncovered.slice(0,20)})
 );
 
+// v4.13.201: the operation boundary is broader than <button>.
+// Inputs/selects/textarea can be actions themselves or can feed another action;
+// links and native details controls also represent user-operable paths.
+function auditInteractiveControlContracts(source){
+  const out=[];
+  const re=/<(button|input|select|textarea|a|summary)\b([^>]*)>/gi;
+  let m;
+  while((m=re.exec(source))){
+    const tag=m[1].toLowerCase(), attrs=m[2]||'';
+    const id=(attrs.match(/\bid=[\"']([^\"']+)[\"']/i)||[])[1]||'';
+    const cls=(attrs.match(/\bclass=[\"']([^\"']+)[\"']/i)||[])[1]||'';
+    const disabled=/\bdisabled(?:\s*=\s*(?:\"disabled\"|'disabled'|disabled))?\b/i.test(attrs);
+    const readOnly=/\breadonly(?:\s*=\s*(?:\"readonly\"|'readonly'|readonly))?\b/i.test(attrs);
+    const href=(attrs.match(/\bhref=[\"']([^\"']*)[\"']/i)||[])[1]||'';
+    const dataAttrs=[...attrs.matchAll(/\bdata-([a-z0-9_-]+)\s*=/gi)].map(x=>x[1]);
+    const inline=/\bonclick\s*=|\bonchange\s*=|\boninput\s*=|\bonchange\s*=/i.test(attrs);
+    const idRef=id ? (source.match(new RegExp(`(?:getElementById\([\"']${id}[\"']\)|\$\([\"']${id}[\"']\)|#[${id}\\b])`, 'g'))||[]).length : 0;
+    const handlerRef=id ? source.split('\n').some(line=>line.includes(id)&&/(?:onclick|addEventListener|\.value|\.checked|\.files)/.test(line)) : false;
+    const classRef=cls.split(/\s+/).filter(Boolean).some(c=>source.includes(c)&&/(?:querySelector|querySelectorAll|closest|matches)/.test(source));
+    let covered=disabled||readOnly||inline||dataAttrs.length>0||handlerRef||classRef;
+    if(tag==='a') covered=covered||href.length>0;
+    if(tag==='summary') covered=true;
+    // Unidentified checkbox/radio controls may be consumed as a group (e.g. :checked).
+    if((tag==='input'||tag==='select'||tag==='textarea')&&!id&&!dataAttrs.length){
+      const type=(attrs.match(/\btype=[\"']([^\"']+)[\"']/i)||[])[1]||'';
+      covered=covered||new RegExp(`querySelectorAll\([^)]*${type?type:'input'}[^)]*\)`).test(source)||/\:checked/.test(source);
+    }
+    out.push({tag,id,covered,disabled,readOnly,href:!!href,dataAttrs});
+  }
+  const uncovered=out.filter(x=>!x.covered&&!x.disabled&&!x.readOnly);
+  return {total:out.length,covered:out.length-uncovered.length,uncovered};
+}
+const interactiveContractCoverage=auditInteractiveControlContracts(html);
+check('STATIC-071 all interactive control types have an operation contract',interactiveContractCoverage.uncovered.length===0,JSON.stringify({total:interactiveContractCoverage.total,covered:interactiveContractCoverage.covered,uncovered:interactiveContractCoverage.uncovered.slice(0,30)}));
+
 const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
 const dupIds = [...new Set(ids.filter((id,i)=>ids.indexOf(id)!==i))];
 check('STATIC-001 unique DOM ids', dupIds.length===0, dupIds.join(', '));
@@ -237,6 +272,8 @@ const operationRuntimeAudit=await evalJS(`(()=>{try{
   return {ok:unlabeled.length===0&&duplicateIds.length===0,buttonCount:buttons.length,actionable:actionable.length,unlabeled:unlabeled.map(b=>b.outerHTML.slice(0,180)),duplicateIds:[...new Set(duplicateIds)],noType:noType.length};
 }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
 check('E2E-UI-OPS-001 generic interactive control inventory',operationRuntimeAudit?.ok===true,JSON.stringify(operationRuntimeAudit));
+const interactiveRuntimeAudit=await evalJS(`(()=>{try{const els=[...document.querySelectorAll('button,input,select,textarea,a,summary')];const active=els.filter(e=>!e.disabled&&e.getAttribute('aria-hidden')!=='true'&&!e.hidden);const unlabeled=active.filter(e=>{const t=e.tagName.toLowerCase();const text=((e.getAttribute('aria-label')||e.getAttribute('title')||e.textContent||e.getAttribute('placeholder')||e.getAttribute('value')||'')||'').trim();const parentLabel=e.closest('label')?.textContent?.trim()||'';const parentContext=(e.parentElement?.textContent||'').trim();const hiddenType=t==='input'&&['hidden','file'].includes((e.getAttribute('type')||'').toLowerCase());return ['input','select','textarea','button','a'].includes(t)&&!text&&!parentLabel&&!parentContext&&!hiddenType});const ids=els.filter(e=>e.id).map(e=>e.id);const dup=ids.filter((x,i)=>ids.indexOf(x)!==i);return {ok:unlabeled.length===0&&dup.length===0,total:els.length,active:active.length,unlabeled:unlabeled.slice(0,20).map(e=>e.outerHTML.slice(0,180)),duplicateIds:[...new Set(dup)]}}catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
+check('E2E-UI-OPS-002 all interactive control types are inventoried',interactiveRuntimeAudit?.ok===true,JSON.stringify(interactiveRuntimeAudit));
 
 check('E2E-001 all six tabs exist', tabState.every(x=>x.exists), JSON.stringify(tabState));
 

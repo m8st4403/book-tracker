@@ -11,12 +11,12 @@ function runMutation(name,mutateIndex=source,mutateApi=apiSource){
     for(const f of docs) fs.copyFileSync(path.join(root,f),path.join(dir,f));
     fs.writeFileSync(path.join(dir,'index.html'),mutateIndex);
     fs.writeFileSync(path.join(dir,'api_management.js'),mutateApi);
-    const r=spawnSync(process.execPath,[path.join(root,'dev_guard.js'),path.join(dir,'index.html')],{encoding:'utf8',timeout:60000,cwd:dir});
+    const r=spawnSync(process.execPath,[path.join(root,'dev_guard.js'),path.join(dir,'index.html')],{encoding:'utf8',timeout:180000,cwd:dir});
     if(r.error) throw r.error;
     return {caught:r.status!==0,output:r.stdout+r.stderr};
   } finally { fs.rmSync(dir,{recursive:true,force:true}); }
 }
-const uiOperationWiringMutation=source.replace('$("homeUpcomingMore").onclick=()=>{document.querySelector(\'[data-s="calendar"]\').click()};','');
+const uiOperationWiringMutation=(()=>{const m=source.match(/\n\s*\$\("homeUpcomingMore"\)\.onclick=[^\n]+;/);return m?source.replace(m[0],''):source.replace('homeUpcomingMore','homeUpcomingMore_missing');})();
 
 const uiMutation=source.replace('</body>','<div id="mutationOverflow" style="position:fixed;left:0;top:0;width:1000px;height:20px">mutation</div></body>');
 const apiMutation=apiSource.replace('if(p.requireTaxIncluded&&e.taxIncludedConfirmed!==true)return {status:"HOLD",reason:"TAX_STATUS_UNKNOWN_OR_NOT_INCLUDED"};','');
