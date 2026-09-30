@@ -17,6 +17,7 @@ function runMutation(name,mutateIndex=source,mutateApi=apiSource){
   } finally { fs.rmSync(dir,{recursive:true,force:true}); }
 }
 const uiOperationWiringMutation=(()=>{const m=source.match(/\n\s*\$\("homeUpcomingMore"\)\.onclick=[^\n]+;/);return m?source.replace(m[0],''):source.replace('homeUpcomingMore','homeUpcomingMore_missing');})();
+const uiInputOperationContractMutation=source.replace('id="searchUnownedOnly" data-data-operation="1"','id="searchUnownedOnly"');
 
 const uiMutation=source.replace('</body>','<div id="mutationOverflow" style="position:fixed;left:0;top:0;width:1000px;height:20px">mutation</div></body>');
 const apiMutation=apiSource.replace('if(p.requireTaxIncluded&&e.taxIncludedConfirmed!==true)return {status:"HOLD",reason:"TAX_STATUS_UNKNOWN_OR_NOT_INCLUDED"};','');
@@ -56,6 +57,7 @@ const authorFragmentMutationCase=['Author fragment suppression',()=>runMutation(
 const structuredMultiAuthorMutationCase=['Structured multi-author parsing',()=>runMutation('Structured multi-author parsing',structuredMultiAuthorMutation)];
 const cases=[releaseUnknownFirstMutationCase,
   ['UI operation wiring',()=>runMutation('UI operation wiring',uiOperationWiringMutation)],
+  ['UI input operation contract',()=>runMutation('UI input operation contract',uiInputOperationContractMutation)],
 
   ['UI generic overflow',()=>runMutation('UI generic overflow',uiMutation)],
   ['API trust',()=>runMutation('API trust',source,apiMutation)],

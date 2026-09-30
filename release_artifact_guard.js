@@ -25,7 +25,7 @@ const uploadFiles = walk(uploadDir);
 const forbiddenHistorical = uploadFiles.filter(p => /(?:CHANGELOG(?:_v\d+_\d+_\d+)?|PAST_FIX_QUALITY_AUDIT|NEXT_IMPLEMENTATION_PRIORITY|REGRESSION_COVERAGE|LOGIC_TEST_MATRIX|RULE_LEDGER|RULE_TEST_MATRIX|RULE_GAP_AUDIT|OPERATION_CATALOG)/i.test(path.basename(p)));
 if (forbiddenHistorical.length) fail(`historical files leaked into GitHubアップロード: ${forbiddenHistorical.map(p=>path.relative(uploadDir,p)).join(', ')}`);
 else pass('historical changelog/audit/priority files are kept out of GitHubアップロード');
-const allowedUpload = new Set(['release_artifact_guard.js','index.html','api_management.js','dev_guard.js','mutation_guard.js','package.json','README.md','SPEC.md','DEV_GUARD.md','QUALITY_CONTRACT.md','RELEASE_TEST_GATE.md','ROADMAP_TEST_MATRIX.md']);
+const allowedUpload = new Set(['release_artifact_guard.js','index.html','api_management.js','dev_guard.js','mutation_guard.js','package.json','README.md','SPEC.md','DEV_GUARD.md','QUALITY_CONTRACT.md','RELEASE_TEST_GATE.md','ROADMAP_TEST_MATRIX.md','OPERATION_CONTRACT.md']);
 const unexpectedUpload = uploadFiles.map(p=>path.relative(uploadDir,p)).filter(n=>!allowedUpload.has(n));
 if(unexpectedUpload.length) fail(`unexpected files in GitHubアップロード: ${unexpectedUpload.join(', ')}`);
 else pass('GitHubアップロード contains only current release assets');
@@ -44,7 +44,7 @@ else fail(`release version mismatch: package=${currentVersion} app=${app} guard=
 const pkg = JSON.parse(fs.readFileSync(path.join(uploadDir,'package.json'),'utf8'));
 if (pkg.scripts?.test === 'npm run test:guard && npm run test:mutation' && pkg.scripts?.['test:release']?.includes('release_artifact_guard.js')) pass('quality and artifact gates are connected through npm scripts');
 else fail('quality and artifact gates are not connected through npm scripts');
-for (const required of ['dev_guard.js','mutation_guard.js','RELEASE_TEST_GATE.md','QUALITY_CONTRACT.md']) {
+for (const required of ['dev_guard.js','mutation_guard.js','RELEASE_TEST_GATE.md','QUALITY_CONTRACT.md','OPERATION_CONTRACT.md']) {
   if (fs.existsSync(path.join(uploadDir, required))) pass(`required quality asset present: ${required}`);
   else fail(`required quality asset missing: ${required}`);
 }

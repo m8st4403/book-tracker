@@ -58,7 +58,7 @@ check(
   JSON.stringify({total:operationCoverage.total,covered:operationCoverage.covered,uncovered:operationCoverage.uncovered.slice(0,20)})
 );
 
-// v4.13.201: the operation boundary is broader than <button>.
+// v4.13.202: the operation boundary is broader than <button>.
 // Inputs/selects/textarea can be actions themselves or can feed another action;
 // links and native details controls also represent user-operable paths.
 function auditInteractiveControlContracts(source){
@@ -109,6 +109,8 @@ const readUtf8=p=>{try{return fs.readFileSync(p,'utf8')}catch(e){return ''}};
 const readmeText=readUtf8(path.join(path.dirname(target),'README.md'));
 const specText=readUtf8(path.join(path.dirname(target),'SPEC.md'));
 const qualityText=readUtf8(path.join(path.dirname(target),'QUALITY_CONTRACT.md'));
+const operationContractText=readUtf8(path.join(path.dirname(target),'OPERATION_CONTRACT.md'));
+check('STATIC-072 operation contract exists and is layered', /存在/.test(operationContractText) && /経路/.test(operationContractText) && /状態/.test(operationContractText) && /データ/.test(operationContractText) && /保存/.test(operationContractText) && /再読込/.test(operationContractText) && /連携/.test(operationContractText) && /異常復旧/.test(operationContractText), 'operation contract covers eight layers');
 const headerVersionMatch=html.match(/id="appHeaderSub">v([^<]+)<br\/>/);
 const currentDocVersion=(readmeText.match(/## 現在のリリース\s*\n\s*\*\*v([^*]+)\*\*/)||[])[1]||'';
 const specCurrentVersion=(specText.match(/^# v([^ ]+) 現行リリース契約/m)||[])[1]||'';
