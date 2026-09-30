@@ -38,6 +38,7 @@ const seriesCoalescingMutation=source.replace('groups.get(targetKey).push(...gen
 const seriesSortMutation=source.replace('items=sortSeriesGroupItems(items);','items=[...items];');
 const volumeInvariantMutation=source.replace('Number.isInteger(n)&&n>=1?n:null','Number.isInteger(n)&&n>=0?n:null');
 const librarySortOracleMutation=source.replace('else if(mode==="volume-asc")r=volumeCompare(x.b,y.b);','else if(mode==="volume-asc")r=0;')
+const searchSortMutation=source.replace('if(appSettings.search?.sort==="release-desc")a.sort((x,y)=>releaseTime(y)-releaseTime(x));','if(false)a.sort((x,y)=>releaseTime(y)-releaseTime(x));').replace('else if(appSettings.search?.sort==="release-asc")a.sort((x,y)=>releaseTime(x)-releaseTime(y));','else if(false)a.sort((x,y)=>releaseTime(x)-releaseTime(y));').replace('else a.sort((x,y)=>{','else if(false)a.sort((x,y)=>{')
 const registrationAtomicMutation=source.replace('if(failedPreparations.length||added.length!==candidates.length-skippedDuplicates.length){','if(false){');
 const registrationRollbackMutation=source.replace('if(saveFailed){books=oldBooks;calendarExtras=oldExtras;bookMeta=oldMeta;saveMeta();persistBooks();persistCalendarExtras();metrics?.traceStep("保存失敗・ロールバック"','if(saveFailed){metrics?.traceStep("保存失敗・ロールバック"');
 const registrationDuplicateMutation=source.replace('if(usableExisting&&!isRicherBookRecord(prepared,usableExisting)){skippedDuplicates.push(preparedIsbn||key);return;}','if(false){skippedDuplicates.push(preparedIsbn||key);return;}');
@@ -74,7 +75,8 @@ const cases=[
   ['Series redundant-scope coalescing',()=>runMutation('Series redundant-scope coalescing',seriesCoalescingMutation)],
   ['Series display sort after scope coalescing',()=>runMutation('Series display sort after scope coalescing',seriesSortMutation)],
   ['Series volume invariant',()=>runMutation('Series volume invariant',volumeInvariantMutation)],
-  ['Independent library sort oracle',()=>runMutation('Independent library sort oracle',librarySortOracleMutation)]
+  ['Independent library sort oracle',()=>runMutation('Independent library sort oracle',librarySortOracleMutation)],
+  ['Independent search sort oracle',()=>runMutation('Independent search sort oracle',searchSortMutation)]
 ];
 let ok=true;
 for(const [name,fn] of cases){const r=fn();console.log(`${r.caught?'PASS':'FAIL'} | MUTATION-${name} | intentional defect ${r.caught?'detected':'NOT detected'}`);if(!r.caught){ok=false;console.log(r.output)}}

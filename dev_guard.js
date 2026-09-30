@@ -1167,6 +1167,36 @@ check('E2E-UI-006 diagnostic copy/clear hierarchy works',diagnosticCopyClearUi?.
 
     // Screenshot smoke at the final state. This catches catastrophic blank pages in addition to geometry tests.
     const shot=await cdp.send('Page.captureScreenshot',{format:'png'});
+    const searchSortOracle=await evalJS(`(async()=>{try{
+      const api=window.bookTrackerApiManagement;
+      const oldSearch=api.search;
+      const oldSettings=JSON.parse(JSON.stringify(appSettings.search));
+      const oldBooks=books.slice();
+      const fixture=[
+        {isbn:'search-o1',title:'検索本 3',author:'A',date:'2026-03-01',language:'ja'},
+        {isbn:'search-o2',title:'検索本 1',author:'B',date:'2026-01-01',language:'ja'},
+        {isbn:'search-o3',title:'検索本 2',author:'C',date:'2026-02-01',language:'en'},
+        {isbn:'search-o4',title:'別作品',author:'D',date:'2025-12-01',language:'ja'}
+      ];
+      api.search=async()=>({results:[...fixture]});
+      const expected={
+        'release-desc':['search-o1','search-o3','search-o2','search-o4'],
+        'release-asc':['search-o4','search-o2','search-o3','search-o1'],
+        'title-asc':['search-o2','search-o3','search-o1','search-o4']
+      };
+      const results={};
+      for(const mode of Object.keys(expected)){
+        appSettings.search={...oldSettings,sort:mode,resultCount:20,jpPriority:false,unownedFirst:false};
+        results[mode]=(await searchGoogle('検索本')).map(x=>x.isbn);
+      }
+      books=[fixture[1]];
+      appSettings.search={...oldSettings,sort:'release-desc',resultCount:20,jpPriority:false,unownedFirst:true};
+      const unowned=(await searchGoogle('検索本')).map(x=>x.isbn);
+      const ok=Object.entries(expected).every(([mode,want])=>JSON.stringify(results[mode])===JSON.stringify(want)) && JSON.stringify(unowned)===JSON.stringify(['search-o1','search-o3','search-o4','search-o2']);
+      api.search=oldSearch; appSettings.search=oldSettings; books=oldBooks;
+      return {ok,results,unowned};
+    }catch(e){try{window.bookTrackerApiManagement.search=window.bookTrackerApiManagement.search}catch(_){} return {ok:false,error:String(e?.message||e)}}})()`);
+    check('E2E-SEARCH-003 independent search sort/unowned oracle',searchSortOracle?.ok===true,JSON.stringify(searchSortOracle));
     const phaseMetricContract=await evalJS(`(()=>{try{const sm=window.bookTrackerSearchMetrics;const t=sm.start('計測テスト','phase');t.addApiPhase('googleBooks','fetch',12);sm.finish(t,true,'',0,[]);return {ok:t.apiPhases?.googleBooks?.fetch===12};}catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
     const postFinishPhaseContract=await evalJS(`(()=>{try{const sm=window.bookTrackerSearchMetrics;const t=sm.start('計測テスト','post-finish');sm.beginApi('googleBooks');sm.endApi('googleBooks',false);sm.finish(t,true,'',0,[]);t.addApiPhase('googleBooks','json',34);return {ok:t.apiPhases?.googleBooks?.json===34,rendered:document.getElementById('searchMetricsList')?.textContent?.includes('json：34 ms')};}catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
     check('E2E-SEARCH-001 provider phase attaches to search record',phaseMetricContract?.ok===true,JSON.stringify(phaseMetricContract));
