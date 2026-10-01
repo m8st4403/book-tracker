@@ -58,7 +58,7 @@ check(
   JSON.stringify({total:operationCoverage.total,covered:operationCoverage.covered,uncovered:operationCoverage.uncovered.slice(0,20)})
 );
 
-// v4.13.202: the operation boundary is broader than <button>.
+// v4.13.203: the operation boundary is broader than <button>.
 // Inputs/selects/textarea can be actions themselves or can feed another action;
 // links and native details controls also represent user-operable paths.
 function auditInteractiveControlContracts(source){
@@ -195,6 +195,13 @@ check('STATIC-016 sort tie-break contract exists', /REG-002B/.test(fs.readFileSy
 check('STATIC-017 quality contract covers operation model', /全ユーザー操作|共通登録|計測品質契約/.test(fs.readFileSync(path.join(path.dirname(target),'QUALITY_CONTRACT.md'),'utf8')), 'operation and measurement contracts are centralized');
 
 
+const featureContractPath=path.join(path.dirname(target),'FEATURE_CONTRACT.md');
+const featureContract=fs.existsSync(featureContractPath)?fs.readFileSync(featureContractPath,'utf8'):'';
+check('STATIC-073 feature contract ledger exists',fs.existsSync(featureContractPath),'feature contract ledger is required for shipped functionality');
+check('STATIC-074 feature contract covers all eight completion layers',['入口','操作','状態','データ','永続化','復元','投影','失敗復旧'].every(x=>featureContract.includes(x)),'feature contract covers eight completion layers');
+check('STATIC-075 feature contract covers all current functional surfaces',['FEAT-NAV','FEAT-REG','FEAT-LIB','FEAT-SEARCH','FEAT-CAL','FEAT-SET','FEAT-API','FEAT-BIB','FEAT-DIAG','FEAT-METRIC','FEAT-CROSS','FEAT-UI'].every(x=>featureContract.includes(x)),'all current functional surfaces are catalogued');
+check('STATIC-076 feature contract forbids button-only scope',/buttonだけを対象としない/.test(featureContract)&&/input/.test(featureContract)&&/select/.test(featureContract)&&/Clipboard/.test(featureContract),'feature scope is broader than buttons');
+check('STATIC-077 feature contract has release blockers',/リリース禁止条件/.test(featureContract)&&/Release Gate/.test(featureContract)&&/Mutation/.test(featureContract),'uncatalogued or unverified functionality blocks release');
 check('STATIC-006 roadmap guard docs exist', fs.existsSync(path.join(path.dirname(target),'ROADMAP_TEST_MATRIX.md')), 'roadmap test matrix');
 check('STATIC-007 release gate docs exist', fs.existsSync(path.join(path.dirname(target),'RELEASE_TEST_GATE.md')), 'release gate');
 check('STATIC-008 package test script exists', fs.existsSync(path.join(path.dirname(target),'package.json')), 'package.json');
