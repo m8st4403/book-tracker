@@ -199,12 +199,32 @@ const featureContractPath=path.join(path.dirname(target),'FEATURE_CONTRACT.md');
 const featureContract=fs.existsSync(featureContractPath)?fs.readFileSync(featureContractPath,'utf8'):'';
 check('STATIC-073 feature contract ledger exists',fs.existsSync(featureContractPath),'feature contract ledger is required for shipped functionality');
 check('STATIC-074 feature contract covers all eight completion layers',['入口','操作','状態','データ','永続化','復元','投影','失敗復旧'].every(x=>featureContract.includes(x)),'feature contract covers eight completion layers');
-check('STATIC-075 feature contract covers all current functional surfaces',['FEAT-NAV','FEAT-REG','FEAT-LIB','FEAT-SEARCH','FEAT-CAL','FEAT-SET','FEAT-API','FEAT-BIB','FEAT-DIAG','FEAT-METRIC','FEAT-CROSS','FEAT-UI'].every(x=>featureContract.includes(x)),'all current functional surfaces are catalogued');
+const currentFeatureIds=['FEAT-NAV','FEAT-SCAN','FEAT-BACKUP','FEAT-DETAIL','FEAT-PURCHASE','FEAT-REG','FEAT-LIB','FEAT-SEARCH','FEAT-CAL','FEAT-SET','FEAT-API','FEAT-BIB','FEAT-DIAG','FEAT-METRIC','FEAT-CROSS','FEAT-UI'];
+check('STATIC-075 feature contract covers all current functional surfaces',currentFeatureIds.every(x=>featureContract.includes(x)),'all current functional surfaces are catalogued');
+const featureAnchors=[['FEAT-SCAN',['id=\"scan\"','function scan(','function stopScan(']],['FEAT-BACKUP',['id=\"backupDataBtn\"','id=\"restoreDataBtn\"','function validateBackupData(','function restoreBackupData(']],['FEAT-DETAIL',['window.openBookDetail=function(','id=\"detailPrice\"','id=\"detailReading\"','id=\"detailFavorite\"','id=\"detailMemo\"']],['FEAT-PURCHASE',['purchaseGroups','function setPurchaseGroupForBooks(','function getPurchaseGroupForBook(']],['FEAT-CAL',['function renderCalendar(','function addCalendarExtra(','function canonicalReleaseDate(']],['FEAT-REG',['function prepareRegistrationBook(','function prepareRegistrationBatch(','function commitBulkPreparedBooks(']]];
+check('STATIC-078 feature implementation anchors',featureAnchors.every(([id,anchors])=>anchors.every(a=>html.includes(a))), 'CURRENT feature implementation anchors are present');
 check('STATIC-076 feature contract forbids button-only scope',/buttonだけを対象としない/.test(featureContract)&&/input/.test(featureContract)&&/select/.test(featureContract)&&/Clipboard/.test(featureContract),'feature scope is broader than buttons');
 check('STATIC-077 feature contract has release blockers',/リリース禁止条件/.test(featureContract)&&/Release Gate/.test(featureContract)&&/Mutation/.test(featureContract),'uncatalogued or unverified functionality blocks release');
 check('STATIC-006 roadmap guard docs exist', fs.existsSync(path.join(path.dirname(target),'ROADMAP_TEST_MATRIX.md')), 'roadmap test matrix');
 check('STATIC-007 release gate docs exist', fs.existsSync(path.join(path.dirname(target),'RELEASE_TEST_GATE.md')), 'release gate');
 check('STATIC-008 package test script exists', fs.existsSync(path.join(path.dirname(target),'package.json')), 'package.json');
+const featureCoveragePath=path.join(path.dirname(target),'FEATURE_COVERAGE.json');
+let featureCoverage=null;
+try{featureCoverage=JSON.parse(fs.readFileSync(featureCoveragePath,'utf8'))}catch(e){featureCoverage=null}
+check('STATIC-079 machine-readable feature coverage exists',!!featureCoverage&&featureCoverage.release===packageVersion&&Array.isArray(featureCoverage.features),'machine-readable feature coverage is valid for current release');
+if(featureCoverage){
+  const requiredLayers=['入口','操作','状態','データ','永続化','復元','投影','失敗復旧'];
+  const currentIds=currentFeatureIds;
+  const coverageIds=featureCoverage.features.map(x=>x.id);
+  const duplicateCoverageIds=[...new Set(coverageIds.filter((id,i)=>coverageIds.indexOf(id)!==i))];
+  const missingCoverage=currentIds.filter(id=>!coverageIds.includes(id));
+  const extraCoverage=coverageIds.filter(id=>!currentIds.includes(id));
+  const missingLayers=featureCoverage.features.filter(x=>requiredLayers.some(layer=>!x.layers?.[layer])).map(x=>x.id);
+  check('STATIC-080 feature coverage IDs are bidirectionally closed',missingCoverage.length===0&&extraCoverage.length===0&&duplicateCoverageIds.length===0,JSON.stringify({missingCoverage,extraCoverage,duplicateCoverageIds}));
+  check('STATIC-081 every current feature has all eight contract layers',missingLayers.length===0,JSON.stringify({missingLayers}));
+  check('STATIC-082 every current feature has structured eight-layer coverage',featureCoverage.schemaVersion===3&&featureCoverage.features.every(x=>x.layers&&requiredLayers.every(layer=>x.layers[layer])), 'exact executable evidence is validated by feature_coverage_gate.js');
+}
+
 
 // Check that roadmap promises are represented as explicit planned/current contracts.
 const roadmap = fs.existsSync(path.join(path.dirname(target),'ROADMAP_TEST_MATRIX.md')) ? fs.readFileSync(path.join(path.dirname(target),'ROADMAP_TEST_MATRIX.md'),'utf8') : '';
@@ -267,6 +287,9 @@ async function main(){
 
     const loadState=await evalJS('({url:location.href,ready:document.readyState,title:document.title,storage:(()=>{try{__guardStorage.setItem("__guard","1");__guardStorage.removeItem("__guard");return true}catch(e){return false}})()})');
     check('E2E-000 target loaded',loadState && loadState.ready==='complete' && loadState.title==='本棚スケジュール' && loadState.storage===true,JSON.stringify(loadState));
+
+
+
 
 
     const requiredTabs=['home','add','library','search','calendar','settings'];
@@ -1009,6 +1032,23 @@ check('E2E-001 all six tabs exist', tabState.every(x=>x.exists), JSON.stringify(
 }catch(e){return {error:String(e?.message||e)}}})()`);
 check('E2E-UI-006 diagnostic copy/clear hierarchy works',diagnosticCopyClearUi?.copies===true&&diagnosticCopyClearUi?.libraryCleared===true&&diagnosticCopyClearUi?.settingsCleared===true&&diagnosticCopyClearUi?.allCleared===true,JSON.stringify(diagnosticCopyClearUi));
 
+    const bibliographyAuditSmoke=await evalJS(`(async()=>{try{
+      const saved={books:books.slice(),confirm:window.confirm,persist:persistBooks,renderLibrary,renderHome,renderCalendar};
+      window.confirm=()=>true; persistBooks=()=>true; renderLibrary=()=>{}; renderHome=()=>{}; renderCalendar=()=>{};
+      books=[{isbn:'9780000000099',title:'監査fixture',author:'著者',publisher:'',date:'',price:null,series:null}];
+      const api=window.bookTrackerApiManagement,oldResolve=api.resolveIsbn,oldClear=api.clearResolverCache;
+      api.clearResolverCache=()=>{};
+      api.resolveIsbn=async()=>({isbn:'9780000000099',title:'監査fixture',author:'著者',publisher:'出版社',date:'2026-01-02',series:{name:'監査シリーズ',volumeNumber:1,displayVolume:'1',confidence:{seriesName:'VERIFIED',volumeNumber:'VERIFIED'}},resolution:{accepted:{series:true,listPrice:true},fields:{publisher:{provider:'fixture',confidence:'VERIFIED'},releaseDate:{provider:'fixture',confidence:'VERIFIED'},seriesName:{provider:'fixture',confidence:'VERIFIED'},volumeNumber:{provider:'fixture',confidence:'VERIFIED'},listPrice:{provider:'fixture',confidence:'HIGH'}}},fieldEvidence:{publisher:{value:'出版社',confidence:'VERIFIED'},releaseDate:{value:'2026-01-02',confidence:'VERIFIED'},seriesName:{value:'監査シリーズ',confidence:'VERIFIED'},volumeNumber:{value:1,confidence:'VERIFIED'},listPrice:{value:550,confidence:'HIGH',evidence:{provider:'fixture'}}},priceMeta:{listPrice:550,taxIncluded:true}});
+      const result=await auditAndFillExistingBibliography();
+      const b=books[0];
+      const ok=result?.checked===1&&result?.changed===1&&b.publisher==='出版社'&&b.date==='2026-01-02'&&b.series?.name==='監査シリーズ'&&b.price?.status==='confirmed'&&b.price?.listPrice===550;
+      const unchangedCount=books.length===1;
+      api.resolveIsbn=oldResolve;api.clearResolverCache=oldClear;window.confirm=saved.confirm;persistBooks=saved.persist;renderLibrary=saved.renderLibrary;renderHome=saved.renderHome;renderCalendar=saved.renderCalendar;books=saved.books;
+      return {ok:ok&&unchangedCount,changed:result?.changed,publisher:b.publisher,date:b.date,series:b.series,price:b.price};
+    }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
+    check('E2E-BIB-001 existing bibliography audit uses Resolver, fills only eligible missing fields, and preserves collection shape',bibliographyAuditSmoke?.ok===true,JSON.stringify(bibliographyAuditSmoke));
+
+
     const isbnSeriesSourceSmoke=await evalJS(`(async()=>{try{
       const btn=document.getElementById('isbnSeriesSourceBtn'),box=document.getElementById('isbnSeriesSourceResults'),api=window.bookTrackerApiManagement;
       const originalBooks=books, originalEnabled=api.providerEnabled, originals={};
@@ -1384,6 +1424,20 @@ check('E2E-UI-006 diagnostic copy/clear hierarchy works',diagnosticCopyClearUi?.
     const phaseMetricContract=await evalJS(`(()=>{try{const sm=window.bookTrackerSearchMetrics;const t=sm.start('計測テスト','phase');t.addApiPhase('googleBooks','fetch',12);sm.finish(t,true,'',0,[]);return {ok:t.apiPhases?.googleBooks?.fetch===12};}catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
     const postFinishPhaseContract=await evalJS(`(()=>{try{const sm=window.bookTrackerSearchMetrics;const t=sm.start('計測テスト','post-finish');sm.beginApi('googleBooks');sm.endApi('googleBooks',false);sm.finish(t,true,'',0,[]);t.addApiPhase('googleBooks','json',34);return {ok:t.apiPhases?.googleBooks?.json===34,rendered:document.getElementById('searchMetricsList')?.textContent?.includes('json：34 ms')};}catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
     check('E2E-SEARCH-001 provider phase attaches to search record',phaseMetricContract?.ok===true,JSON.stringify(phaseMetricContract));
+
+    const registrationMetricSmoke=await evalJS(`(async()=>{try{
+      const m=window.bookTrackerRegistrationMetrics,token=m.start('計測モデルfixture');
+      const t0=performance.now();
+      await m.measureProcessing(token,async()=>{m.beginUserWait(token);await new Promise(r=>setTimeout(r,35));m.endUserWait(token);await new Promise(r=>setTimeout(r,5));});
+      const waited=Number(token.userWaitMs)||0,processed=Number(token.processingMs)||0,total=performance.now()-t0;
+      const ok=waited>=25&&processed>=0&&processed<waited&&total>=waited;
+      m.clear();
+      return {ok,waited:Math.round(waited),processed:Math.round(processed),total:Math.round(total)};
+    }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
+    const metricPresence=await evalJS(`(()=>({type:typeof window.bookTrackerRegistrationMetrics,keys:typeof window.bookTrackerRegistrationMetrics==='object'?Object.keys(window.bookTrackerRegistrationMetrics):[]}))()`);
+    check('E2E-METRIC-000 registration metric runtime is loaded',metricPresence?.type==='object'&&metricPresence?.keys.includes('measureProcessing')&&metricPresence?.keys.includes('beginUserWait'),JSON.stringify(metricPresence));
+    check('E2E-METRIC-001 user-wait time is excluded from registration processing time',registrationMetricSmoke?.ok===true,JSON.stringify(registrationMetricSmoke));
+
     check('E2E-SEARCH-002 post-timeout phase can update completed record',postFinishPhaseContract?.ok===true&&postFinishPhaseContract?.rendered===true,JSON.stringify(postFinishPhaseContract));
     check('E2E-SCREEN-001 screenshot captured',!!shot.data && shot.data.length>1000,'390x844 rendered screenshot');
   } catch(e){

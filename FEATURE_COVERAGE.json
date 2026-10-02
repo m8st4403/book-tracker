@@ -1,0 +1,899 @@
+{
+  "schemaVersion": 3,
+  "release": "4.13.208",
+  "layers": [
+    "入口",
+    "操作",
+    "状態",
+    "データ",
+    "永続化",
+    "復元",
+    "投影",
+    "失敗復旧"
+  ],
+  "features": [
+    {
+      "id": "FEAT-NAV",
+      "layers": {
+        "入口": {
+          "status": "required",
+          "evidence": [
+            "E2E-001 all six tabs exist"
+          ]
+        },
+        "操作": {
+          "status": "required",
+          "evidence": [
+            "E2E-UI-OPS-001 generic interactive control inventory"
+          ]
+        },
+        "状態": {
+          "status": "required",
+          "evidence": [
+            "E2E-001 all six tabs exist"
+          ]
+        },
+        "データ": {
+          "status": "not-applicable",
+          "reason": "業務データを生成しない",
+          "evidence": []
+        },
+        "永続化": {
+          "status": "not-applicable",
+          "reason": "タブ選択は永続化対象外",
+          "evidence": []
+        },
+        "復元": {
+          "status": "not-applicable",
+          "reason": "永続化対象外",
+          "evidence": []
+        },
+        "投影": {
+          "status": "not-applicable",
+          "reason": "データ投影なし",
+          "evidence": []
+        },
+        "失敗復旧": {
+          "status": "required",
+          "evidence": [
+            "UI operation wiring"
+          ]
+        }
+      },
+      "depth": {
+        "requiredMutation": "Feature anchor: navigation"
+      }
+    },
+    {
+      "id": "FEAT-SCAN",
+      "layers": {
+        "入口": {
+          "status": "required",
+          "evidence": [
+            "E2E-UI-OPS-001 generic interactive control inventory"
+          ]
+        },
+        "操作": {
+          "status": "required",
+          "evidence": [
+            "E2E-UI-OPS-002 all interactive control types are inventoried"
+          ]
+        },
+        "状態": {
+          "status": "required",
+          "evidence": [
+            "E2E-REG-007 successful commit matches independent expected set"
+          ]
+        },
+        "データ": {
+          "status": "required",
+          "evidence": [
+            "E2E-REG-007 successful commit matches independent expected set"
+          ]
+        },
+        "永続化": {
+          "status": "required",
+          "evidence": [
+            "E2E-REG-011 registration commit persists the registered book"
+          ]
+        },
+        "復元": {
+          "status": "required",
+          "evidence": [
+            "E2E-REG-012 persisted registration survives boot-read"
+          ]
+        },
+        "投影": {
+          "status": "required",
+          "evidence": [
+            "E2E-HOME-001 Home statistics match independent library-state oracle"
+          ]
+        },
+        "失敗復旧": {
+          "status": "required",
+          "evidence": [
+            "UI input operation contract"
+          ]
+        }
+      },
+      "depth": {
+        "requiredMutation": "Feature anchor: scan"
+      }
+    },
+    {
+      "id": "FEAT-BACKUP",
+      "layers": {
+        "入口": {
+          "status": "required",
+          "evidence": [
+            "E2E-PERSIST-003 backup export/import round-trip"
+          ]
+        },
+        "操作": {
+          "status": "required",
+          "evidence": [
+            "E2E-PERSIST-003 backup export/import round-trip"
+          ]
+        },
+        "状態": {
+          "status": "required",
+          "evidence": [
+            "E2E-PERSIST-004 backup schema/key validation rejects invalid input"
+          ]
+        },
+        "データ": {
+          "status": "required",
+          "evidence": [
+            "E2E-PERSIST-003 backup export/import round-trip"
+          ]
+        },
+        "永続化": {
+          "status": "required",
+          "evidence": [
+            "E2E-PERSIST-003 backup export/import round-trip"
+          ]
+        },
+        "復元": {
+          "status": "required",
+          "evidence": [
+            "E2E-PERSIST-003 backup export/import round-trip"
+          ]
+        },
+        "投影": {
+          "status": "required",
+          "evidence": [
+            "E2E-PERSIST-001 save/reload preserves all persistent domains"
+          ]
+        },
+        "失敗復旧": {
+          "status": "required",
+          "evidence": [
+            "E2E-PERSIST-005 backup restore failure rolls back atomically"
+          ]
+        }
+      },
+      "depth": {
+        "requiredMutation": "Feature anchor: backup"
+      }
+    },
+    {
+      "id": "FEAT-DETAIL",
+      "layers": {
+        "入口": {
+          "status": "required",
+          "evidence": [
+            "E2E-UI-OPS-001 generic interactive control inventory"
+          ]
+        },
+        "操作": {
+          "status": "required",
+          "evidence": [
+            "E2E-UI-OPS-002 all interactive control types are inventoried"
+          ]
+        },
+        "状態": {
+          "status": "required",
+          "evidence": [
+            "E2E-CROSS-DATA-001 10系統横断契約（ISBN/タイトル/作者/出版社/発売日/定価/シリーズ/巻数/読書状態/お気に入り）"
+          ]
+        },
+        "データ": {
+          "status": "required",
+          "evidence": [
+            "E2E-CROSS-DATA-001 10系統横断契約（ISBN/タイトル/作者/出版社/発売日/定価/シリーズ/巻数/読書状態/お気に入り）"
+          ]
+        },
+        "永続化": {
+          "status": "required",
+          "evidence": [
+            "E2E-PERSIST-001 save/reload preserves all persistent domains"
+          ]
+        },
+        "復元": {
+          "status": "required",
+          "evidence": [
+            "E2E-PERSIST-001 save/reload preserves all persistent domains"
+          ]
+        },
+        "投影": {
+          "status": "required",
+          "evidence": [
+            "E2E-HOME-001 Home statistics match independent library-state oracle"
+          ]
+        },
+        "失敗復旧": {
+          "status": "required",
+          "evidence": [
+            "E2E-PERSIST-002 purchase-group write failure rolls back memory state"
+          ]
+        }
+      },
+      "depth": {
+        "requiredMutation": "Feature anchor: detail"
+      }
+    },
+    {
+      "id": "FEAT-PURCHASE",
+      "layers": {
+        "入口": {
+          "status": "required",
+          "evidence": [
+            "E2E-PERSIST-001 save/reload preserves all persistent domains"
+          ]
+        },
+        "操作": {
+          "status": "required",
+          "evidence": [
+            "E2E-PERSIST-002 purchase-group write failure rolls back memory state"
+          ]
+        },
+        "状態": {
+          "status": "required",
+          "evidence": [
+            "E2E-PERSIST-001 save/reload preserves all persistent domains"
+          ]
+        },
+        "データ": {
+          "status": "required",
+          "evidence": [
+            "E2E-PERSIST-001 save/reload preserves all persistent domains"
+          ]
+        },
+        "永続化": {
+          "status": "required",
+          "evidence": [
+            "E2E-PERSIST-001 save/reload preserves all persistent domains"
+          ]
+        },
+        "復元": {
+          "status": "required",
+          "evidence": [
+            "E2E-PERSIST-001 save/reload preserves all persistent domains"
+          ]
+        },
+        "投影": {
+          "status": "required",
+          "evidence": [
+            "E2E-HOME-001 Home statistics match independent library-state oracle"
+          ]
+        },
+        "失敗復旧": {
+          "status": "required",
+          "evidence": [
+            "E2E-PERSIST-002 purchase-group write failure rolls back memory state"
+          ]
+        }
+      },
+      "depth": {
+        "requiredMutation": "Feature anchor: purchase"
+      }
+    },
+    {
+      "id": "FEAT-REG",
+      "layers": {
+        "入口": {
+          "status": "required",
+          "evidence": [
+            "E2E-REG-006 単冊登録成功後のボタン状態更新"
+          ]
+        },
+        "操作": {
+          "status": "required",
+          "evidence": [
+            "E2E-REG-007 successful commit matches independent expected set"
+          ]
+        },
+        "状態": {
+          "status": "required",
+          "evidence": [
+            "E2E-REG-008 preparation failure is atomic"
+          ]
+        },
+        "データ": {
+          "status": "required",
+          "evidence": [
+            "E2E-REG-007 successful commit matches independent expected set"
+          ]
+        },
+        "永続化": {
+          "status": "required",
+          "evidence": [
+            "E2E-REG-011 registration commit persists the registered book"
+          ]
+        },
+        "復元": {
+          "status": "required",
+          "evidence": [
+            "E2E-REG-012 persisted registration survives boot-read"
+          ]
+        },
+        "投影": {
+          "status": "required",
+          "evidence": [
+            "E2E-CROSS-DATA-001 10系統横断契約（ISBN/タイトル/作者/出版社/発売日/定価/シリーズ/巻数/読書状態/お気に入り）"
+          ]
+        },
+        "失敗復旧": {
+          "status": "required",
+          "evidence": [
+            "E2E-REG-009 persistence failure fully rolls back"
+          ]
+        }
+      },
+      "depth": {
+        "requiredMutation": "Feature anchor: registration"
+      }
+    },
+    {
+      "id": "FEAT-LIB",
+      "layers": {
+        "入口": {
+          "status": "required",
+          "evidence": [
+            "E2E-UI-OPS-001 generic interactive control inventory"
+          ]
+        },
+        "操作": {
+          "status": "required",
+          "evidence": [
+            "E2E-LIB-FILTER-INTERACTION-001 real DOM filter oracle covers author/publisher/compound/reset"
+          ]
+        },
+        "状態": {
+          "status": "required",
+          "evidence": [
+            "E2E-PROP-002 independent oracle covers all library filter dimensions"
+          ]
+        },
+        "データ": {
+          "status": "required",
+          "evidence": [
+            "E2E-LIB-SERIES-SORT-001 series grouping preserves every selected volume sort across scope coalescing and input permutations"
+          ]
+        },
+        "永続化": {
+          "status": "required",
+          "evidence": [
+            "E2E-PERSIST-001 save/reload preserves all persistent domains"
+          ]
+        },
+        "復元": {
+          "status": "required",
+          "evidence": [
+            "E2E-PERSIST-001 save/reload preserves all persistent domains"
+          ]
+        },
+        "投影": {
+          "status": "required",
+          "evidence": [
+            "E2E-HOME-001 Home statistics match independent library-state oracle"
+          ]
+        },
+        "失敗復旧": {
+          "status": "required",
+          "evidence": [
+            "Library price predicate"
+          ]
+        }
+      },
+      "depth": {
+        "requiredMutation": "Feature anchor: library"
+      }
+    },
+    {
+      "id": "FEAT-SEARCH",
+      "layers": {
+        "入口": {
+          "status": "required",
+          "evidence": [
+            "E2E-UI-OPS-001 generic interactive control inventory"
+          ]
+        },
+        "操作": {
+          "status": "required",
+          "evidence": [
+            "E2E-SEARCH-001 provider phase attaches to search record"
+          ]
+        },
+        "状態": {
+          "status": "required",
+          "evidence": [
+            "E2E-CONCURRENCY-001 stale search response cannot win"
+          ]
+        },
+        "データ": {
+          "status": "required",
+          "evidence": [
+            "E2E-SEARCH-003 independent search sort/unowned oracle"
+          ]
+        },
+        "永続化": {
+          "status": "required",
+          "evidence": [
+            "E2E-SETTINGS-001 all settings survive save/read round-trip"
+          ]
+        },
+        "復元": {
+          "status": "required",
+          "evidence": [
+            "E2E-SETTINGS-001 all settings survive save/read round-trip"
+          ]
+        },
+        "投影": {
+          "status": "required",
+          "evidence": [
+            "E2E-REG-007 successful commit matches independent expected set"
+          ]
+        },
+        "失敗復旧": {
+          "status": "required",
+          "evidence": [
+            "Independent search sort oracle"
+          ]
+        }
+      },
+      "depth": {
+        "requiredMutation": "Feature anchor: search"
+      }
+    },
+    {
+      "id": "FEAT-CAL",
+      "layers": {
+        "入口": {
+          "status": "required",
+          "evidence": [
+            "E2E-CALENDAR-001 temporary filters reset from saved defaults"
+          ]
+        },
+        "操作": {
+          "status": "required",
+          "evidence": [
+            "E2E-CALENDAR-001 temporary filters reset from saved defaults"
+          ]
+        },
+        "状態": {
+          "status": "required",
+          "evidence": [
+            "E2E-CALENDAR-003 existing series metadata is preserved and avoids ISBN re-query"
+          ]
+        },
+        "データ": {
+          "status": "required",
+          "evidence": [
+            "E2E-CROSS-RELEASE-001 canonical release-date contract"
+          ]
+        },
+        "永続化": {
+          "status": "required",
+          "evidence": [
+            "E2E-SETTINGS-001 all settings survive save/read round-trip"
+          ]
+        },
+        "復元": {
+          "status": "required",
+          "evidence": [
+            "E2E-SETTINGS-001 all settings survive save/read round-trip"
+          ]
+        },
+        "投影": {
+          "status": "required",
+          "evidence": [
+            "E2E-CROSS-RELEASE-001 canonical release-date contract"
+          ]
+        },
+        "失敗復旧": {
+          "status": "required",
+          "evidence": [
+            "E2E-CALENDAR-002 calendar-extra failure rolls back"
+          ]
+        }
+      },
+      "depth": {
+        "requiredMutation": "Feature anchor: calendar"
+      }
+    },
+    {
+      "id": "FEAT-SET",
+      "layers": {
+        "入口": {
+          "status": "required",
+          "evidence": [
+            "E2E-SETTINGS-001 all settings survive save/read round-trip"
+          ]
+        },
+        "操作": {
+          "status": "required",
+          "evidence": [
+            "E2E-SETTINGS-001 all settings survive save/read round-trip"
+          ]
+        },
+        "状態": {
+          "status": "required",
+          "evidence": [
+            "E2E-SETTINGS-002 settings write failure rolls back memory state"
+          ]
+        },
+        "データ": {
+          "status": "required",
+          "evidence": [
+            "E2E-SETTINGS-001 all settings survive save/read round-trip"
+          ]
+        },
+        "永続化": {
+          "status": "required",
+          "evidence": [
+            "E2E-SETTINGS-001 all settings survive save/read round-trip"
+          ]
+        },
+        "復元": {
+          "status": "required",
+          "evidence": [
+            "E2E-PERSIST-003 backup export/import round-trip"
+          ]
+        },
+        "投影": {
+          "status": "required",
+          "evidence": [
+            "E2E-SETTINGS-001 all settings survive save/read round-trip"
+          ]
+        },
+        "失敗復旧": {
+          "status": "required",
+          "evidence": [
+            "E2E-SETTINGS-002 settings write failure rolls back memory state"
+          ]
+        }
+      },
+      "depth": {
+        "requiredMutation": "Feature anchor: settings"
+      }
+    },
+    {
+      "id": "FEAT-API",
+      "layers": {
+        "入口": {
+          "status": "required",
+          "evidence": [
+            "E2E-API-006B Rakuten/NDL adapters are installed safely"
+          ]
+        },
+        "操作": {
+          "status": "required",
+          "evidence": [
+            "E2E-API-006E ISBN自動フェイルオーバー"
+          ]
+        },
+        "状態": {
+          "status": "required",
+          "evidence": [
+            "E2E-API-006G 障害Provider一時クールダウン"
+          ]
+        },
+        "データ": {
+          "status": "required",
+          "evidence": [
+            "LOGIC-API-007B critical fields are never downgraded by rejected resolver data"
+          ]
+        },
+        "永続化": {
+          "status": "not-applicable",
+          "reason": "Provider内部状態は永続化せず、採用済み書誌の保存は登録機能で検証",
+          "evidence": []
+        },
+        "復元": {
+          "status": "not-applicable",
+          "reason": "Provider内部状態の復元は不要",
+          "evidence": []
+        },
+        "投影": {
+          "status": "required",
+          "evidence": [
+            "E2E-CROSS-DATA-001 10系統横断契約（ISBN/タイトル/作者/出版社/発売日/定価/シリーズ/巻数/読書状態/お気に入り）"
+          ]
+        },
+        "失敗復旧": {
+          "status": "required",
+          "evidence": [
+            "E2E-API-006H timeout時の自動フェイルオーバー"
+          ]
+        }
+      },
+      "depth": {
+        "requiredMutation": "Feature anchor: API"
+      }
+    },
+    {
+      "id": "FEAT-BIB",
+      "layers": {
+        "入口": {
+          "status": "required",
+          "evidence": [
+            "E2E-BIB-001 existing bibliography audit uses Resolver, fills only eligible missing fields, and preserves collection shape"
+          ]
+        },
+        "操作": {
+          "status": "required",
+          "evidence": [
+            "E2E-CROSS-DATA-001 10系統横断契約（ISBN/タイトル/作者/出版社/発売日/定価/シリーズ/巻数/読書状態/お気に入り）"
+          ]
+        },
+        "状態": {
+          "status": "required",
+          "evidence": [
+            "E2E-CROSS-DATA-001 10系統横断契約（ISBN/タイトル/作者/出版社/発売日/定価/シリーズ/巻数/読書状態/お気に入り）"
+          ]
+        },
+        "データ": {
+          "status": "required",
+          "evidence": [
+            "E2E-CROSS-DATA-001 10系統横断契約（ISBN/タイトル/作者/出版社/発売日/定価/シリーズ/巻数/読書状態/お気に入り）"
+          ]
+        },
+        "永続化": {
+          "status": "required",
+          "evidence": [
+            "E2E-PERSIST-001 save/reload preserves all persistent domains"
+          ]
+        },
+        "復元": {
+          "status": "required",
+          "evidence": [
+            "E2E-PERSIST-001 save/reload preserves all persistent domains"
+          ]
+        },
+        "投影": {
+          "status": "required",
+          "evidence": [
+            "E2E-CROSS-RELEASE-001 canonical release-date contract"
+          ]
+        },
+        "失敗復旧": {
+          "status": "required",
+          "evidence": [
+            "E2E-REG-009 persistence failure fully rolls back"
+          ]
+        }
+      },
+      "depth": {
+        "requiredMutation": "Feature anchor: bibliography"
+      }
+    },
+    {
+      "id": "FEAT-DIAG",
+      "layers": {
+        "入口": {
+          "status": "required",
+          "evidence": [
+            "E2E-UI-OPS-001 generic interactive control inventory"
+          ]
+        },
+        "操作": {
+          "status": "required",
+          "evidence": [
+            "E2E-UI-OPS-002 all interactive control types are inventoried"
+          ]
+        },
+        "状態": {
+          "status": "required",
+          "evidence": [
+            "E2E-UI-006 diagnostic copy/clear hierarchy works"
+          ]
+        },
+        "データ": {
+          "status": "required",
+          "evidence": [
+            "E2E-UI-006 diagnostic copy/clear hierarchy works"
+          ]
+        },
+        "永続化": {
+          "status": "not-applicable",
+          "reason": "診断結果はセッション内のみ",
+          "evidence": []
+        },
+        "復元": {
+          "status": "not-applicable",
+          "reason": "診断結果は永続化しない",
+          "evidence": []
+        },
+        "投影": {
+          "status": "required",
+          "evidence": [
+            "E2E-UI-006 diagnostic copy/clear hierarchy works"
+          ]
+        },
+        "失敗復旧": {
+          "status": "required",
+          "evidence": [
+            "UI operation wiring"
+          ]
+        }
+      },
+      "depth": {
+        "requiredMutation": "Feature anchor: diagnostics"
+      }
+    },
+    {
+      "id": "FEAT-METRIC",
+      "layers": {
+        "入口": {
+          "status": "required",
+          "evidence": [
+            "E2E-UI-OPS-001 generic interactive control inventory"
+          ]
+        },
+        "操作": {
+          "status": "required",
+          "evidence": [
+            "E2E-REG-007 successful commit matches independent expected set"
+          ]
+        },
+        "状態": {
+          "status": "required",
+          "evidence": [
+            "E2E-REG-007 successful commit matches independent expected set"
+          ]
+        },
+        "データ": {
+          "status": "required",
+          "evidence": [
+            "E2E-REG-007 successful commit matches independent expected set"
+          ]
+        },
+        "永続化": {
+          "status": "not-applicable",
+          "reason": "セッション内計測のみ",
+          "evidence": []
+        },
+        "復元": {
+          "status": "not-applicable",
+          "reason": "計測結果は復元対象外",
+          "evidence": []
+        },
+        "投影": {
+          "status": "required",
+          "evidence": [
+            "E2E-METRIC-001 user-wait time is excluded from registration processing time"
+          ]
+        },
+        "失敗復旧": {
+          "status": "required",
+          "evidence": [
+            "Registration user-wait timing"
+          ]
+        }
+      },
+      "depth": {
+        "requiredMutation": "Feature anchor: metrics"
+      }
+    },
+    {
+      "id": "FEAT-CROSS",
+      "layers": {
+        "入口": {
+          "status": "required",
+          "evidence": [
+            "E2E-CROSS-DATA-001 10系統横断契約（ISBN/タイトル/作者/出版社/発売日/定価/シリーズ/巻数/読書状態/お気に入り）"
+          ]
+        },
+        "操作": {
+          "status": "required",
+          "evidence": [
+            "E2E-CROSS-DATA-001 10系統横断契約（ISBN/タイトル/作者/出版社/発売日/定価/シリーズ/巻数/読書状態/お気に入り）"
+          ]
+        },
+        "状態": {
+          "status": "required",
+          "evidence": [
+            "E2E-CROSS-DATA-001 10系統横断契約（ISBN/タイトル/作者/出版社/発売日/定価/シリーズ/巻数/読書状態/お気に入り）"
+          ]
+        },
+        "データ": {
+          "status": "required",
+          "evidence": [
+            "E2E-CROSS-DATA-001 10系統横断契約（ISBN/タイトル/作者/出版社/発売日/定価/シリーズ/巻数/読書状態/お気に入り）"
+          ]
+        },
+        "永続化": {
+          "status": "required",
+          "evidence": [
+            "E2E-CROSS-DATA-001 10系統横断契約（ISBN/タイトル/作者/出版社/発売日/定価/シリーズ/巻数/読書状態/お気に入り）"
+          ]
+        },
+        "復元": {
+          "status": "required",
+          "evidence": [
+            "E2E-CROSS-DATA-001 10系統横断契約（ISBN/タイトル/作者/出版社/発売日/定価/シリーズ/巻数/読書状態/お気に入り）"
+          ]
+        },
+        "投影": {
+          "status": "required",
+          "evidence": [
+            "E2E-CROSS-RELEASE-001 canonical release-date contract"
+          ]
+        },
+        "失敗復旧": {
+          "status": "required",
+          "evidence": [
+            "E2E-API-006H timeout時の自動フェイルオーバー"
+          ]
+        }
+      },
+      "depth": {
+        "requiredMutation": "Feature anchor: cross-data"
+      }
+    },
+    {
+      "id": "FEAT-UI",
+      "layers": {
+        "入口": {
+          "status": "required",
+          "evidence": [
+            "E2E-UI-OPS-002 all interactive control types are inventoried"
+          ]
+        },
+        "操作": {
+          "status": "required",
+          "evidence": [
+            "E2E-UI-OPS-002 all interactive control types are inventoried"
+          ]
+        },
+        "状態": {
+          "status": "required",
+          "evidence": [
+            "E2E-GLOBAL-001 no unintended text clipping"
+          ]
+        },
+        "データ": {
+          "status": "not-applicable",
+          "reason": "UI品質は業務データを生成しない",
+          "evidence": []
+        },
+        "永続化": {
+          "status": "not-applicable",
+          "reason": "UI品質設定の保存は設定機能が担当",
+          "evidence": []
+        },
+        "復元": {
+          "status": "not-applicable",
+          "reason": "UI品質自体は復元対象外",
+          "evidence": []
+        },
+        "投影": {
+          "status": "required",
+          "evidence": [
+            "E2E-GLOBAL-001 no unintended text clipping"
+          ]
+        },
+        "失敗復旧": {
+          "status": "required",
+          "evidence": [
+            "UI generic overflow"
+          ]
+        }
+      },
+      "depth": {
+        "requiredMutation": "Feature anchor: UI"
+      }
+    }
+  ]
+}

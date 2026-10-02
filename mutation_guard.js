@@ -55,7 +55,28 @@ const releaseUnknownFirstMutationCase=['Release-date unknown ordering',()=>runMu
 const genericMutationCase=  ['Generic author identity normalization',()=>runMutation('Generic author identity normalization',genericIdentityMutation)];
 const authorFragmentMutationCase=['Author fragment suppression',()=>runMutation('Author fragment suppression',authorFragmentMutation)];
 const structuredMultiAuthorMutationCase=['Structured multi-author parsing',()=>runMutation('Structured multi-author parsing',structuredMultiAuthorMutation)];
-const cases=[releaseUnknownFirstMutationCase,
+
+const featureAnchorMutationSpecs=[
+ ['Feature anchor: navigation','id="home"'],
+ ['Feature anchor: scan','id="scan"'],
+ ['Feature anchor: backup','id="backupDataBtn"'],
+ ['Feature anchor: detail','window.openBookDetail=function('],
+ ['Feature anchor: purchase','function setPurchaseGroupForBooks('],
+ ['Feature anchor: registration','function commitBulkPreparedBooks('],
+ ['Feature anchor: library','function renderLibrary('],
+ ['Feature anchor: search','function searchBooks('],
+ ['Feature anchor: calendar','function renderCalendar('],
+ ['Feature anchor: settings','function saveSettings('],
+ ['Feature anchor: API','bookTrackerApiManagement'],
+ ['Feature anchor: bibliography','function auditExistingBibliography'],
+ ['Feature anchor: diagnostics','function clearAllDiagnosticResults('],
+ ['Feature anchor: metrics','function measureProcessing('],
+ ['Feature anchor: cross-data','canonicalReleaseDate'],
+ ['Feature anchor: UI','function esc(']
+];
+
+const featureAnchorCases=featureAnchorMutationSpecs.map(([name,anchor])=>[name,()=>runMutation(name,source.replace(anchor,anchor.replace(/[\^$.*+?()[\]{}|]/g,'')+'__MUTATED__'))]);
+const cases=[...featureAnchorCases,releaseUnknownFirstMutationCase,
   ['UI operation wiring',()=>runMutation('UI operation wiring',uiOperationWiringMutation)],
   ['UI input operation contract',()=>runMutation('UI input operation contract',uiInputOperationContractMutation)],
 
