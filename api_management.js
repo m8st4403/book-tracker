@@ -15,7 +15,7 @@
     title:{minConfidence:"HIGH",requireIdentifier:true,conflict:"PREFER_STRONGEST"},
     author:{minConfidence:"HIGH",requireIdentifier:true,conflict:"PREFER_STRONGEST"},
     publisher:{minConfidence:"HIGH",requireIdentifier:true,conflict:"PREFER_STRONGEST"},
-    releaseDate:{minConfidence:"HIGH",requireIdentifier:true,requireSemantic:true,conflict:"HOLD"},
+    releaseDate:{minConfidence:"HIGH",requireIdentifier:true,requireSemantic:true,conflict:"HOLD",calendarRequiresDay:true},
     seriesId:{minConfidence:"HIGH",requireIdentifier:true,conflict:"HOLD"},
     seriesName:{minConfidence:"HIGH",requireIdentifier:true,requireSemantic:true,conflict:"HOLD"},
     volumeNumber:{minConfidence:"HIGH",requireIdentifier:true,requireSemantic:true,conflict:"HOLD"},
@@ -56,6 +56,7 @@
       taxIncludedConfirmed:!!ctx.taxIncludedConfirmed
     };
     if(field==="isbn13")e.semanticValidated=typeof valid13==="function"?valid13(String(value)): /^97[89]\d{10}$/.test(String(value));
+    if(field==="releaseDate"){const rd=releaseDateInfo(value);e.releaseDatePrecision=rd.precision;e.calendarEligible=rd.calendarEligible;e.releaseDateReason=rd.reason;e.semanticValidated=rd.precision!=="unknown";}
     if(field==="volumeNumber")e.semanticValidated=Number.isInteger(Number(value))&&Number(value)>=1;
     if(field==="listPrice")e.semanticValidated=Number.isFinite(Number(value))&&Number(value)>=0;
     if(field==="taxIncluded")e.semanticValidated=value===true;
@@ -67,6 +68,22 @@
     return {value,confidence,evidence:e};
   }
   function fieldPolicy(field){return FIELD_POLICIES[field]||{minConfidence:thresholds[field]||"MEDIUM",requireIdentifier:false,conflict:"PREFER_STRONGEST"};}
+  function releaseDateInfo(value){
+    const raw=String(value??"").normalize("NFKC").trim();
+    if(!raw)return {date:"",precision:"unknown",calendarEligible:false,reason:"MISSING"};
+    let m=raw.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})(?:$|[T\s])/);
+    if(m){const y=Number(m[1]),mo=Number(m[2]),d=Number(m[3]);const dt=new Date(y,mo-1,d);if(dt.getFullYear()===y&&dt.getMonth()===mo-1&&dt.getDate()===d)return {date:`${y}-${String(mo).padStart(2,"0")}-${String(d).padStart(2,"0")}`,precision:"day",calendarEligible:true,reason:"DAY"};}
+    m=raw.match(/^(\d{4})年(\d{1,2})月(\d{1,2})日/);
+    if(m){const y=Number(m[1]),mo=Number(m[2]),d=Number(m[3]);const dt=new Date(y,mo-1,d);if(dt.getFullYear()===y&&dt.getMonth()===mo-1&&dt.getDate()===d)return {date:`${y}-${String(mo).padStart(2,"0")}-${String(d).padStart(2,"0")}`,precision:"day",calendarEligible:true,reason:"DAY"};}
+    m=raw.match(/^(\d{4})[-\/](\d{1,2})(?:$|[^\d])/);
+    if(m){const y=Number(m[1]),mo=Number(m[2]);if(mo>=1&&mo<=12)return {date:`${y}-${String(mo).padStart(2,"0")}`,precision:"month",calendarEligible:false,reason:"DAY_REQUIRED"};}
+    m=raw.match(/^(\d{4})年(\d{1,2})月/);
+    if(m){const y=Number(m[1]),mo=Number(m[2]);if(mo>=1&&mo<=12)return {date:`${y}-${String(mo).padStart(2,"0")}`,precision:"month",calendarEligible:false,reason:"DAY_REQUIRED"};}
+    m=raw.match(/^(\d{4})(?:年)?$/);
+    if(m){const y=Number(m[1]);if(y>=1000&&y<=9999)return {date:String(y),precision:"year",calendarEligible:false,reason:"DAY_REQUIRED"};}
+    return {date:"",precision:"unknown",calendarEligible:false,reason:"UNPARSEABLE"};
+  }
+  function releaseDateEligibility(value){return releaseDateInfo(value);}
   function evaluateFieldCandidate(field,result,ctx={}){
     const p=fieldPolicy(field);
     if(!result||result.value===null||result.value===undefined||result.value==="")return {status:"REJECT",reason:"VALUE_MISSING"};
@@ -735,5 +752,5 @@
     return {value:null,confidence:"UNKNOWN",provider:null,evidence:null,attempts};
   }
   function config(){return {version:VERSION,runtimePolicy:JSON.parse(JSON.stringify(runtimePolicy)),providerHealth:JSON.parse(JSON.stringify(Object.fromEntries(providerHealth))),providers:JSON.parse(JSON.stringify(providers)),priority:JSON.parse(JSON.stringify(priority)),thresholds:JSON.parse(JSON.stringify(thresholds))}}
-  window.bookTrackerApiManagement={VERSION,CONFIDENCE:CONF,CRITICAL_FIELDS:[...CRITICAL],FIELD_POLICIES,providers,priority,thresholds,adapters,evidenceFor,evaluateFieldCandidate,acceptable,listPriceAccepted,runField,resolveIsbn,seriesAcceptable,mergeCandidates,config,normalizeRakuten,normalizeNDLFixture,normalizeNDLOpenSearch,extractNDLCreatorEntities,buildNDLSruSearchUrl,providerHealth,runtimePolicy,providerEnabled,providerTemporarilyDisabled,search,clearResolverCache,cacheInfo,cachePolicy};
+  window.bookTrackerApiManagement={VERSION,CONFIDENCE:CONF,CRITICAL_FIELDS:[...CRITICAL],FIELD_POLICIES,providers,priority,thresholds,adapters,evidenceFor,evaluateFieldCandidate,acceptable,listPriceAccepted,runField,resolveIsbn,seriesAcceptable,mergeCandidates,releaseDateInfo,releaseDateEligibility,config,normalizeRakuten,normalizeNDLFixture,normalizeNDLOpenSearch,extractNDLCreatorEntities,buildNDLSruSearchUrl,providerHealth,runtimePolicy,providerEnabled,providerTemporarilyDisabled,search,clearResolverCache,cacheInfo,cachePolicy};
 })();

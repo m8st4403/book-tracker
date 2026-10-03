@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "release": "4.13.230",
+  "release": "4.13.233",
   "purpose": "Required-layer evidence may be shared only when the reuse is explicit, justified, and independently backed by the consuming feature's own primary runtime evidence.",
   "rules": [
     "Every reused evidence ID must be listed here with its producer feature and allowed consumer feature/layer pairs.",

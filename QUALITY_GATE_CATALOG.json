@@ -1,12 +1,22 @@
 {
   "schemaVersion": 1,
-  "release": "4.13.230",
+  "release": "4.13.233",
   "purpose": "Single source of truth for release quality stages. Prevents pipeline stage drift and orphaned quality gates.",
   "stages": [
     {
       "id": "guard",
       "script": "dev_guard.js",
       "scope": "static/runtime wiring"
+    },
+    {
+      "id": "status",
+      "script": "feature_status_inventory_gate.js",
+      "scope": "implemented vs unconfirmed runtime vs planned feature status"
+    },
+    {
+      "id": "roadmap",
+      "script": "development_roadmap_gate.js",
+      "scope": "development priority and planned-feature disposition"
     },
     {
       "id": "coverage",

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "release": "4.13.230",
+  "release": "4.13.233",
   "principle": "全投影先を独立検査へ接続し、cross-contract-onlyを残さない。新規投影は独立証拠がない限りRelease GateでFAILとする。",
   "statuses": [
     "named-evidence",

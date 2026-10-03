@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "release": "4.13.230",
+  "release": "4.13.233",
   "principle": "Every shared bibliographic field must have explicit source, resolver/adoption, persistence, projection, and failure evidence; a field is not considered covered merely because another field's test passes.",
   "fields": [
     {
@@ -63,7 +63,7 @@
     {
       "id": "releaseDate",
       "source": "Provider",
-      "resolver": "releaseDateInfo/canonicalReleaseDate",
+      "resolver": "releaseDateInfo/canonicalReleaseDate/releaseDateUsageState",
       "storage": "books[].date",
       "projections": [
         "詳細",
@@ -74,8 +74,8 @@
         "通知",
         "sort"
       ],
-      "failure": "unknown/month/year precision or wrong day",
-      "mutation": "Release-date unknown ordering"
+      "failure": "unknown/month/year precision or wrong day; calendar requires day precision",
+      "mutation": "Release-date unknown ordering + precision eligibility"
     },
     {
       "id": "listPrice",

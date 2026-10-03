@@ -1,0 +1,212 @@
+{
+  "schemaVersion": 1,
+  "release": "4.13.233",
+  "generatedAt": "2026-10-03",
+  "purpose": "Final status inventory separating implemented quality coverage, runtime confirmation, and explicitly planned-but-unimplemented roadmap features.",
+  "summary": {
+    "currentFeatureModel": 16,
+    "currentFeaturesAutomatedContractPass": 16,
+    "currentFeaturesBrowserE2EConfirmedInCurrentEnvironment": 0,
+    "currentFeaturesBrowserE2EUnconfirmedInCurrentEnvironment": 16,
+    "explicitPlannedFeatureIds": 28,
+    "explicitPlannedFeatureIdsList": [
+      "IOS-CAMERA",
+      "IOS-CLOUD",
+      "IOS-DATA",
+      "IOS-DYNAMIC-TYPE",
+      "IOS-EVENTKIT",
+      "IOS-NOTIFY",
+      "IOS-SWIFTUI",
+      "IOS-VOICEOVER",
+      "MON-AFF",
+      "MON-B2B",
+      "MON-PRO",
+      "MON-SUB",
+      "OCR-CANDIDATE",
+      "OCR-COVER",
+      "OCR-ISBN",
+      "OCR-SEARCH",
+      "OCR-SPINE",
+      "REC-AUTHOR",
+      "REC-BEHAVIOR",
+      "REC-NO-ATTRIBUTE",
+      "REC-REASON",
+      "REC-SERIES",
+      "REC-USER-CONTROL",
+      "RELEASE-CHANGE",
+      "RELEASE-CONFLICT",
+      "RELEASE-MODEL",
+      "RELEASE-REGION",
+      "RELEASE-SOURCE"
+    ],
+    "additionalUnnumberedFuturePolicyItems": 6,
+    "additionalUnnumberedFuturePolicyItemsNote": "App Store/privacy/accessibility/rights work items are listed in ROADMAP_TEST_MATRIX.md but are intentionally not counted as feature IDs."
+  },
+  "currentFeatures": [
+    {
+      "id": "FEAT-NAV",
+      "operation": "タブ遷移",
+      "automatedContract": "PASS",
+      "requiredLayers": 4,
+      "evidencedLayers": 4,
+      "primaryEvidence": "E2E-001 all six tabs exist",
+      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
+      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+    },
+    {
+      "id": "FEAT-SCAN",
+      "operation": "ISBNスキャン",
+      "automatedContract": "PASS",
+      "requiredLayers": 8,
+      "evidencedLayers": 8,
+      "primaryEvidence": "E2E-SCAN-002 barcode normalization produces canonical ISBN candidates",
+      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
+      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+    },
+    {
+      "id": "FEAT-BACKUP",
+      "operation": "バックアップ復元",
+      "automatedContract": "PASS",
+      "requiredLayers": 8,
+      "evidencedLayers": 8,
+      "primaryEvidence": "E2E-PERSIST-003 backup export/import round-trip",
+      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
+      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+    },
+    {
+      "id": "FEAT-DETAIL",
+      "operation": "書籍詳細",
+      "automatedContract": "PASS",
+      "requiredLayers": 8,
+      "evidencedLayers": 8,
+      "primaryEvidence": "E2E-PERSIST-001 save/reload preserves all persistent domains",
+      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
+      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+    },
+    {
+      "id": "FEAT-PURCHASE",
+      "operation": "購入情報",
+      "automatedContract": "PASS",
+      "requiredLayers": 8,
+      "evidencedLayers": 8,
+      "primaryEvidence": "E2E-PERSIST-002 purchase-group write failure rolls back memory state",
+      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
+      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+    },
+    {
+      "id": "FEAT-REG",
+      "operation": "蔵書登録",
+      "automatedContract": "PASS",
+      "requiredLayers": 8,
+      "evidencedLayers": 8,
+      "primaryEvidence": "E2E-REG-011 registration commit persists the registered book",
+      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
+      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+    },
+    {
+      "id": "FEAT-LIB",
+      "operation": "蔵書管理",
+      "automatedContract": "PASS",
+      "requiredLayers": 8,
+      "evidencedLayers": 8,
+      "primaryEvidence": "E2E-PROP-002 independent oracle covers all library filter dimensions",
+      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
+      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+    },
+    {
+      "id": "FEAT-SEARCH",
+      "operation": "書籍検索",
+      "automatedContract": "PASS",
+      "requiredLayers": 8,
+      "evidencedLayers": 8,
+      "primaryEvidence": "E2E-SEARCH-003 independent search sort/unowned oracle",
+      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
+      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+    },
+    {
+      "id": "FEAT-CAL",
+      "operation": "カレンダー",
+      "automatedContract": "PASS",
+      "requiredLayers": 8,
+      "evidencedLayers": 8,
+      "primaryEvidence": "E2E-CROSS-RELEASE-001 canonical release-date contract",
+      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
+      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+    },
+    {
+      "id": "FEAT-SET",
+      "operation": "設定",
+      "automatedContract": "PASS",
+      "requiredLayers": 8,
+      "evidencedLayers": 8,
+      "primaryEvidence": "E2E-SETTINGS-001 all settings survive save/read round-trip",
+      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
+      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+    },
+    {
+      "id": "FEAT-API",
+      "operation": "書誌API",
+      "automatedContract": "PASS",
+      "requiredLayers": 6,
+      "evidencedLayers": 6,
+      "primaryEvidence": "E2E-API-006H timeout時の自動フェイルオーバー",
+      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
+      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+    },
+    {
+      "id": "FEAT-BIB",
+      "operation": "既存書誌補完",
+      "automatedContract": "PASS",
+      "requiredLayers": 8,
+      "evidencedLayers": 8,
+      "primaryEvidence": "E2E-BIB-001 existing bibliography audit uses Resolver, fills only eligible missing fields, and preserves collection shape",
+      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
+      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+    },
+    {
+      "id": "FEAT-DIAG",
+      "operation": "診断",
+      "automatedContract": "PASS",
+      "requiredLayers": 6,
+      "evidencedLayers": 6,
+      "primaryEvidence": "E2E-UI-006 diagnostic copy/clear hierarchy works",
+      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
+      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+    },
+    {
+      "id": "FEAT-METRIC",
+      "operation": "計測",
+      "automatedContract": "PASS",
+      "requiredLayers": 6,
+      "evidencedLayers": 6,
+      "primaryEvidence": "E2E-METRIC-001 user-wait time is excluded from registration processing time",
+      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
+      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+    },
+    {
+      "id": "FEAT-CROSS",
+      "operation": "横断データ",
+      "automatedContract": "PASS",
+      "requiredLayers": 8,
+      "evidencedLayers": 8,
+      "primaryEvidence": "E2E-CROSS-DATA-001 10系統横断契約（ISBN/タイトル/作者/出版社/発売日/定価/シリーズ/巻数/読書状態/お気に入り）",
+      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
+      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+    },
+    {
+      "id": "FEAT-UI",
+      "operation": "UI品質",
+      "automatedContract": "PASS",
+      "requiredLayers": 5,
+      "evidencedLayers": 5,
+      "primaryEvidence": "E2E-UI-OPS-004 runtime/static operation-contract parity",
+      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
+      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+    }
+  ],
+  "interpretation": {
+    "automatedContractPass": "Contract/logic/release-gate evidence exists; this does not imply successful real-browser execution.",
+    "browserE2EUnconfirmed": "Not executed to completion in the current automation environment. It is not a product defect classification.",
+    "planned": "Not implemented/current by roadmap status and therefore excluded from current release PASS criteria."
+  }
+}

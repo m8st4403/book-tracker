@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "release": "4.13.233",
+  "purpose": "Decision record separating stabilization work, next development priorities, deferred roadmap work, and future-only policy items. This is planning truth, not an implementation PASS signal.",
+  "principles": [
+    "Do not start new feature breadth until current data/projection quality gates remain green.",
+    "Resolve existing release-date adoption/projection gaps before adding recommendation or monetization features.",
+    "After release-date stabilization, revisit search/discovery architecture as the next major product feature.",
+    "Native iOS work begins only after the web/prototype data contracts are stable enough to serve as the semantic source of truth.",
+    "Planned features remain excluded from current release PASS criteria until explicitly promoted to CURRENT."
+  ],
+  "priorityOrder": [
+    {
+      "rank": 1,
+      "id": "STAB-RELEASE-DATE",
+      "status": "NEXT",
+      "scope": "既存蔵書の発売日取得・採用・保存・カレンダー投影をReleaseEventモデルへ整理",
+      "reason": "既存蔵書で発売日が欠落し、カレンダー反映も不足しているという現在のユーザー影響を直接解消する。",
+      "gatesRequired": [
+        "field-contract",
+        "cross-projection",
+        "mutation",
+        "runtime-contract"
+      ]
+    },
+    {
+      "rank": 2,
+      "id": "SEARCH-DISCOVERY-REDESIGN",
+      "status": "NEXT_AFTER_1",
+      "scope": "学術誌・一般書・コミックを区別した検索/追加/発見経路の再設計",
+      "reason": "登録品質基盤が安定した後の主要プロダクト課題。検索結果の同一性、古い結果混入、API fallback、timeout/429、登録受け渡しを一体で設計する。",
+      "gatesRequired": [
+        "coverage",
+        "outcome",
+        "cross-projection",
+        "mutation",
+        "runtime-contract"
+      ]
+    },
+    {
+      "rank": 3,
+      "id": "IOS-MVP",
+      "status": "LATER",
+      "scope": "SwiftUI/データ移行/カメラ/通知/EventKit/アクセシビリティ",
+      "reason": "現行プロトタイプの意味モデルと検索・書誌経路が固まってからネイティブ化する方が移植リスクを下げられる。",
+      "dependsOn": [
+        "STAB-RELEASE-DATE",
+        "SEARCH-DISCOVERY-REDESIGN"
+      ]
+    },
+    {
+      "rank": 4,
+      "id": "OCR",
+      "status": "LATER",
+      "scope": "ISBN/表紙/背表紙OCRと候補確認",
+      "reason": "候補誤登録を防ぐ確認フローが必要で、検索/登録共通契約の安定後に追加する。",
+      "dependsOn": [
+        "SEARCH-DISCOVERY-REDESIGN",
+        "IOS-MVP"
+      ]
+    },
+    {
+      "rank": 5,
+      "id": "RECOMMENDATION",
+      "status": "LATER",
+      "scope": "行動/シリーズ/作者ベースの推薦",
+      "reason": "書誌同一性と検索結果品質が安定してから実装しないと、推薦根拠の誤りが増える。",
+      "dependsOn": [
+        "SEARCH-DISCOVERY-REDESIGN"
+      ]
+    },
+    {
+      "rank": 6,
+      "id": "MONETIZATION",
+      "status": "DEFER",
+      "scope": "アフィリエイト/Pro/サブスク/B2B",
+      "reason": "コア機能の品質とデータ権利・利用条件を先に確立する。",
+      "dependsOn": [
+        "IOS-MVP",
+        "SEARCH-DISCOVERY-REDESIGN"
+      ]
+    }
+  ],
+  "plannedFeatureDisposition": {
+    "RELEASE-MODEL": "promote_candidate_next",
+    "RELEASE-SOURCE": "promote_candidate_next",
+    "RELEASE-REGION": "promote_with_release_engine",
+    "RELEASE-CHANGE": "promote_with_release_engine",
+    "RELEASE-CONFLICT": "promote_with_release_engine",
+    "REC-BEHAVIOR": "later",
+    "REC-SERIES": "later",
+    "REC-AUTHOR": "later",
+    "REC-REASON": "later",
+    "REC-NO-ATTRIBUTE": "later",
+    "REC-USER-CONTROL": "later",
+    "IOS-SWIFTUI": "later",
+    "IOS-DYNAMIC-TYPE": "later",
+    "IOS-VOICEOVER": "later",
+    "IOS-CAMERA": "later",
+    "IOS-EVENTKIT": "later",
+    "IOS-NOTIFY": "later",
+    "IOS-DATA": "later",
+    "IOS-CLOUD": "later",
+    "OCR-ISBN": "later",
+    "OCR-COVER": "later",
+    "OCR-SPINE": "later",
+    "OCR-CANDIDATE": "later",
+    "OCR-SEARCH": "later",
+    "MON-AFF": "defer",
+    "MON-PRO": "defer",
+    "MON-SUB": "defer",
+    "MON-B2B": "defer"
+  },
+  "exitCriteriaForNextStep": [
+    "Release-date model has explicit source/confidence/updatedAt provenance and item-specific adoption rules.",
+    "Existing-book refresh can fill eligible missing releaseDate values without overwriting existing values.",
+    "ReleaseDate -> calendar projection is independently tested, including future dates and date changes.",
+    "Search redesign begins only after the release-date stabilization gate is green."
+  ]
+}
