@@ -52,7 +52,7 @@ const registrationDuplicateMutation=source.replace('if(usableExisting&&!isRicher
 const registrationUserWaitMutation=source.replace('waitDelta=Math.max(0,(Number(token?.userWaitMs)||0)-waitBefore);token.processingMs+=(Math.max(0,elapsed-apiDelta-waitDelta));','waitDelta=0;token.processingMs+=(Math.max(0,elapsed-apiDelta-waitDelta));');
 const registrationPersistenceMutation=source.replace('function persistBooks(){try{localStorage.setItem(KEY,JSON.stringify(books));return true}catch(e){console.error("books save",e);return false}}','function persistBooks(){return true}');
 
-const releaseUnknownFirstMutationCase=['Release-date unknown ordering',()=>runMutation('Release-date unknown ordering',releaseUnknownFirstMutation)];
+const releaseUnknownFirstMutationCase=['Release-date unknown ordering + precision eligibility',()=>runMutation('Release-date unknown ordering + precision eligibility',releaseUnknownFirstMutation)];
 const genericMutationCase=  ['Generic author identity normalization',()=>runMutation('Generic author identity normalization',genericIdentityMutation)];
 const authorFragmentMutationCase=['Author fragment suppression',()=>runMutation('Author fragment suppression',authorFragmentMutation)];
 const structuredMultiAuthorMutationCase=['Structured multi-author parsing',()=>runMutation('Structured multi-author parsing',structuredMultiAuthorMutation)];

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "release": "4.13.233",
+  "release": "4.13.234",
   "principle": "Every shared bibliographic field must have explicit source, resolver/adoption, persistence, projection, and failure evidence; a field is not considered covered merely because another field's test passes.",
   "fields": [
     {
