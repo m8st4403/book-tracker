@@ -1,17 +1,151 @@
 {
   "schemaVersion": 1,
-  "release": "4.13.215",
+  "release": "4.13.230",
   "principle": "Every shared bibliographic field must have explicit source, resolver/adoption, persistence, projection, and failure evidence; a field is not considered covered merely because another field's test passes.",
   "fields": [
-    {"id":"isbn","source":"Provider/入力","resolver":"canonicalIsbn/bookResultKey","storage":"books[].isbn","projections":["登録","蔵書","検索","詳細","所有判定"],"failure":"invalid/duplicate ISBN","mutation":"Feature anchor: registration"},
-    {"id":"title","source":"Provider/検索","resolver":"Resolver title","storage":"books[].title","projections":["検索","詳細","蔵書","ソート"],"failure":"empty/stale title","mutation":"Feature anchor: search"},
-    {"id":"author","source":"Provider","resolver":"Resolver author + identity normalization","storage":"books[].author/authorNames","projections":["詳細","蔵書","作者filter","作者profile"],"failure":"malformed/multi-author identity","mutation":"Author filter predicate"},
-    {"id":"publisher","source":"Provider","resolver":"Resolver publisher","storage":"books[].publisher","projections":["詳細","蔵書","出版社filter","出版社profile"],"failure":"missing/incorrect publisher","mutation":"Publisher filter predicate"},
-    {"id":"releaseDate","source":"Provider","resolver":"releaseDateInfo/canonicalReleaseDate","storage":"books[].date","projections":["詳細","蔵書","発売日filter","Home","カレンダー","通知","sort"],"failure":"unknown/month/year precision or wrong day","mutation":"Release-date unknown ordering"},
-    {"id":"listPrice","source":"Provider/manual","resolver":"field adoption policy + taxIncluded requirement","storage":"books[].price","projections":["詳細","蔵書","価格filter","Home総額"],"failure":"tax status unknown/conflict","mutation":"API trust"},
-    {"id":"seriesName","source":"Provider/title fallback","resolver":"series grouping oracle","storage":"books[].series.name","projections":["登録","シリーズ表示","診断","巻抜け"],"failure":"scope collision/spin-off merge","mutation":"Series redundant-scope coalescing"},
-    {"id":"volumeNumber","source":"Provider/title evidence","resolver":"volume invariant","storage":"books[].series.volumeNumber","projections":["登録","シリーズ表示","巻sort","巻抜け"],"failure":"0/null/wrong volume or sort instability","mutation":"Series volume invariant"},
-    {"id":"readingStatus","source":"User","resolver":"bookMeta","storage":"bookMeta[isbn].readingStatus","projections":["詳細","蔵書","読書filter","Home"],"failure":"state not saved/projected","mutation":"Library reading-status predicate"},
-    {"id":"favorite","source":"User","resolver":"bookMeta","storage":"bookMeta[isbn].favorite","projections":["詳細","蔵書","お気に入りfilter","Home"],"failure":"state not saved/projected","mutation":"Library favorite predicate"}
+    {
+      "id": "isbn",
+      "source": "Provider/入力",
+      "resolver": "canonicalIsbn/bookResultKey",
+      "storage": "books[].isbn",
+      "projections": [
+        "登録",
+        "蔵書",
+        "検索",
+        "詳細",
+        "所有判定"
+      ],
+      "failure": "invalid/duplicate ISBN",
+      "mutation": "Feature anchor: registration"
+    },
+    {
+      "id": "title",
+      "source": "Provider/検索",
+      "resolver": "Resolver title",
+      "storage": "books[].title",
+      "projections": [
+        "検索",
+        "詳細",
+        "蔵書",
+        "ソート"
+      ],
+      "failure": "empty/stale title",
+      "mutation": "Feature anchor: search"
+    },
+    {
+      "id": "author",
+      "source": "Provider",
+      "resolver": "Resolver author + identity normalization",
+      "storage": "books[].author/authorNames",
+      "projections": [
+        "詳細",
+        "蔵書",
+        "作者filter",
+        "作者profile"
+      ],
+      "failure": "malformed/multi-author identity",
+      "mutation": "Author filter predicate"
+    },
+    {
+      "id": "publisher",
+      "source": "Provider",
+      "resolver": "Resolver publisher",
+      "storage": "books[].publisher",
+      "projections": [
+        "詳細",
+        "蔵書",
+        "出版社filter",
+        "出版社profile"
+      ],
+      "failure": "missing/incorrect publisher",
+      "mutation": "Publisher filter predicate"
+    },
+    {
+      "id": "releaseDate",
+      "source": "Provider",
+      "resolver": "releaseDateInfo/canonicalReleaseDate",
+      "storage": "books[].date",
+      "projections": [
+        "詳細",
+        "蔵書",
+        "発売日filter",
+        "Home",
+        "カレンダー",
+        "通知",
+        "sort"
+      ],
+      "failure": "unknown/month/year precision or wrong day",
+      "mutation": "Release-date unknown ordering"
+    },
+    {
+      "id": "listPrice",
+      "source": "Provider/manual",
+      "resolver": "field adoption policy + taxIncluded requirement",
+      "storage": "books[].price",
+      "projections": [
+        "詳細",
+        "蔵書",
+        "価格filter",
+        "Home総額"
+      ],
+      "failure": "tax status unknown/conflict",
+      "mutation": "API trust"
+    },
+    {
+      "id": "seriesName",
+      "source": "Provider/title fallback",
+      "resolver": "series grouping oracle",
+      "storage": "books[].series.name",
+      "projections": [
+        "登録",
+        "シリーズ表示",
+        "診断",
+        "巻抜け"
+      ],
+      "failure": "scope collision/spin-off merge",
+      "mutation": "Series redundant-scope coalescing"
+    },
+    {
+      "id": "volumeNumber",
+      "source": "Provider/title evidence",
+      "resolver": "volume invariant",
+      "storage": "books[].series.volumeNumber",
+      "projections": [
+        "登録",
+        "シリーズ表示",
+        "巻sort",
+        "巻抜け"
+      ],
+      "failure": "0/null/wrong volume or sort instability",
+      "mutation": "Series volume invariant"
+    },
+    {
+      "id": "readingStatus",
+      "source": "User",
+      "resolver": "bookMeta",
+      "storage": "bookMeta[isbn].readingStatus",
+      "projections": [
+        "詳細",
+        "蔵書",
+        "読書filter",
+        "Home"
+      ],
+      "failure": "state not saved/projected",
+      "mutation": "Library reading-status predicate"
+    },
+    {
+      "id": "favorite",
+      "source": "User",
+      "resolver": "bookMeta",
+      "storage": "bookMeta[isbn].favorite",
+      "projections": [
+        "詳細",
+        "蔵書",
+        "お気に入りfilter",
+        "Home"
+      ],
+      "failure": "state not saved/projected",
+      "mutation": "Library favorite predicate"
+    }
   ]
 }

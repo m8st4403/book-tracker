@@ -1,17 +1,24 @@
 {
   "name": "book-tracker-test-guard",
   "private": true,
-  "version": "4.13.215",
+  "version": "4.13.230",
   "scripts": {
-    "test": "npm run test:guard && npm run test:coverage && npm run test:depth && npm run test:outcome && npm run test:outcome-quality && npm run test:reuse && npm run test:field-contract && npm run test:mutation",
+    "test": "npm run test:release",
     "test:guard": "node dev_guard.js index.html",
     "test:mutation": "node mutation_guard.js",
-    "test:release": "npm test && node release_artifact_guard.js .",
+    "test:release": "node quality_gate_catalog_gate.js && node release_pipeline.js && node release_artifact_guard.js .",
     "test:coverage": "node feature_coverage_gate.js",
     "test:depth": "node feature_depth_gate.js",
     "test:outcome": "node functional_outcome_gate.js",
     "test:outcome-quality": "node outcome_evidence_quality_gate.js",
     "test:reuse": "node evidence_reuse_gate.js",
-    "test:field-contract": "node bibliographic_field_contract_gate.js"
+    "test:field-contract": "node bibliographic_field_contract_gate.js",
+    "test:pipeline": "node release_pipeline.js",
+    "test:zip-structure": "node release_zip_structure_guard.js \"$ZIP_PATH\"",
+    "test:cross-projection": "node cross_data_projection_gate.js",
+    "test:runtime-contract": "node runtime_spec_guard_contract.js",
+    "test:runtime-harness-contract": "node runtime_harness_contract.js",
+    "test:catalog": "node quality_gate_catalog_gate.js",
+    "test:runtime-env": "node runtime_environment_probe.js"
   }
 }

@@ -1,0 +1,25 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>本棚スケジュール Runtime検査ハーネス</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;margin:20px;line-height:1.5}button{padding:10px 14px;border:0;border-radius:10px;background:#111827;color:#fff;font-weight:700}pre{white-space:pre-wrap;word-break:break-word;background:#f3f4f6;padding:12px;border-radius:10px}.ok{color:#166534}.ng{color:#b42318}</style></head><body>
+<h1>Runtime検査ハーネス</h1><p>アプリ本体をiframeで起動し、Runtime Spec Guardをユーザー操作なしで実行します。</p>
+<button id="run">Runtime検査を実行</button><p id="status">待機中</p><pre id="result"></pre>
+<iframe id="app" title="app" style="position:absolute;width:1px;height:1px;left:-10000px;border:0"></iframe>
+<script>
+const TIMEOUT_MS=30000;const statusEl=document.getElementById('status'),resultEl=document.getElementById('result'),frame=document.getElementById('app');
+function show(v,ok){statusEl.textContent=v;statusEl.className=ok?'ok':'ng'}
+async function run(){
+ show('アプリ起動・Runtime検査を開始…',true);resultEl.textContent='';
+ const started=performance.now();
+ frame.src='./index.html?runtimeHarness=1&ts='+Date.now();
+ try{
+  await new Promise((resolve,reject)=>{let done=false;const timer=setTimeout(()=>{if(done)return;done=true;reject(new Error('APP_LOAD_OR_RUNTIME_TIMEOUT:'+TIMEOUT_MS+'ms'))},TIMEOUT_MS);frame.addEventListener('load',()=>{if(!done){done=true;clearTimeout(timer);resolve()}},{once:true})});
+  const w=frame.contentWindow;
+  if(typeof w.runBookTrackerSpecGuard!=='function')throw new Error('RUNTIME_GUARD_EXPORT_MISSING');
+  const r=await w.runBookTrackerSpecGuard();
+  const audit=r?.projectionAudit||{};
+  const ok=!!r?.ok&&audit.expected===24&&audit.executed===24&&Object.values(audit.counts||{}).every(n=>n===1);
+  const out={schema:1,release:r?.version||'unknown',elapsedMs:Math.round(performance.now()-started),status:ok?'PASS':'FAIL',projectionAudit:audit,results:r?.results||[]};
+  resultEl.textContent=JSON.stringify(out,null,2);show(ok?'Runtime検査 PASS（24/24）':'Runtime検査 FAIL',ok);return out;
+ }catch(e){const out={schema:1,elapsedMs:Math.round(performance.now()-started),status:'UNAVAILABLE',reason:String(e?.message||e)};resultEl.textContent=JSON.stringify(out,null,2);show('Runtime検査を完走できませんでした',false);return out}
+}
+document.getElementById('run').addEventListener('click',run);
+if(new URLSearchParams(location.search).has('autorun'))run();
+</script></body></html>

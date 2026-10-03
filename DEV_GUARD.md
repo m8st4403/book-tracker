@@ -1,4 +1,4 @@
-# v4.13.215 開発ガード
+# v4.13.230 開発ガード
 
 現在の品質契約の正本は `QUALITY_CONTRACT.md` です。過去版の回帰一覧・ルール台帳・操作カタログを現行判定へ重複参照しません。
 
@@ -30,5 +30,5 @@ npm run test:release
 シリーズscope吸収後の巻数ソートを、2種類のscope配置 × 6入力順 × ASC/DESC = 24ケースで検証します。さらに `series display sort` Mutationを注入し、再ソート処理を失わせた場合にGateがFAILすることを確認します。
 
 
-### v4.13.215: Functional outcome closure
+### v4.13.230: Functional outcome closure
 All CURRENT features must have a machine-readable operation, observable outcome, failure invariant, primary executable evidence, coverage link, and mutation link in `FUNCTIONAL_OUTCOME_MATRIX.json`. Missing or orphaned entries block release.

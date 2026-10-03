@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "release": "4.13.230",
+  "purpose": "Single source of truth for release quality stages. Prevents pipeline stage drift and orphaned quality gates.",
+  "stages": [
+    {
+      "id": "guard",
+      "script": "dev_guard.js",
+      "scope": "static/runtime wiring"
+    },
+    {
+      "id": "coverage",
+      "script": "feature_coverage_gate.js",
+      "scope": "feature contract coverage"
+    },
+    {
+      "id": "depth",
+      "script": "feature_depth_gate.js",
+      "scope": "feature completion depth"
+    },
+    {
+      "id": "outcome",
+      "script": "functional_outcome_gate.js",
+      "scope": "functional outcomes"
+    },
+    {
+      "id": "outcome-quality",
+      "script": "outcome_evidence_quality_gate.js",
+      "scope": "outcome evidence quality"
+    },
+    {
+      "id": "reuse",
+      "script": "evidence_reuse_gate.js",
+      "scope": "evidence reuse"
+    },
+    {
+      "id": "field-contract",
+      "script": "bibliographic_field_contract_gate.js",
+      "scope": "bibliographic field lifecycle"
+    },
+    {
+      "id": "cross-projection",
+      "script": "cross_data_projection_gate.js",
+      "scope": "cross-data projection"
+    },
+    {
+      "id": "runtime-contract",
+      "script": "runtime_spec_guard_contract.js",
+      "scope": "runtime guard contract"
+    },
+    {
+      "id": "runtime-harness-contract",
+      "script": "runtime_harness_contract.js",
+      "scope": "runtime harness contract"
+    },
+    {
+      "id": "mutation",
+      "script": "mutation_guard.js",
+      "scope": "mutation resistance"
+    }
+  ]
+}

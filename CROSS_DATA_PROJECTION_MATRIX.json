@@ -1,0 +1,453 @@
+{
+  "schemaVersion": 1,
+  "release": "4.13.230",
+  "principle": "全投影先を独立検査へ接続し、cross-contract-onlyを残さない。新規投影は独立証拠がない限りRelease GateでFAILとする。",
+  "statuses": [
+    "named-evidence",
+    "cross-contract-only",
+    "unverified",
+    "not-applicable"
+  ],
+  "fields": [
+    {
+      "field": "isbn",
+      "projection": "登録",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "E2E-REG-007"
+      ],
+      "verificationRequired": false,
+      "reason": "現行契約で投影先は定義されているが、この投影経路専用の独立証拠がBIBLIOGRAPHIC_FIELD_CONTRACTからは特定できない"
+    },
+    {
+      "field": "isbn",
+      "projection": "蔵書",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "E2E-REG-007"
+      ],
+      "verificationRequired": false,
+      "reason": "現行契約で投影先は定義されているが、この投影経路専用の独立証拠がBIBLIOGRAPHIC_FIELD_CONTRACTからは特定できない"
+    },
+    {
+      "field": "isbn",
+      "projection": "検索",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "E2E-SEARCH-003"
+      ],
+      "verificationRequired": false,
+      "reason": "現行契約で投影先は定義されているが、この投影経路専用の独立証拠がBIBLIOGRAPHIC_FIELD_CONTRACTからは特定できない"
+    },
+    {
+      "field": "isbn",
+      "projection": "詳細",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "PROJ-001"
+      ],
+      "verificationRequired": false,
+      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+    },
+    {
+      "field": "isbn",
+      "projection": "所有判定",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "PROJ-002"
+      ],
+      "verificationRequired": false,
+      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+    },
+    {
+      "field": "title",
+      "projection": "検索",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "E2E-SEARCH-003"
+      ],
+      "verificationRequired": false,
+      "reason": "現行契約で投影先は定義されているが、この投影経路専用の独立証拠がBIBLIOGRAPHIC_FIELD_CONTRACTからは特定できない"
+    },
+    {
+      "field": "title",
+      "projection": "詳細",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "E2E-PERSIST-001"
+      ],
+      "verificationRequired": false,
+      "reason": "現行契約で投影先は定義されているが、この投影経路専用の独立証拠がBIBLIOGRAPHIC_FIELD_CONTRACTからは特定できない"
+    },
+    {
+      "field": "title",
+      "projection": "蔵書",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "E2E-CROSS-DATA-001"
+      ],
+      "verificationRequired": false,
+      "reason": "現行契約で投影先は定義されているが、この投影経路専用の独立証拠がBIBLIOGRAPHIC_FIELD_CONTRACTからは特定できない"
+    },
+    {
+      "field": "title",
+      "projection": "ソート",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "PROJ-003"
+      ],
+      "verificationRequired": false,
+      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+    },
+    {
+      "field": "author",
+      "projection": "詳細",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "PROJ-004"
+      ],
+      "verificationRequired": false,
+      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+    },
+    {
+      "field": "author",
+      "projection": "蔵書",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "E2E-CROSS-DATA-001"
+      ],
+      "verificationRequired": false,
+      "reason": "現行契約で投影先は定義されているが、この投影経路専用の独立証拠がBIBLIOGRAPHIC_FIELD_CONTRACTからは特定できない"
+    },
+    {
+      "field": "author",
+      "projection": "作者filter",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "E2E-PROP-002"
+      ],
+      "verificationRequired": false,
+      "reason": "現行契約で投影先は定義されているが、この投影経路専用の独立証拠がBIBLIOGRAPHIC_FIELD_CONTRACTからは特定できない"
+    },
+    {
+      "field": "author",
+      "projection": "作者profile",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "PROJ-005"
+      ],
+      "verificationRequired": false,
+      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+    },
+    {
+      "field": "publisher",
+      "projection": "詳細",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "PROJ-006"
+      ],
+      "verificationRequired": false,
+      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+    },
+    {
+      "field": "publisher",
+      "projection": "蔵書",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "E2E-CROSS-DATA-001"
+      ],
+      "verificationRequired": false,
+      "reason": "現行契約で投影先は定義されているが、この投影経路専用の独立証拠がBIBLIOGRAPHIC_FIELD_CONTRACTからは特定できない"
+    },
+    {
+      "field": "publisher",
+      "projection": "出版社filter",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "E2E-PROP-002"
+      ],
+      "verificationRequired": false,
+      "reason": "現行契約で投影先は定義されているが、この投影経路専用の独立証拠がBIBLIOGRAPHIC_FIELD_CONTRACTからは特定できない"
+    },
+    {
+      "field": "publisher",
+      "projection": "出版社profile",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "PROJ-007"
+      ],
+      "verificationRequired": false,
+      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+    },
+    {
+      "field": "releaseDate",
+      "projection": "詳細",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "E2E-CROSS-DATA-001"
+      ],
+      "verificationRequired": false,
+      "reason": "現行契約で投影先は定義されているが、この投影経路専用の独立証拠がBIBLIOGRAPHIC_FIELD_CONTRACTからは特定できない"
+    },
+    {
+      "field": "releaseDate",
+      "projection": "蔵書",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "PROJ-008"
+      ],
+      "verificationRequired": false,
+      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+    },
+    {
+      "field": "releaseDate",
+      "projection": "発売日filter",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "PROJ-009"
+      ],
+      "verificationRequired": false,
+      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+    },
+    {
+      "field": "releaseDate",
+      "projection": "Home",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "PROJ-010"
+      ],
+      "verificationRequired": false,
+      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+    },
+    {
+      "field": "releaseDate",
+      "projection": "カレンダー",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "E2E-CROSS-RELEASE-001"
+      ],
+      "verificationRequired": false,
+      "reason": "現行契約で投影先は定義されているが、この投影経路専用の独立証拠がBIBLIOGRAPHIC_FIELD_CONTRACTからは特定できない"
+    },
+    {
+      "field": "releaseDate",
+      "projection": "通知",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "PROJ-011"
+      ],
+      "verificationRequired": false,
+      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+    },
+    {
+      "field": "releaseDate",
+      "projection": "sort",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "PROJ-012"
+      ],
+      "verificationRequired": false,
+      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+    },
+    {
+      "field": "listPrice",
+      "projection": "詳細",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "PROJ-013"
+      ],
+      "verificationRequired": false,
+      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+    },
+    {
+      "field": "listPrice",
+      "projection": "蔵書",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "PROJ-014"
+      ],
+      "verificationRequired": false,
+      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+    },
+    {
+      "field": "listPrice",
+      "projection": "価格filter",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "PROJ-015"
+      ],
+      "verificationRequired": false,
+      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+    },
+    {
+      "field": "listPrice",
+      "projection": "Home総額",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "PROJ-016"
+      ],
+      "verificationRequired": false,
+      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+    },
+    {
+      "field": "seriesName",
+      "projection": "登録",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "PROJ-017"
+      ],
+      "verificationRequired": false,
+      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+    },
+    {
+      "field": "seriesName",
+      "projection": "シリーズ表示",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "E2E-LIB-SERIES-SORT-001"
+      ],
+      "verificationRequired": false,
+      "reason": "現行契約で投影先は定義されているが、この投影経路専用の独立証拠がBIBLIOGRAPHIC_FIELD_CONTRACTからは特定できない"
+    },
+    {
+      "field": "seriesName",
+      "projection": "診断",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "E2E-CROSS-DATA-001"
+      ],
+      "verificationRequired": false,
+      "reason": "現行契約で投影先は定義されているが、この投影経路専用の独立証拠がBIBLIOGRAPHIC_FIELD_CONTRACTからは特定できない"
+    },
+    {
+      "field": "seriesName",
+      "projection": "巻抜け",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "PROJ-018"
+      ],
+      "verificationRequired": false,
+      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+    },
+    {
+      "field": "volumeNumber",
+      "projection": "登録",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "PROJ-019"
+      ],
+      "verificationRequired": false,
+      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+    },
+    {
+      "field": "volumeNumber",
+      "projection": "シリーズ表示",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "E2E-LIB-SERIES-SORT-001"
+      ],
+      "verificationRequired": false,
+      "reason": "現行契約で投影先は定義されているが、この投影経路専用の独立証拠がBIBLIOGRAPHIC_FIELD_CONTRACTからは特定できない"
+    },
+    {
+      "field": "volumeNumber",
+      "projection": "巻sort",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "E2E-LIB-SERIES-SORT-001"
+      ],
+      "verificationRequired": false,
+      "reason": "現行契約で投影先は定義されているが、この投影経路専用の独立証拠がBIBLIOGRAPHIC_FIELD_CONTRACTからは特定できない"
+    },
+    {
+      "field": "volumeNumber",
+      "projection": "巻抜け",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "PROJ-020"
+      ],
+      "verificationRequired": false,
+      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+    },
+    {
+      "field": "readingStatus",
+      "projection": "詳細",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "PROJ-021"
+      ],
+      "verificationRequired": false,
+      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+    },
+    {
+      "field": "readingStatus",
+      "projection": "蔵書",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "E2E-PROP-002"
+      ],
+      "verificationRequired": false,
+      "reason": "現行契約で投影先は定義されているが、この投影経路専用の独立証拠がBIBLIOGRAPHIC_FIELD_CONTRACTからは特定できない"
+    },
+    {
+      "field": "readingStatus",
+      "projection": "読書filter",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "E2E-PROP-002"
+      ],
+      "verificationRequired": false,
+      "reason": "現行契約で投影先は定義されているが、この投影経路専用の独立証拠がBIBLIOGRAPHIC_FIELD_CONTRACTからは特定できない"
+    },
+    {
+      "field": "readingStatus",
+      "projection": "Home",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "PROJ-022"
+      ],
+      "verificationRequired": false,
+      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+    },
+    {
+      "field": "favorite",
+      "projection": "詳細",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "PROJ-023"
+      ],
+      "verificationRequired": false,
+      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+    },
+    {
+      "field": "favorite",
+      "projection": "蔵書",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "E2E-PROP-002"
+      ],
+      "verificationRequired": false,
+      "reason": "現行契約で投影先は定義されているが、この投影経路専用の独立証拠がBIBLIOGRAPHIC_FIELD_CONTRACTからは特定できない"
+    },
+    {
+      "field": "favorite",
+      "projection": "お気に入りfilter",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "E2E-PROP-002"
+      ],
+      "verificationRequired": false,
+      "reason": "現行契約で投影先は定義されているが、この投影経路専用の独立証拠がBIBLIOGRAPHIC_FIELD_CONTRACTからは特定できない"
+    },
+    {
+      "field": "favorite",
+      "projection": "Home",
+      "coverageStatus": "named-evidence",
+      "independentEvidence": [
+        "PROJ-024"
+      ],
+      "verificationRequired": false,
+      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+    }
+  ]
+}
