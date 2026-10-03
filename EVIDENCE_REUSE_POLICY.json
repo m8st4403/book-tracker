@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "release": "4.13.215",
+  "purpose": "Required-layer evidence may be shared only when the reuse is explicit, justified, and independently backed by the consuming feature's own primary runtime evidence.",
+  "rules": [
+    "Every reused evidence ID must be listed here with its producer feature and allowed consumer feature/layer pairs.",
+    "A consumer cannot use another feature's primary evidence as its only required-layer evidence unless the pair is explicitly allowed and the consumer also has its own primary runtime evidence.",
+    "Unlisted evidence reuse is a release failure.",
+    "This policy governs test evidence reuse; it does not declare the reused evidence sufficient for semantic coverage by itself."
+  ],
+  "sharedEvidence": [
+    {
+      "evidence": "E2E-UI-OPS-002 all interactive control types are inventoried",
+      "producer": "FEAT-UI",
+      "allowedConsumers": [
+        "FEAT-DETAIL:操作",
+        "FEAT-DIAG:操作",
+        "FEAT-SCAN:操作"
+      ]
+    },
+    {
+      "evidence": "E2E-PERSIST-001 save/reload preserves all persistent domains",
+      "producer": "FEAT-DETAIL",
+      "allowedConsumers": [
+        "FEAT-BACKUP:投影",
+        "FEAT-BIB:復元",
+        "FEAT-BIB:永続化",
+        "FEAT-LIB:復元",
+        "FEAT-LIB:永続化",
+        "FEAT-PURCHASE:データ",
+        "FEAT-PURCHASE:入口",
+        "FEAT-PURCHASE:復元",
+        "FEAT-PURCHASE:永続化",
+        "FEAT-PURCHASE:状態"
+      ]
+    },
+    {
+      "evidence": "E2E-CROSS-DATA-001 10系統横断契約（ISBN/タイトル/作者/出版社/発売日/定価/シリーズ/巻数/読書状態/お気に入り）",
+      "producer": "FEAT-CROSS",
+      "allowedConsumers": [
+        "FEAT-API:投影",
+        "FEAT-BIB:データ",
+        "FEAT-BIB:操作",
+        "FEAT-BIB:状態",
+        "FEAT-DETAIL:データ",
+        "FEAT-DETAIL:状態",
+        "FEAT-REG:投影"
+      ]
+    },
+    {
+      "evidence": "E2E-SETTINGS-001 all settings survive save/read round-trip",
+      "producer": "FEAT-SET",
+      "allowedConsumers": [
+        "FEAT-CAL:復元",
+        "FEAT-CAL:永続化",
+        "FEAT-SEARCH:復元",
+        "FEAT-SEARCH:永続化"
+      ]
+    },
+    {
+      "evidence": "E2E-PERSIST-003 backup export/import round-trip",
+      "producer": "FEAT-BACKUP",
+      "allowedConsumers": [
+        "FEAT-SET:復元"
+      ]
+    },
+    {
+      "evidence": "E2E-REG-011 registration commit persists the registered book",
+      "producer": "FEAT-REG",
+      "allowedConsumers": [
+        "FEAT-SCAN:永続化"
+      ]
+    },
+    {
+      "evidence": "E2E-CROSS-RELEASE-001 canonical release-date contract",
+      "producer": "FEAT-CAL",
+      "allowedConsumers": [
+        "FEAT-BIB:投影",
+        "FEAT-CROSS:投影"
+      ]
+    },
+    {
+      "evidence": "E2E-API-006H timeout時の自動フェイルオーバー",
+      "producer": "FEAT-API",
+      "allowedConsumers": [
+        "FEAT-CROSS:失敗復旧"
+      ]
+    },
+    {
+      "evidence": "E2E-PERSIST-002 purchase-group write failure rolls back memory state",
+      "producer": "FEAT-PURCHASE",
+      "allowedConsumers": [
+        "FEAT-DETAIL:失敗復旧"
+      ]
+    }
+  ]
+}

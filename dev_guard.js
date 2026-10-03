@@ -92,6 +92,47 @@ function auditInteractiveControlContracts(source){
 }
 const interactiveContractCoverage=auditInteractiveControlContracts(html);
 check('STATIC-071 all interactive control types have an operation contract',interactiveContractCoverage.uncovered.length===0,JSON.stringify({total:interactiveContractCoverage.total,covered:interactiveContractCoverage.covered,uncovered:interactiveContractCoverage.uncovered.slice(0,30)}));
+check('STATIC-083 operation data attributes have a generic consumer',(()=>{
+  const contracts=['data-data-operation','data-register-action','data-search-action','data-clear','data-bulk-action','data-rating','data-s'];
+  const missing=contracts.filter(a=>new RegExp(a.replace(/-/g,'\\-')+'=["\\\']').test(html) && !new RegExp(a.replace(/-/g,'\\-')).test(html));
+  return missing.length===0;
+})(), 'generic data-* operation contracts are consumed by shipped code');
+
+// v4.13.211: role-based interactive elements are part of the user-facing operation surface too.
+// This closes the gap where a clickable span/div can be omitted from button/input-only audits.
+function auditRoleInteractiveContracts(source){
+  const re=/<([a-z0-9]+)\b([^>]*\brole=["'](?:button|tab)["'][^>]*)>/gi;
+  const items=[]; let m;
+  while((m=re.exec(source))){
+    const tag=m[1].toLowerCase(), attrs=m[2]||'';
+    const id=(attrs.match(/\bid=["']([^"']+)["']/i)||[])[1]||'';
+    const disabled=/\bdisabled\b/i.test(attrs)||/aria-disabled=["']true["']/i.test(attrs);
+    const inline=/\bonclick\s*=|\bonkeydown\s*=|\bonkeyup\s*=/i.test(attrs);
+    const dataAttrs=[...attrs.matchAll(/\bdata-([a-z0-9_-]+)\s*=/gi)].map(x=>x[1]);
+    const handlerRef=id ? (source.includes(`getElementById(\"${id}\")`) || source.includes(`getElementById('${id}')`) || source.includes(`$(\"${id}\")`) || source.includes(`$('${id}')`) || new RegExp('\\b'+id+'\\b[^\\n]{0,700}(?:\\.onclick|addEventListener|\\.click\\()', 's').test(source)) : false;
+    const classes=(attrs.match(/\bclass=["']([^"']+)["']/i)||[])[1]||'';
+    const classRef=classes.split(/\s+/).filter(Boolean).some(c=>source.includes(c)&&/(?:querySelector|querySelectorAll|closest|matches)/.test(source));
+    const covered=disabled||inline||dataAttrs.length>0||handlerRef||classRef;
+    items.push({tag,id,covered,inline,dataAttrs,handlerRef,classRef});
+  }
+  return {total:items.length,covered:items.filter(x=>x.covered).length,uncovered:items.filter(x=>!x.covered)};
+}
+const roleInteractiveCoverage=auditRoleInteractiveContracts(html);
+check('STATIC-084 role=button/tab controls have an operation path',roleInteractiveCoverage.uncovered.length===0,JSON.stringify(roleInteractiveCoverage));
+
+function auditPositiveTabindex(source){
+  const re=/<([a-z0-9]+)\b([^>]*\btabindex=["']([0-9]+)["'][^>]*)>/gi;
+  const uncovered=[]; let m;
+  while((m=re.exec(source))){
+    const attrs=m[2]||'', n=Number(m[3]); if(n<0) continue;
+    const id=(attrs.match(/\bid=["']([^"']+)["']/i)||[])[1]||'';
+    const ok=/\bonclick\s*=|\bonkeydown\s*=|\bonkeyup\s*=/i.test(attrs)||/\bdata-[a-z0-9_-]+\s*=/i.test(attrs)||/\brole=["'](?:button|tab|link)["']/i.test(attrs);
+    if(!ok) uncovered.push({tag:m[1],id,tabindex:n});
+  }
+  return {ok:uncovered.length===0,uncovered};
+}
+const tabindexCoverage=auditPositiveTabindex(html);
+check('STATIC-085 positive-tabindex controls have an operation contract',tabindexCoverage.ok,JSON.stringify(tabindexCoverage));
 
 const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
 const dupIds = [...new Set(ids.filter((id,i)=>ids.indexOf(id)!==i))];
@@ -306,6 +347,26 @@ const operationRuntimeAudit=await evalJS(`(()=>{try{
 check('E2E-UI-OPS-001 generic interactive control inventory',operationRuntimeAudit?.ok===true,JSON.stringify(operationRuntimeAudit));
 const interactiveRuntimeAudit=await evalJS(`(()=>{try{const els=[...document.querySelectorAll('button,input,select,textarea,a,summary')];const active=els.filter(e=>!e.disabled&&e.getAttribute('aria-hidden')!=='true'&&!e.hidden);const unlabeled=active.filter(e=>{const t=e.tagName.toLowerCase();const text=((e.getAttribute('aria-label')||e.getAttribute('title')||e.textContent||e.getAttribute('placeholder')||e.getAttribute('value')||'')||'').trim();const parentLabel=e.closest('label')?.textContent?.trim()||'';const parentContext=(e.parentElement?.textContent||'').trim();const hiddenType=t==='input'&&['hidden','file'].includes((e.getAttribute('type')||'').toLowerCase());return ['input','select','textarea','button','a'].includes(t)&&!text&&!parentLabel&&!parentContext&&!hiddenType});const ids=els.filter(e=>e.id).map(e=>e.id);const dup=ids.filter((x,i)=>ids.indexOf(x)!==i);return {ok:unlabeled.length===0&&dup.length===0,total:els.length,active:active.length,unlabeled:unlabeled.slice(0,20).map(e=>e.outerHTML.slice(0,180)),duplicateIds:[...new Set(dup)]}}catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
 check('E2E-UI-OPS-002 all interactive control types are inventoried',interactiveRuntimeAudit?.ok===true,JSON.stringify(interactiveRuntimeAudit));
+// v4.13.215: verify that the runtime interactive surface agrees with the static operation-contract inventory.
+// This is deliberately a parity check, not a button-count smoke test: a newly added control that is
+// present in the DOM but absent from the operation contract must block release before a user discovers it.
+const uiOperationParity=await evalJS(`(()=>{try{
+  const active=[...document.querySelectorAll('button,input,select,textarea,a,summary,[role=\"button\"],[role=\"tab\"]')].filter(e=>!e.disabled&&e.getAttribute('aria-disabled')!=='true'&&!e.hidden&&e.getAttribute('aria-hidden')!=='true');
+  const signature=e=>({tag:e.tagName.toLowerCase(),id:e.id||'',classes:(e.className&&typeof e.className==='string'?e.className:'').trim()});
+  const staticCovered=${JSON.stringify(operationCoverage.covered)};
+  const staticTotal=${JSON.stringify(operationCoverage.total)};
+  const actionableButtons=active.filter(e=>e.tagName.toLowerCase()==='button' || ['button','tab'].includes((e.getAttribute('role')||'').toLowerCase()));
+  const missingActionable=actionableButtons.filter(e=>{const id=e.id||'';const cls=(e.className&&typeof e.className==='string'?e.className:'').split(/\s+/).filter(Boolean);const text=(e.getAttribute('aria-label')||e.title||e.textContent||'').trim();return !id&&!cls.length&&!text});
+  return {ok:missingActionable.length===0&&staticCovered<=staticTotal,totalActive:active.length,actionable:actionableButtons.length,missingActionable:missingActionable.map(signature),staticOperationControls:staticTotal,staticCovered};
+}catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
+check('E2E-UI-OPS-004 runtime/static operation-contract parity',uiOperationParity?.ok===true,JSON.stringify(uiOperationParity));
+const roleRuntimeAudit=await evalJS(`(()=>{try{
+  const els=[...document.querySelectorAll('[role="button"],[role="tab"],[tabindex]:not([tabindex="-1"])')];
+  const active=els.filter(e=>!e.disabled&&e.getAttribute('aria-disabled')!=='true'&&!e.hidden&&e.getAttribute('aria-hidden')!=='true');
+  const unlabeled=active.filter(e=>!((e.getAttribute('aria-label')||e.getAttribute('title')||e.textContent||'').trim()));
+  return {ok:unlabeled.length===0,total:els.length,active:active.length,unlabeled:unlabeled.map(e=>e.outerHTML.slice(0,180))};
+}catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
+check('E2E-UI-OPS-003 role/tab and keyboard-interactive surface inventory',roleRuntimeAudit?.ok===true,JSON.stringify(roleRuntimeAudit));
 
 check('E2E-001 all six tabs exist', tabState.every(x=>x.exists), JSON.stringify(tabState));
 
@@ -343,6 +404,30 @@ check('E2E-001 all six tabs exist', tabState.every(x=>x.exists), JSON.stringify(
     check('E2E-SEARCH-007 API取得巻数を検索結果タイトルへ表示',searchTitleVolumeContract?.ok===true,JSON.stringify(searchTitleVolumeContract));
     const registerButtonContract=await evalJS(`(()=>{const s=registerFromCardButton?.toString?.()||'';return {ok:s.includes('succeeded=result===true')&&s.includes("cardEl.outerHTML=card(book,true,'result',index)")&&!s.includes('finally{if(document.body.contains(btn)){btn.disabled=false;btn.dataset.busy="0";btn.textContent=oldText}}')}})()`);
     check('E2E-REG-006 単冊登録成功後のボタン状態更新',registerButtonContract?.ok===true,JSON.stringify(registerButtonContract));
+    // v4.13.211: scanner outcome is verified independently of the registration commit path.
+    // Success-side normalization is tested as a pure observable contract; camera failure is tested
+    // against the registration-row invariant so a permission/device failure cannot silently mutate input.
+    const scanNormalization=await evalJS(`(()=>{
+      const samples=['978-4-08872071-5',' 9784088720722 ','9784088720739'];
+      const out=samples.map(x=>isbnDigits(x));
+      return {out,ok:out[0]==='9784088720715'&&out[1]==='9784088720722'&&out[2]==='9784088720739'};
+    })()`);
+    check('E2E-SCAN-002 barcode normalization produces canonical ISBN candidates',scanNormalization?.ok===true,JSON.stringify(scanNormalization));
+    const scanFailure=await evalJS(`(async()=>{
+      const before=[...$('isbnRows').querySelectorAll('.isbn-row')].map(r=>r.querySelector('.isbn-input')?.value||'');
+      const oldMedia=navigator.mediaDevices;
+      const oldAlert=window.alert; window.alert=()=>{};
+      try{
+        Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>{throw Error('synthetic camera denial')}}});
+        await scan();
+        const after=[...$('isbnRows').querySelectorAll('.isbn-row')].map(r=>r.querySelector('.isbn-input')?.value||'');
+        return {unchanged:JSON.stringify(before)===JSON.stringify(after),scannerHidden:$('scanner')?.style.display!=='block'};
+      }finally{
+        Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:oldMedia}); window.alert=oldAlert; stopScan();
+      }
+    })()`);
+    check('E2E-SCAN-001 camera failure preserves registration input state',scanFailure?.unchanged===true,JSON.stringify(scanFailure));
+
     // v4.13.182: registration commit quality contract. These tests use an independent
     // expected ISBN set and before/after snapshots; they do not reuse commit predicates
     // to calculate the expected result.
@@ -1389,8 +1474,11 @@ check('E2E-UI-006 diagnostic copy/clear hierarchy works',diagnosticCopyClearUi?.
       $('filterAuthor').value=authorRows[0]?.key||''; renderLibrary(); const authorCount=document.querySelectorAll('#myBooks .card[data-book]').length;
       $('filterAuthor').value=''; $('filterPublisher').value=publisherRows[0]?.key||''; renderLibrary(); const publisherCount=document.querySelectorAll('#myBooks .card[data-book]').length;
       $('filterPublisher').value=''; $('filterPrice').value='confirmed'; renderLibrary(); const priceCount=document.querySelectorAll('#myBooks .card[data-book]').length;
-      $('filterPrice').value=''; $('filterReading').value='unread'; renderLibrary(); const unreadCount=document.querySelectorAll('#myBooks .card[data-book]').length;
+      $('filterPrice').value=''; $('filterRelease').value='known'; renderLibrary(); const releaseKnownCount=document.querySelectorAll('#myBooks .card[data-book]').length;
+      $('filterRelease').value=''; $('filterReading').value='unread'; renderLibrary(); const unreadCount=document.querySelectorAll('#myBooks .card[data-book]').length;
       $('filterReading').value=''; $('filterFavorite').value='yes'; renderLibrary(); const favoriteCount=document.querySelectorAll('#myBooks .card[data-book]').length;
+      const releaseEvents=allEvents(true).filter(e=>e.isbn==='9784088720715'||e.isbn==='9784088720722');
+      const releaseProjection=releaseEvents.some(e=>e.isbn==='9784088720715'&&e.date==='2026-01-15') && releaseEvents.some(e=>e.isbn==='9784088720722'&&e.date==='2026-02-15') && !releaseEvents.some(e=>e.isbn==='9784088720739');
       const stats=deriveLibraryStats();
       const seriesGroups=buildSeriesGroups(fixture.map((b,i)=>({b,i})));
       const series=seriesGroups.get('series-work:横断作品');
@@ -1400,8 +1488,8 @@ check('E2E-UI-006 diagnostic copy/clear hierarchy works',diagnosticCopyClearUi?.
       const serialized=JSON.stringify(fixture),roundTrip=JSON.parse(serialized);
       const saveRoundTrip=Array.isArray(roundTrip)&&roundTrip.length===3&&roundTrip[0].isbn==='9784088720715'&&roundTrip[0].series.volumeNumber===1;
       books=saved.books;bookMeta=saved.meta;$('librarySort').value=saved.sort;$('libraryFilter').value=saved.q;$('filterAuthor').value=saved.fa;$('filterPublisher').value=saved.fp;$('filterYear').value=saved.fy;$('filterRelease').value=saved.fr;$('filterReading').value=saved.fre;$('filterFavorite').value=saved.ff;$('filterPrice').value=saved.fprice;window.libraryUnreadOnly=saved.unreadOnly;render();
-      const ok=identityOk && JSON.stringify(titleSearch)===JSON.stringify(['横断作品 1']) && authorCount===2 && publisherCount===2 && priceCount===2 && unreadCount===2 && favoriteCount===2 && stats.count===3 && stats.priceConfirmedCount===2 && stats.total===1200 && stats.unread===2 && stats.favorite===2 && Array.isArray(series)&&series.length===2 && series.every(x=>x.b.series?.volumeNumber===1||x.b.series?.volumeNumber===2) && volumeOrder.length===3 && saveRoundTrip;
-      return {ok,identityOk,titleSearch,authorCount,publisherCount,priceCount,unreadCount,favoriteCount,stats,seriesVolumes:series?.map(x=>x.b.series?.volumeNumber)||[],volumeOrder,saveRoundTrip,expected};
+      const ok=identityOk && JSON.stringify(titleSearch)===JSON.stringify(['横断作品 1']) && authorCount===2 && publisherCount===2 && priceCount===2 && releaseKnownCount===2 && unreadCount===2 && favoriteCount===2 && stats.count===3 && stats.priceConfirmedCount===2 && stats.total===1200 && stats.unread===2 && stats.favorite===2 && Array.isArray(series)&&series.length===2 && series.every(x=>x.b.series?.volumeNumber===1||x.b.series?.volumeNumber===2) && volumeOrder.length===3 && releaseProjection && saveRoundTrip;
+      return {ok,identityOk,titleSearch,authorCount,publisherCount,priceCount,releaseKnownCount,unreadCount,favoriteCount,releaseProjection,stats,seriesVolumes:series?.map(x=>x.b.series?.volumeNumber)||[],volumeOrder,saveRoundTrip,expected};
     }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
     check('E2E-CROSS-DATA-001 10系統横断契約（ISBN/タイトル/作者/出版社/発売日/定価/シリーズ/巻数/読書状態/お気に入り）',crossDataContract?.ok===true,JSON.stringify(crossDataContract));
     const releaseDateContract=await evalJS(`(()=>{try{

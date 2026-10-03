@@ -45,6 +45,7 @@ const librarySortOracleMutation=source.replace('else if(mode==="volume-asc")r=vo
 const searchSortMutation=source.replace('if(appSettings.search?.sort==="release-desc")a.sort((x,y)=>releaseTime(y)-releaseTime(x));','if(false)a.sort((x,y)=>releaseTime(y)-releaseTime(x));').replace('else if(appSettings.search?.sort==="release-asc")a.sort((x,y)=>releaseTime(x)-releaseTime(y));','else if(false)a.sort((x,y)=>releaseTime(x)-releaseTime(y));').replace('else a.sort((x,y)=>{','else if(false)a.sort((x,y)=>{')
 const releaseUnknownFirstMutation=source.replace('if(ta==null)return 1;if(tb==null)return -1;','if(ta==null)return -1;if(tb==null)return 1;');
 const homeStatsMutation=source.replace('if(homeStats)homeStats.innerHTML=renderStatBoxes(stats,"home");','if(homeStats)homeStats.innerHTML=renderStatBoxes({count:0,priceConfirmedCount:0,total:0,purchaseCount:0,unread:0,favorite:0},"home");').replace('updateSharedStats(stats);','updateSharedStats({count:0,priceConfirmedCount:0,total:0,purchaseCount:0,unread:0,favorite:0});')
+const crossReleaseMutation=source.replace("date:'2026-01-15'","date:''").replace("date:'2026-02-15'","date:''");
 const registrationAtomicMutation=source.replace('if(failedPreparations.length||added.length!==candidates.length-skippedDuplicates.length){','if(false){');
 const registrationRollbackMutation=source.replace('if(saveFailed){books=oldBooks;calendarExtras=oldExtras;bookMeta=oldMeta;saveMeta();persistBooks();persistCalendarExtras();metrics?.traceStep("保存失敗・ロールバック"','if(saveFailed){metrics?.traceStep("保存失敗・ロールバック"');
 const registrationDuplicateMutation=source.replace('if(usableExisting&&!isRicherBookRecord(prepared,usableExisting)){skippedDuplicates.push(preparedIsbn||key);return;}','if(false){skippedDuplicates.push(preparedIsbn||key);return;}');
@@ -109,7 +110,8 @@ const cases=[...featureAnchorCases,releaseUnknownFirstMutationCase,
   ['Series volume invariant',()=>runMutation('Series volume invariant',volumeInvariantMutation)],
   ['Independent library sort oracle',()=>runMutation('Independent library sort oracle',librarySortOracleMutation)],
   ['Independent search sort oracle',()=>runMutation('Independent search sort oracle',searchSortMutation)],
-  ['Home statistics projection',()=>runMutation('Home statistics projection',homeStatsMutation)]
+  ['Home statistics projection',()=>runMutation('Home statistics projection',homeStatsMutation)],
+  ['Cross-data release-date coverage',()=>runMutation('Cross-data release-date coverage',crossReleaseMutation)]
 ];
 let ok=true;
 for(const [name,fn] of cases){const r=fn();console.log(`${r.caught?'PASS':'FAIL'} | MUTATION-${name} | intentional defect ${r.caught?'detected':'NOT detected'}`);if(!r.caught){ok=false;console.log(r.output)}}

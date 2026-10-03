@@ -1,6 +1,6 @@
 {
   "schemaVersion": 3,
-  "release": "4.13.208",
+  "release": "4.13.215",
   "layers": [
     "入口",
     "操作",
@@ -82,7 +82,8 @@
         "状態": {
           "status": "required",
           "evidence": [
-            "E2E-REG-007 successful commit matches independent expected set"
+            "E2E-REG-007 successful commit matches independent expected set",
+            "E2E-SCAN-002 barcode normalization produces canonical ISBN candidates"
           ]
         },
         "データ": {
@@ -112,7 +113,8 @@
         "失敗復旧": {
           "status": "required",
           "evidence": [
-            "UI input operation contract"
+            "UI input operation contract",
+            "E2E-SCAN-001 camera failure preserves registration input state"
           ]
         }
       },
@@ -854,7 +856,7 @@
         "操作": {
           "status": "required",
           "evidence": [
-            "E2E-UI-OPS-002 all interactive control types are inventoried"
+            "E2E-UI-OPS-004 runtime/static operation-contract parity"
           ]
         },
         "状態": {

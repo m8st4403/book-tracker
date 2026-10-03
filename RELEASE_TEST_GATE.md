@@ -1,4 +1,4 @@
-# Release Test Gate v4.13.208
+# Release Test Gate v4.13.215
 
 ## 正本
 
@@ -97,32 +97,32 @@
 自動Gateで検証できるものをユーザーへ繰り返し依頼しない。実機確認は、代表的なE2E・実API・UI表示・保存/再起動など、自動化だけでは代替できない確認へ限定する。
 
 
-## v4.13.208追加
+## v4.13.215追加
 
 - Homeの蔵書統計と蔵書状態の独立Oracle
 - Home表示更新を壊すMutationの検出
 - Home→蔵書のクロスビュー整合性
 
 
-## v4.13.208追加ゲート
+## v4.13.215追加ゲート
 - 10系統（ISBN/タイトル/作者/出版社/発売日/定価/シリーズ/巻数/読書状態/お気に入り等）を1つの横断E2E契約で検査する。
 - 各系統の既存Mutationと組み合わせ、重要predicate/identity/sort/state projectionの故障検出能力を維持する。
 - 「個別作品を手で触った結果」だけでは10系統のPASSとは認めない。
 
-## v4.13.208 横断操作経路監査
+## v4.13.215 横断操作経路監査
 - 配布HTMLに存在する全buttonを静的に棚卸しし、操作経路（inline handler / delegated handler / data-driven handler / disabled state）を検査する。
 - 主要タブだけでなく、動的生成ボタン・診断・設定・検索・カレンダーを含む全UI操作を対象とする。
 - 操作経路を1件意図的に除去するMutationを必ずFAIL検出する。
 - ユーザー実機で偶然発見することを前提にせず、自動Gateで「ボタンは存在するが操作経路がない」状態を配布前に拒否する。
 
-## v4.13.208 操作契約Gate
+## v4.13.215 操作契約Gate
 
 - `OPERATION_CONTRACT.md` を品質契約の一部として必須化する。
 - button以外を含む全interactive controlを静的・実行時に棚卸しする。
 - 操作経路だけでなく、状態・データ・保存・再読込・連携・異常復旧の検査契約を要求する。
 - 操作経路を除去したbuttonだけでなく、入力系controlの契約を破壊したMutationも必ずFAIL検出する。
 
-## v4.13.208 機能契約台帳Gate
+## v4.13.215 機能契約台帳Gate
 
 - `FEATURE_CONTRACT.md` が存在すること
 - 全CURRENT機能が8層の完遂契約を持つこと
@@ -130,13 +130,23 @@
 - 新機能の未登録をRelease前に拒否できること
 - 独立Oracle/Mutation/E2Eを必要に応じて紐付けること
 
-## v4.13.208 機能カバレッジ実効性ゲート
+## v4.13.215 機能カバレッジ実効性ゲート
 - `FEATURE_COVERAGE.json` は8層ごとに required / not-applicable と検査証拠を明示する。
 - 証拠はStatic/E2E/Logic/Mutationの実際の出力ラベルと完全一致し、部分文字列一致では判定しない。
 - CURRENT機能は少なくともE2EまたはLogicの実行証拠を持つ。
 - 失敗復旧をrequiredとする機能はMutationまたは明示的な失敗系証拠を持つ。
 - このゲートは`npm test`へ接続し、台帳だけ増えて実効検査が増えていない状態をRelease時に停止する。
 
-## v4.13.208 feature-depth gate
+## v4.13.215 feature-depth gate
 
 `npm run test:depth` must pass before release. It verifies every CURRENT feature has a source anchor set, a feature-specific mutation test, and at least one executable (E2E/LOGIC) evidence path. It also reports layers backed only by static contracts as `WARN`; such warnings are not silently treated as runtime verification and are tracked for subsequent depth work.
+
+## v4.13.215 操作面閉包Gate
+- STATIC-083: data-*操作契約の共通消費経路
+- STATIC-084: role=button/tab操作経路
+- STATIC-085: tabindex>=0操作契約
+- E2E-UI-OPS-003: role/tab・キーボード操作面インベントリ
+
+
+### v4.13.215: Functional outcome closure
+All CURRENT features must have a machine-readable operation, observable outcome, failure invariant, primary executable evidence, coverage link, and mutation link in `FUNCTIONAL_OUTCOME_MATRIX.json`. Missing or orphaned entries block release.

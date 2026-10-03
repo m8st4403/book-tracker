@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "release": "4.13.215",
+  "principle": "A shipped operation is not complete until its observable outcome, persistence/projection impact, and failure behavior have an executable evidence path.",
+  "features": [
+    {
+      "id": "FEAT-NAV",
+      "operation": "タブ遷移",
+      "observableOutcome": "選択タブが一意になり対象画面が表示される",
+      "primaryEvidence": "E2E-001 all six tabs exist",
+      "failureInvariant": "失敗時に不正な画面状態を残さない"
+    },
+    {
+      "id": "FEAT-SCAN",
+      "operation": "ISBNスキャン",
+      "observableOutcome": "読取結果が登録準備の期待ISBN集合へ正規化される",
+      "primaryEvidence": "E2E-SCAN-002 barcode normalization produces canonical ISBN candidates",
+      "failureInvariant": "取消・権限拒否・読取失敗で未登録データを残さない"
+    },
+    {
+      "id": "FEAT-BACKUP",
+      "operation": "バックアップ復元",
+      "observableOutcome": "保存済み永続ドメインが往復後に同値になる",
+      "primaryEvidence": "E2E-PERSIST-003 backup export/import round-trip",
+      "failureInvariant": "不正入力・失敗時に既存データを保持"
+    },
+    {
+      "id": "FEAT-DETAIL",
+      "operation": "書籍詳細",
+      "observableOutcome": "対象ISBNの編集結果だけが保存され再読込後も残る",
+      "primaryEvidence": "E2E-PERSIST-001 save/reload preserves all persistent domains",
+      "failureInvariant": "対象消失・保存失敗で他データを破壊しない"
+    },
+    {
+      "id": "FEAT-PURCHASE",
+      "operation": "購入情報",
+      "observableOutcome": "対象冊と金額・状態の関係が整合し保存される",
+      "primaryEvidence": "E2E-PERSIST-002 purchase-group write failure rolls back memory state",
+      "failureInvariant": "部分更新を残さずatomicに戻る"
+    },
+    {
+      "id": "FEAT-REG",
+      "operation": "蔵書登録",
+      "observableOutcome": "期待ISBN集合だけが1回ずつ登録され保存される",
+      "primaryEvidence": "E2E-REG-011 registration commit persists the registered book",
+      "failureInvariant": "準備失敗・保存失敗・重複で既存蔵書を壊さない"
+    },
+    {
+      "id": "FEAT-LIB",
+      "operation": "蔵書管理",
+      "observableOutcome": "フィルター・並替え結果が独立oracleと一致する",
+      "primaryEvidence": "E2E-PROP-002 independent oracle covers all library filter dimensions",
+      "failureInvariant": "境界値・リセット・連打で不整合を残さない"
+    },
+    {
+      "id": "FEAT-SEARCH",
+      "operation": "書籍検索",
+      "observableOutcome": "最新検索の結果だけが表示され指定sort oracleと一致する",
+      "primaryEvidence": "E2E-SEARCH-003 independent search sort/unowned oracle",
+      "failureInvariant": "stale結果・timeout・429で古い結果を採用しない"
+    },
+    {
+      "id": "FEAT-CAL",
+      "operation": "カレンダー",
+      "observableOutcome": "canonical release dateに基づき対象日へ表示される",
+      "primaryEvidence": "E2E-CROSS-RELEASE-001 canonical release-date contract",
+      "failureInvariant": "日付欠損は誤日付へ推測せず安全側へ扱う"
+    },
+    {
+      "id": "FEAT-SET",
+      "operation": "設定",
+      "observableOutcome": "設定変更が保存・再読込後も同じ値になる",
+      "primaryEvidence": "E2E-SETTINGS-001 all settings survive save/read round-trip",
+      "failureInvariant": "不正値・保存失敗時に直前の有効設定を保持"
+    },
+    {
+      "id": "FEAT-API",
+      "operation": "書誌API",
+      "observableOutcome": "evidence・信頼度・採用条件から決定的に採用値を選ぶ",
+      "primaryEvidence": "E2E-API-006H timeout時の自動フェイルオーバー",
+      "failureInvariant": "timeout/429/conflictで不確かな値を勝手に採用しない"
+    },
+    {
+      "id": "FEAT-BIB",
+      "operation": "既存書誌補完",
+      "observableOutcome": "不足項目だけを採用条件に従って補完し既存値を上書きしない",
+      "primaryEvidence": "E2E-BIB-001 existing bibliography audit uses Resolver, fills only eligible missing fields, and preserves collection shape",
+      "failureInvariant": "補完失敗時に既存蔵書を保持"
+    },
+    {
+      "id": "FEAT-DIAG",
+      "operation": "診断",
+      "observableOutcome": "診断実行結果が対象領域に表示されcopy/clear後に正しい状態になる",
+      "primaryEvidence": "E2E-UI-006 diagnostic copy/clear hierarchy works",
+      "failureInvariant": "空結果・連打・長文でもUI状態を壊さない"
+    },
+    {
+      "id": "FEAT-METRIC",
+      "operation": "計測",
+      "observableOutcome": "処理時間・API待ち・ユーザー待ちが別計上される",
+      "primaryEvidence": "E2E-METRIC-001 user-wait time is excluded from registration processing time",
+      "failureInvariant": "待ち時間混入を検出し異常計測を性能FAILと誤判定しない"
+    },
+    {
+      "id": "FEAT-CROSS",
+      "operation": "横断データ",
+      "observableOutcome": "canonical dataと各タブの投影が一致する",
+      "primaryEvidence": "E2E-CROSS-DATA-001 10系統横断契約（ISBN/タイトル/作者/出版社/発売日/定価/シリーズ/巻数/読書状態/お気に入り）",
+      "failureInvariant": "欠損・競合・低信頼値を別タブへ不正伝播しない"
+    },
+    {
+      "id": "FEAT-UI",
+      "operation": "UI品質",
+      "observableOutcome": "interactive controlが操作可能で結果領域が表示・可読・overflowなしになる",
+      "primaryEvidence": "E2E-UI-OPS-004 runtime/static operation-contract parity",
+      "failureInvariant": "viewport・文字サイズ・長文で操作対象を隠さない"
+    }
+  ]
+}
