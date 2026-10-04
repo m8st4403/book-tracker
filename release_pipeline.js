@@ -15,16 +15,16 @@ if (catalog.release !== releaseVersion) {
 
 const stages = catalog.stages.map(x => [x.id, x.script]);
 const timeoutMs = 180000;
+const stageTimeoutMs = { mutation: 600000 };
 const maxBuffer = 8 * 1024 * 1024;
 const results = [];
 
 for (const [name, script] of stages) {
   const started = Date.now();
-  const r = spawnSync(process.execPath, [script], {
-    cwd,
-    encoding: 'utf8',
-    timeout: timeoutMs
-  });
+  const spawnOptions = name === 'mutation'
+    ? {cwd, encoding:'utf8', timeout:stageTimeoutMs[name] || timeoutMs, stdio:'inherit'}
+    : {cwd, encoding:'utf8', timeout:stageTimeoutMs[name] || timeoutMs, maxBuffer};
+  const r = spawnSync(process.execPath, [script], spawnOptions);
   const elapsedMs = Date.now() - started;
   let status = 'PASS';
   if (r.error && r.error.code === 'ETIMEDOUT') status = 'TIMEOUT';

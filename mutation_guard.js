@@ -113,6 +113,59 @@ const cases=[...featureAnchorCases,releaseUnknownFirstMutationCase,
   ['Home statistics projection',()=>runMutation('Home statistics projection',homeStatsMutation)],
   ['Cross-data release-date coverage',()=>runMutation('Cross-data release-date coverage',crossReleaseMutation)]
 ];
-let ok=true;
-for(const [name,fn] of cases){const r=fn();console.log(`${r.caught?'PASS':'FAIL'} | MUTATION-${name} | intentional defect ${r.caught?'detected':'NOT detected'}`);if(!r.caught){ok=false;console.log(r.output)}}
-process.exitCode=ok?0:1;
+// Mutation cases are independent. Run them in bounded parallel child processes so the
+// quality gate remains complete without making a large mutation suite unnecessarily
+// serial. Each child still invokes the same dev_guard and therefore keeps the exact
+// mutation semantics; only scheduling changes.
+const mutationConcurrency=Math.max(1,Math.min(Number(process.env.MUTATION_CONCURRENCY)||4,cases.length));
+const selectedIndex=process.env.MUTATION_CASE_INDEX==null?null:Number(process.env.MUTATION_CASE_INDEX);
+
+function runSelectedCase(index){
+  const [name,fn]=cases[index];
+  const r=fn();
+  process.stdout.write(`${r.caught?'PASS':'FAIL'} | MUTATION-${name} | intentional defect ${r.caught?'detected':'NOT detected'}\\n`);
+  if(!r.caught&&r.output)process.stdout.write(r.output);
+  return r.caught;
+}
+
+if(selectedIndex!==null){
+  if(!Number.isInteger(selectedIndex)||selectedIndex<0||selectedIndex>=cases.length){
+    console.error(`invalid MUTATION_CASE_INDEX: ${process.env.MUTATION_CASE_INDEX}`);
+    process.exitCode=2;
+  }else{
+    process.exitCode=runSelectedCase(selectedIndex)?0:1;
+  }
+}else{
+  const {spawn}=require('child_process');
+  let nextIndex=0,completed=0,failed=0;
+  const children=new Map();
+
+  const launch=()=>{
+    while(children.size<mutationConcurrency&&nextIndex<cases.length){
+      const index=nextIndex++;
+      const child=spawn(process.execPath,[__filename],{
+        cwd:root,
+        env:{...process.env,MUTATION_CASE_INDEX:String(index)},
+        stdio:['ignore','pipe','pipe']
+      });
+      children.set(child,index);
+      let out='',err='';
+      child.stdout.on('data',d=>{out+=d});
+      child.stderr.on('data',d=>{err+=d});
+      child.on('close',(code,signal)=>{
+        const idx=children.get(child);
+        children.delete(child);
+        completed++;
+        if(out)process.stdout.write(out);
+        if(err)process.stderr.write(err);
+        if(code!==0||signal){failed++;console.error(`MUTATION CHILD FAILED | index=${idx} | code=${code} | signal=${signal||'none'}`);}
+        launch();
+        if(completed===cases.length){
+          console.log(`MUTATION SUMMARY | cases=${cases.length} | concurrency=${mutationConcurrency} | failed=${failed}`);
+          process.exitCode=failed?1:0;
+        }
+      });
+    }
+  };
+  launch();
+}
