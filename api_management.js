@@ -579,6 +579,7 @@
     else if(field==="volumeNumber")value=row?.series?.volumeNumber??null;
     else if(field==="listPrice")value=row?.priceMeta?.listPrice??null;
     else if(field==="taxIncluded")value=row?.priceMeta?.taxIncluded??null;
+    else if(field==="releaseDate")value=row?.date??null;
     else value=row?.[field]??null;
     if(value===null||value===undefined||value==="")return null;
     const ev=row?.fieldEvidence?.[field]||evidenceFor(field,value,{identifierMatched:canonicalIsbn(row?.isbn)===canonicalIsbn(ctx.isbn),countryMatched:true});

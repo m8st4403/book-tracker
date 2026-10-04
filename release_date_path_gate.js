@@ -3,6 +3,7 @@ const fs=require('fs');
 const path=require('path');
 const root=process.cwd();
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const apiSource=fs.readFileSync(path.join(root,'api_management.js'),'utf8');
 const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
 const expected=[
  'CALENDAR_PROJECTION_OK','CALENDAR_PROJECTION_MISSING','SAVED_PRECISION_NOT_CALENDAR_READY',
@@ -11,7 +12,7 @@ const expected=[
 ];
 const failures=[];
 function req(cond,msg){if(!cond)failures.push(msg)}
-req(pkg.version==='4.13.242',`version mismatch: ${pkg.version}`);
+req(pkg.version==='4.13.243',`version mismatch: ${pkg.version}`);
 req(html.includes('async function runReleaseDateAudit()'),'async release-date audit missing');
 req(html.includes('function classifyReleaseDatePathCause('),'cause classifier missing');
 for(const code of expected)req(html.includes(code),`missing cause code: ${code}`);
@@ -24,5 +25,9 @@ req(html.includes('releasePrecision==="month"'),'month precision must be represe
 req(html.includes('発売予定・発売月'),'month-level calendar display missing');
 req(html.includes('SAVED_VALUE_MISSING'),'saved-value loss must be distinguished');
 req(!/books\[[^\]]+\]\s*=/.test(html.slice(html.indexOf('async function runReleaseDateAudit()'), html.indexOf('function allEvents'))),'release-date audit must not mutate books');
+req(html.includes('async function refreshMissingReleaseDates()'),'missing-only release-date repair function missing');
+req(html.includes('既存の発売日・タイトル・作者・出版社・シリーズ・価格は上書きしません'),'release-date repair must declare non-overwrite policy');
+req(html.includes('releaseDateMeta'),'release-date provenance metadata missing');
+req(/field===\"releaseDate\"\)value=row\?\.date/.test(apiSource),'resolver must map releaseDate from provider date field');
 if(failures.length){console.error('RELEASE-DATE-PATH-GATE FAIL');failures.forEach(x=>console.error(' - '+x));process.exit(1)}
 console.log('RELEASE-DATE-PATH-GATE PASS | cause taxonomy='+expected.length+' | read-only resolver audit wired');

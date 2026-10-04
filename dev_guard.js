@@ -215,6 +215,9 @@ check('STATIC-009 global registration lock contract', /registrationBusy/.test(ht
 check('STATIC-010 search generation contract', /searchGenerations/.test(html) && /runSearchSingleFlight/.test(html) && /isCurrentSearch/.test(html), 'stale search responses cannot overwrite current results');
 check('STATIC-011 data operation lock contract', /dataOperationBusy/.test(html) && /setDataOperationUiBusy/.test(html) && /data-data-operation/.test(html), 'registration and series repair share a data-operation lock');
 check('STATIC-062 existing bibliography audit is wired', ['bibliographyAuditBtn','bibliographyAuditResults','copyBibliographyAuditBtn','clearBibliographyAuditBtn'].every(id=>new RegExp('id=\"'+id+'\"').test(html)) && /async function auditAndFillExistingBibliography\(\)/.test(html) && /fillMissingBibliography\(/.test(html), 'existing-library bibliography audit/repair has a single non-overwriting path');
+    check('STATIC-063 existing release-date repair is wired', ['releaseDateRepairBtn','releaseDateRepairResults','copyReleaseDateRepairBtn','clearReleaseDateRepairBtn'].every(id=>new RegExp('id=\"'+id+'\"').test(html)) && /async function refreshMissingReleaseDates\(\)/.test(html) && /既存の発売日.*上書きしません/.test(html), 'existing release-date repair has an explicit missing-only non-overwrite path');
+    check('STATIC-064 releaseDate resolver maps provider date field', /else if\(field==="releaseDate"\)value=row\?\.date\?\?null/.test(apiSource), 'resolver releaseDate candidate must read provider date');
+    check('STATIC-065 release-date provenance metadata is persisted', /function makeReleaseDateMeta\(resolved\)/.test(html) && /releaseDateMeta=rdMeta/.test(html), 'release-date provenance metadata missing');
 check('STATIC-063 ISBN FAST resolver does not stop on series alone', /const coreReady=/.test(fs.readFileSync(path.join(path.dirname(target),'api_management.js'),'utf8')) && /coreReady && \(seriesReady \|\| rows.length>=3\)/.test(fs.readFileSync(path.join(path.dirname(target),'api_management.js'),'utf8')), 'FAST ISBN resolution collects core bibliographic fields across Providers');
 check('STATIC-046 library diagnostics share operation lock', ['seriesCheckBtn','seriesDiagnoseBtn','bibliographyCompareBtn','isbnRegistrationPrepBtn','seriesRepairBtn'].every(id=>new RegExp('id=\"'+id+'\"[^>]*data-data-operation=\"1\"').test(html)) && /runLibraryDiagnosticAction/.test(html), 'all library diagnostics use the shared operation lock');
 check('STATIC-047 library diagnostic result separation', /id="seriesCheckResults"/.test(html) && /id="seriesDiagnoseResults"/.test(html) && /id="bibliographyCompareResults"/.test(html) && /id="isbnRegistrationPrepResults"/.test(html) && /id="seriesRepairResults"/.test(html) && /function buildLibraryDiagnosticReport\(/.test(html), 'each library diagnostic retains its own result area and bundle report');
@@ -1132,6 +1135,23 @@ check('E2E-UI-006 diagnostic copy/clear hierarchy works',diagnosticCopyClearUi?.
       return {ok:ok&&unchangedCount,changed:result?.changed,publisher:b.publisher,date:b.date,series:b.series,price:b.price};
     }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
     check('E2E-BIB-001 existing bibliography audit uses Resolver, fills only eligible missing fields, and preserves collection shape',bibliographyAuditSmoke?.ok===true,JSON.stringify(bibliographyAuditSmoke));
+    const releaseDateResolverRegression=await evalJS(`(async()=>{try{
+      const api=window.bookTrackerApiManagement;const old=api.adapters.openBD.isbn;const savedPriority=[...api.priority.isbnSearch];const savedEnabled=api.providers.openBD.enabled;api.clearResolverCache();for(const h of api.providerHealth.values()){h.failures=0;h.temporarilyDisabledUntil=0;h.lastError='';}
+      api.priority.isbnSearch=['openBD'];api.providers.openBD.enabled=true;api.adapters.openBD.isbn=async(isbn)=>[{isbn,title:'発売日回帰fixture',author:'著者',publisher:'出版社',date:'2026-10',source:'openBD',fieldEvidence:{}}];
+      const r=await api.resolveIsbn('9780000000012',{fast:false});const ev=r?.fieldEvidence?.releaseDate;const ok=ev?.value==='2026-10'&&ev?.decision?.status==='ACCEPT'&&r?.resolution?.accepted?.releaseDate===true;
+      api.adapters.openBD.isbn=old;api.priority.isbnSearch=savedPriority;api.providers.openBD.enabled=savedEnabled;api.clearResolverCache();return {ok,value:ev?.value||'',precision:releaseDateInfo(ev?.value).precision,decision:ev?.decision?.status||''};
+    }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
+    check('E2E-RELEASE-001 Resolver adopts provider releaseDate from normalized date field',releaseDateResolverRegression?.ok===true,JSON.stringify(releaseDateResolverRegression));
+    const releaseDateFillRegression=await evalJS(`(()=>{try{
+      const resolved={date:'2026-10',fieldEvidence:{releaseDate:{value:'2026-10',confidence:'HIGH',evidence:{provider:'openBD'},decision:{status:'ACCEPT'}}},resolution:{fields:{releaseDate:{provider:'openBD',confidence:'HIGH',decision:{status:'ACCEPT'}}}}};
+      const missing={isbn:'9780000000013',title:'missing',date:''};const existing={isbn:'9780000000014',title:'existing',date:'2026-09',releaseDateMeta:{source:'old',confidence:'HIGH',precision:'month',updatedAt:'old'}};
+      const a=fillMissingBibliography(missing,resolved),b=fillMissingBibliography(existing,resolved);
+      const ok=a.filled.includes('releaseDate')&&a.book.date==='2026-10'&&a.book.releaseDateMeta?.source==='openBD'&&b.book.date==='2026-09'&&JSON.stringify(b.book.releaseDateMeta)===JSON.stringify(existing.releaseDateMeta)&&!b.filled.includes('releaseDate');
+      return {ok,missingFilled:a.filled,missingDate:a.book.date,meta:a.book.releaseDateMeta,existingDate:b.book.date,existingFilled:b.filled};
+    }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
+    check('E2E-RELEASE-002 missing-only release-date fill preserves existing values and provenance',releaseDateFillRegression?.ok===true,JSON.stringify(releaseDateFillRegression));
+
+
 
 
     const isbnSeriesSourceSmoke=await evalJS(`(async()=>{try{

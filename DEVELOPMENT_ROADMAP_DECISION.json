@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "release": "4.13.242",
+  "release": "4.13.243",
   "purpose": "Decision record separating stabilization work, next development priorities, deferred roadmap work, and future-only policy items. This is planning truth, not an implementation PASS signal.",
   "principles": [
     "Do not start new feature breadth until current data/projection quality gates remain green.",
@@ -14,7 +14,7 @@
       "rank": 1,
       "id": "STAB-RELEASE-DATE",
       "status": "NEXT",
-      "scope": "既存蔵書の発売日取得・採用・保存・カレンダー投影をReleaseEventモデルへ整理",
+      "scope": "既存蔵書の発売日取得・採用・保存・カレンダー投影をReleaseEventモデルへ整理し、不足発売日の安全な再取得・補完を可能にする",
       "reason": "既存蔵書で発売日が欠落し、カレンダー反映も不足しているという現在のユーザー影響を直接解消する。",
       "gatesRequired": [
         "field-contract",
