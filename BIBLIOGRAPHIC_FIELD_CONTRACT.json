@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "release": "4.13.237",
+  "release": "4.13.238",
   "principle": "Every shared bibliographic field must have explicit source, resolver/adoption, persistence, projection, and failure evidence; a field is not considered covered merely because another field's test passes.",
   "fields": [
     {
@@ -74,7 +74,7 @@
         "通知",
         "sort"
       ],
-      "failure": "unknown/month/year precision or wrong day; calendar requires day precision",
+      "failure": "unknown/year precision is not calendar-eligible; day and month precision are calendar-eligible without fabricating a day",
       "mutation": "Release-date unknown ordering + precision eligibility"
     },
     {

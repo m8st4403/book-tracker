@@ -6,17 +6,20 @@ const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const failures=[];
 const req=(c,m)=>{if(!c)failures.push(m)};
-req(pkg.version==='4.13.237',`version mismatch: ${pkg.version}`);
+req(pkg.version==='4.13.238',`version mismatch: ${pkg.version}`);
 // Regression fixtures are expressed as contracts so a future edit cannot silently
 // remove a precision class or cause category used by the real audit.
 const precisionCases=[
+ ['202610','month',true,'MONTH'],
+ ['2026.10','month',true,'MONTH'],
+ ['1996.3','month',true,'MONTH'],
  ['2026-10-03','day',true,'DAY'],
  ['2026/10/03','day',true,'DAY'],
  ['2026年10月3日','day',true,'DAY'],
- ['2026-10','month',false,'DAY_REQUIRED'],
- ['2026/10','month',false,'DAY_REQUIRED'],
- ['2026年10月','month',false,'DAY_REQUIRED'],
- ['2026','year',false,'DAY_REQUIRED'],
+ ['2026-10','month',true,'MONTH'],
+ ['2026/10','month',true,'MONTH'],
+ ['2026年10月','month',true,'MONTH'],
+ ['2026','year',false,'YEAR_ONLY'],
  ['', 'unknown',false,'MISSING'],
  ['not-a-date','unknown',false,'UNPARSEABLE']
 ];
@@ -52,4 +55,4 @@ for(const c of causes) req(html.includes(`code:"${c}"`),`cause taxonomy missing:
 req(html.includes('Provider→Resolver採用→保存→カレンダー投影'),'audit path stages missing');
 req(html.includes('既存蔵書は変更しません'),'read-only contract missing');
 if(failures.length){console.error('RELEASE-DATE-PATH-UNIT-GATE FAIL');failures.forEach(x=>console.error(' - '+x));process.exit(1)}
-console.log('RELEASE-DATE-PATH-UNIT-GATE PASS | precision fixtures=9 | cause taxonomy=9 | read-only path contract=PASS');
+console.log('RELEASE-DATE-PATH-UNIT-GATE PASS | precision fixtures=12 | cause taxonomy=9 | read-only path contract=PASS');

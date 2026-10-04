@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "release": "4.13.237",
+  "release": "4.13.238",
   "purpose": "Single source of truth for release quality stages. Prevents pipeline stage drift and orphaned quality gates.",
   "stages": [
     {
@@ -76,7 +76,7 @@
     {
       "id": "release-date-path-unit",
       "script": "release_date_path_unit_gate.js",
-      "scope": "release-date precision and nine-path cause taxonomy regression fixtures"
+      "scope": "release-date precision, month-calendar projection, and nine-path cause taxonomy regression fixtures"
     }
   ]
 }

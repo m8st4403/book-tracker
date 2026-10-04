@@ -1495,16 +1495,16 @@ check('E2E-UI-006 diagnostic copy/clear hierarchy works',diagnosticCopyClearUi?.
     const releaseDateContract=await evalJS(`(()=>{try{
       const cases=[
         ['2026-04-15','2026-04-15','day'],['2026-04-15T00:00:00+09:00','2026-04-15','day'],['2026/04/15','2026-04-15','day'],['2026年4月15日','2026-04-15','day'],
-        ['2026-04','', 'month'],['2026年4月','', 'month'],['2026','', 'year'],['not-a-date','', 'unknown'],['','', 'unknown']
+        ['2026-04','2026-04', 'month'],['2026年4月','2026-04', 'month'],['2026','', 'year'],['not-a-date','', 'unknown'],['','', 'unknown']
       ];
-      const normalized=cases.map(([input,date,precision])=>{const info=releaseDateInfo(input);return {input,date:canonicalReleaseDate(input),precision:info.precision,time:releaseTime({date:input})}});
+      const normalized=cases.map(([input,date,precision])=>{const info=releaseDateInfo(input);return {input,date:canonicalCalendarReleaseDate(input),precision:info.precision,time:releaseTime({date:input})}});
       const normalizedOk=normalized.every((x,i)=>x.date===cases[i][1]&&x.precision===cases[i][2]);
       const rows=[{title:'unknown',date:'not-a-date'},{title:'old',date:'2025-01-01'},{title:'new',date:'2026-01-01'}];
       const asc=sortBooks(rows,'release-asc').map(x=>x.title),desc=sortBooks(rows,'release-desc').map(x=>x.title);
       const sortOk=JSON.stringify(asc)===JSON.stringify(['old','new','unknown'])&&JSON.stringify(desc)===JSON.stringify(['new','old','unknown']);
       const oldBooks=books.slice(),oldExtras=calendarExtras.slice();
       books=[{isbn:'date-cross-1',title:'ISO日付',date:'2026-04-15T00:00:00+09:00',upcoming:[]},{isbn:'date-cross-2',title:'月だけ',date:'2026-04',upcoming:[]}];calendarExtras=[];
-      const events=allEvents(true); const calendarOk=events.some(e=>e.isbn==='date-cross-1'&&e.date==='2026-04-15')&&!events.some(e=>e.isbn==='date-cross-2');
+      const events=allEvents(true); const calendarOk=events.some(e=>e.isbn==='date-cross-1'&&e.date==='2026-04-15'&&e.releasePrecision==='day')&&events.some(e=>e.isbn==='date-cross-2'&&e.date==='2026-04'&&e.releasePrecision==='month');
       books=oldBooks;calendarExtras=oldExtras;
       return {ok:normalizedOk&&sortOk&&calendarOk,normalized,asc,desc,calendarOk};
     }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);

@@ -72,16 +72,18 @@
     const raw=String(value??"").normalize("NFKC").trim();
     if(!raw)return {date:"",precision:"unknown",calendarEligible:false,reason:"MISSING"};
     let m=raw.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})(?:$|[T\s])/);
-    if(m){const y=Number(m[1]),mo=Number(m[2]),d=Number(m[3]);const dt=new Date(y,mo-1,d);if(dt.getFullYear()===y&&dt.getMonth()===mo-1&&dt.getDate()===d)return {date:`${y}-${String(mo).padStart(2,"0")}-${String(d).padStart(2,"0")}`,precision:"day",calendarEligible:true,reason:"DAY"};}
+    if(m){const y=Number(m[1]),mo=Number(m[2]),d=Number(m[3]);const dt=new Date(y,mo-1,d);if(dt.getFullYear()===y&&dt.getMonth()===mo-1&&dt.getDate()===d)return {date:`${y}-${String(mo).padStart(2,"0")}-${String(d).padStart(2,"0")}`,precision:"day",time:dt.getTime(),calendarEligible:true,reason:"DAY"};}
     m=raw.match(/^(\d{4})年(\d{1,2})月(\d{1,2})日/);
-    if(m){const y=Number(m[1]),mo=Number(m[2]),d=Number(m[3]);const dt=new Date(y,mo-1,d);if(dt.getFullYear()===y&&dt.getMonth()===mo-1&&dt.getDate()===d)return {date:`${y}-${String(mo).padStart(2,"0")}-${String(d).padStart(2,"0")}`,precision:"day",calendarEligible:true,reason:"DAY"};}
-    m=raw.match(/^(\d{4})[-\/](\d{1,2})(?:$|[^\d])/);
-    if(m){const y=Number(m[1]),mo=Number(m[2]);if(mo>=1&&mo<=12)return {date:`${y}-${String(mo).padStart(2,"0")}`,precision:"month",calendarEligible:false,reason:"DAY_REQUIRED"};}
+    if(m){const y=Number(m[1]),mo=Number(m[2]),d=Number(m[3]);const dt=new Date(y,mo-1,d);if(dt.getFullYear()===y&&dt.getMonth()===mo-1&&dt.getDate()===d)return {date:`${y}-${String(mo).padStart(2,"0")}-${String(d).padStart(2,"0")}`,precision:"day",time:dt.getTime(),calendarEligible:true,reason:"DAY"};}
+    m=raw.match(/^(\d{4})(?:[-\/]|\.)(\d{1,2})$/);
+    if(m){const y=Number(m[1]),mo=Number(m[2]);if(mo>=1&&mo<=12)return {date:`${y}-${String(mo).padStart(2,"0")}`,precision:"month",time:new Date(y,mo-1,1).getTime(),calendarEligible:true,reason:"MONTH"};}
     m=raw.match(/^(\d{4})年(\d{1,2})月/);
-    if(m){const y=Number(m[1]),mo=Number(m[2]);if(mo>=1&&mo<=12)return {date:`${y}-${String(mo).padStart(2,"0")}`,precision:"month",calendarEligible:false,reason:"DAY_REQUIRED"};}
+    if(m){const y=Number(m[1]),mo=Number(m[2]);if(mo>=1&&mo<=12)return {date:`${y}-${String(mo).padStart(2,"0")}`,precision:"month",time:new Date(y,mo-1,1).getTime(),calendarEligible:true,reason:"MONTH"};}
+    m=raw.match(/^(\d{4})(\d{2})$/);
+    if(m){const y=Number(m[1]),mo=Number(m[2]);if(mo>=1&&mo<=12)return {date:`${y}-${String(mo).padStart(2,"0")}`,precision:"month",time:new Date(y,mo-1,1).getTime(),calendarEligible:true,reason:"MONTH"};}
     m=raw.match(/^(\d{4})(?:年)?$/);
-    if(m){const y=Number(m[1]);if(y>=1000&&y<=9999)return {date:String(y),precision:"year",calendarEligible:false,reason:"DAY_REQUIRED"};}
-    return {date:"",precision:"unknown",calendarEligible:false,reason:"UNPARSEABLE"};
+    if(m){const y=Number(m[1]);if(y>=1000&&y<=9999)return {date:String(y),precision:"year",time:new Date(y,0,1).getTime(),calendarEligible:false,reason:"YEAR_ONLY"};}
+    return {date:"",precision:"unknown",time:null,calendarEligible:false,reason:"UNPARSEABLE"};
   }
   function releaseDateEligibility(value){return releaseDateInfo(value);}
   function evaluateFieldCandidate(field,result,ctx={}){
@@ -711,7 +713,7 @@
         authorEntitySeen.add(key);mergedAuthorEntities.push({name,authorityId:authorityId||null,entityId:entityId||null,source:String(entity?.source||row?.source||"")});
       }
     }
-    const out={isbn:ctx.isbn,title:"",author:"",authorNames:[],authorEntities:mergedAuthorEntities,publisher:"",date:"",cover:"",description:"",categories:[],source:"apiManager",sources:[],series:null,priceMeta:null,price:0,currency:"JPY",identifiers:{},fieldEvidence:{},resolution:{version:VERSION,attempts,fields:{},providerResults:rows.map(r=>({provider:String(r?.source||""),isbn:canonicalIsbn(r?.isbn),title:String(r?.title||""),publisher:String(r?.publisher||""),authorNames:Array.isArray(r?.authorNames)?r.authorNames:[],authorEntities:Array.isArray(r?.authorEntities)?r.authorEntities:[],seriesId:String(r?.series?.id||r?.identifiers?.googleSeriesId||""),seriesName:String(r?.series?.name||""),volume:r?.series?.volumeNumber??null,displayVolume:String(r?.series?.displayVolume||"")}))}};
+    const out={isbn:ctx.isbn,title:"",author:"",authorNames:[],authorEntities:mergedAuthorEntities,publisher:"",date:"",cover:"",description:"",categories:[],source:"apiManager",sources:[],series:null,priceMeta:null,price:0,currency:"JPY",identifiers:{},fieldEvidence:{},resolution:{version:VERSION,attempts,fields:{},providerResults:rows.map(r=>({provider:String(r?.source||""),isbn:canonicalIsbn(r?.isbn),title:String(r?.title||""),publisher:String(r?.publisher||""),authorNames:Array.isArray(r?.authorNames)?r.authorNames:[],authorEntities:Array.isArray(r?.authorEntities)?r.authorEntities:[],releaseDate:String(r?.date||""),releaseDatePrecision:releaseDateInfo(r?.date).precision,seriesId:String(r?.series?.id||r?.identifiers?.googleSeriesId||""),seriesName:String(r?.series?.name||""),volume:r?.series?.volumeNumber??null,displayVolume:String(r?.series?.displayVolume||"")}))}};
     for(const row of rows){out.sources.push({provider:row.source,fields:fieldsFor(row)});if(row.identifiers)Object.assign(out.identifiers,row.identifiers)}
     for(const field of fields){
       const cs=rows.map(r=>candidate(field,r,ctx)).filter(Boolean);
