@@ -1227,6 +1227,36 @@ check('E2E-UI-006 diagnostic copy/clear hierarchy works',diagnosticCopyClearUi?.
       return out;
     })()`);
     check('E2E-SMOKE-001 cross-tab state transitions',smoke.searchModeAuthor&&smoke.searchModeBook&&smoke.libraryFilterOpen&&smoke.calendarMonthChanges&&smoke.calendarYearChanges&&smoke.calendarYearMode&&smoke.calendarMonthMode&&smoke.fontLarge,JSON.stringify(smoke));
+
+    // Generic UI state-transition audit: verify visible state, computed display, ARIA state and
+    // mutually-exclusive panels after round trips. This is intentionally reusable across features,
+    // not a one-off calendar assertion.
+    const uiStateAudit=await evalJS(`(()=>{try{
+      const visible=e=>{if(!e)return false;const r=e.getBoundingClientRect(),s=getComputedStyle(e);return !e.hidden&&r.width>0&&r.height>0&&s.display!=='none'&&s.visibility!=='hidden'};
+      const hidden=e=>{if(!e)return true;const s=getComputedStyle(e);return e.hidden||s.display==='none'||s.visibility==='hidden'||e.getBoundingClientRect().width===0||e.getBoundingClientRect().height===0};
+      const nav=id=>document.querySelector('#bottomNav button[data-s="'+id+'"]')?.click();
+      const out={}; nav('calendar');
+      document.getElementById('calendarMonthMode')?.click();
+      out.monthInitial={month:visible(document.getElementById('calHead'))&&visible(document.getElementById('calendarGrid')),year:hidden(document.getElementById('calendarYearGrid')),yearPressed:document.getElementById('calendarYearMode')?.getAttribute('aria-pressed')==='false'};
+      document.getElementById('calendarYearMode')?.click();
+      const yearButtons=[...document.querySelectorAll('#calendarYearGrid .calendar-year-month')];
+      out.yearMode={grid:visible(document.getElementById('calendarYearGrid')),calendar:hidden(document.getElementById('calHead'))&&hidden(document.getElementById('calendarGrid'))&&hidden(document.getElementById('calendarDayCard')),monthPressed:document.getElementById('calendarMonthMode')?.getAttribute('aria-pressed')==='false',yearPressed:document.getElementById('calendarYearMode')?.getAttribute('aria-pressed')==='true',monthControlsHidden:hidden(document.getElementById('prevMonth'))&&hidden(document.getElementById('nextMonth')),twelveButtons:yearButtons.length};
+      yearButtons[5]?.click();
+      const afterSelect=[...document.querySelectorAll('#calendarYearGrid .calendar-year-month')];
+      out.afterMonthSelect={returnedToMonth:document.getElementById('calendarMonthMode')?.getAttribute('aria-pressed')==='true',yearGridHidden:hidden(document.getElementById('calendarYearGrid')),calendarVisible:visible(document.getElementById('calHead'))&&visible(document.getElementById('calendarGrid'))};
+      document.getElementById('calendarYearMode')?.click();
+      const selected= [...document.querySelectorAll('#calendarYearGrid .calendar-year-month.selected-month')];
+      const selectedBlue=selected.length===1 && (()=>{const s=getComputedStyle(selected[0]);return s.backgroundColor!==''&&s.color!=='';})();
+      out.roundTrip={selectedCount:selected.length,selectedBlue,othersUnselected:afterSelect.filter(e=>!e.classList.contains('selected-month')).every(e=>!e.classList.contains('selected-month'))};
+      return {ok:out.monthInitial.month&&out.monthInitial.year&&out.yearMode.grid&&out.yearMode.calendar&&out.yearMode.monthPressed&&out.yearMode.yearPressed&&out.yearMode.monthControlsHidden&&out.yearMode.twelveButtons===12&&out.afterMonthSelect.returnedToMonth&&out.afterMonthSelect.yearGridHidden&&out.afterMonthSelect.calendarVisible&&out.roundTrip.selectedCount===1&&out.roundTrip.selectedBlue,details:out};
+    }catch(e){return {error:String(e?.message||e)}}})()`);
+    check('E2E-UI-STATE-001 generic state-transition audit across calendar view modes',uiStateAudit?.ok===true,JSON.stringify(uiStateAudit));
+
+    // Generic visibility audit for every shipped tab: hidden nodes must not render, visible nodes must
+    // have a usable box. This catches CSS-vs-hidden regressions that static checks cannot detect.
+    const visibilityAudit=await evalJS(`(()=>{const required={home:['home'],add:['add'],library:['library'],search:['search'],calendar:['calendar'],settings:['settings']};const out={};for(const [tab,ids] of Object.entries(required)){document.querySelector('#bottomNav button[data-s="'+tab+'"]')?.click();out[tab]=ids.every(id=>{const e=document.getElementById(id);if(!e)return false;const s=getComputedStyle(e),r=e.getBoundingClientRect();return !e.hidden&&s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0})}return {ok:Object.values(out).every(Boolean),out}})()`);
+    check('E2E-UI-STATE-002 generic tab visibility audit',visibilityAudit?.ok===true,JSON.stringify(visibilityAudit));
+
     const identityAudit=await evalJS(`(()=>{try{const saved=books.slice();books=[{publisher:'集英社'},{publisher:' 集英社 '},{publisher:'集英社　'},{publisher:'集英社文庫'}];const k1=publisherFilterKey(books[0].publisher),k2=publisherFilterKey(books[1].publisher),k3=publisherFilterKey(books[2].publisher),k4=publisherFilterKey(books[3].publisher);const pidx=buildPublisherFilterIndex();const groups={};books.forEach(b=>(groups[seriesKey(b)]??=[]).push(b));const seriesSafe=Object.keys(groups).every(k=>!String(seriesDisplayLabel(k,groups[k].map(b=>({b})))).includes('series-work:')&&!String(seriesDisplayLabel(k,groups[k].map(b=>({b})))).includes('series-scope:'));books=saved;renderLibrary();return {publisherSame:k1===k2&&k2===k3,publisherDistinct:k1!==k4,publisherCount:pidx.get(k1)?.books.size===3,seriesDisplaySafe:seriesSafe}}catch(e){return {error:String(e?.message||e)}}})()`);
     check('E2E-IDENTITY-001 publisher/series display-key separation',identityAudit?.publisherSame&&identityAudit?.publisherDistinct&&identityAudit?.publisherCount&&identityAudit?.seriesDisplaySafe,JSON.stringify(identityAudit));
 
