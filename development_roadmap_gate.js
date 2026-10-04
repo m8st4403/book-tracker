@@ -4,7 +4,7 @@ const root=__dirname;
 const file=path.join(root,'DEVELOPMENT_ROADMAP_DECISION.json');
 if(!fs.existsSync(file)) throw new Error('DEVELOPMENT_ROADMAP_DECISION.json missing');
 const d=JSON.parse(fs.readFileSync(file,'utf8'));
-if(d.release!=='4.13.241') throw new Error(`roadmap release mismatch: ${d.release}`);
+if(d.release!=='4.13.242') throw new Error(`roadmap release mismatch: ${d.release}`);
 if(!Array.isArray(d.priorityOrder)||d.priorityOrder.length!==6) throw new Error('priority order must contain 6 decisions');
 const ranks=d.priorityOrder.map(x=>x.rank);
 if(JSON.stringify(ranks)!==JSON.stringify([1,2,3,4,5,6])) throw new Error('priority ranks must be 1..6');

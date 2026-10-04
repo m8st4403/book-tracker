@@ -11,7 +11,7 @@ const expected=[
 ];
 const failures=[];
 function req(cond,msg){if(!cond)failures.push(msg)}
-req(pkg.version==='4.13.241',`version mismatch: ${pkg.version}`);
+req(pkg.version==='4.13.242',`version mismatch: ${pkg.version}`);
 req(html.includes('async function runReleaseDateAudit()'),'async release-date audit missing');
 req(html.includes('function classifyReleaseDatePathCause('),'cause classifier missing');
 for(const code of expected)req(html.includes(code),`missing cause code: ${code}`);
