@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "release": "4.13.243",
+  "release": "4.13.244",
   "generatedAt": "2026-10-03",
   "purpose": "Final status inventory separating implemented quality coverage, runtime confirmation, and explicitly planned-but-unimplemented roadmap features.",
   "summary": {

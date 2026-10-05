@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "release": "4.13.243",
+  "release": "4.13.244",
   "principle": "A shipped operation is not complete until its observable outcome, persistence/projection impact, and failure behavior have an executable evidence path.",
   "features": [
     {

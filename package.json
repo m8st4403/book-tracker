@@ -1,7 +1,7 @@
 {
   "name": "book-tracker-test-guard",
   "private": true,
-  "version": "4.13.243",
+  "version": "4.13.244",
   "scripts": {
     "test": "npm run test:release",
     "test:guard": "node dev_guard.js index.html",
@@ -22,6 +22,7 @@
     "test:runtime-env": "node runtime_environment_probe.js",
     "test:status": "node feature_status_inventory_gate.js",
     "test:roadmap": "node development_roadmap_gate.js",
-    "test:release-date-path": "node release_date_path_gate.js"
+    "test:release-date-path": "node release_date_path_gate.js",
+    "test:release-date-resolver": "node release_date_resolver_semantics_gate.js"
   }
 }

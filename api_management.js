@@ -585,7 +585,7 @@
     const ev=row?.fieldEvidence?.[field]||evidenceFor(field,value,{identifierMatched:canonicalIsbn(row?.isbn)===canonicalIsbn(ctx.isbn),countryMatched:true});
     return {field,value,confidence:ev.confidence,evidence:ev.evidence,provider:row.source,priority:sourcePriority(field,row.source),row};
   }
-  function normalizeComparable(field,v){return field==="seriesName"?norm(v):field==="volumeNumber"?Number(v):String(v??"").trim()}
+  function normalizeComparable(field,v){if(field==="seriesName")return norm(v);if(field==="volumeNumber")return Number(v);if(field==="releaseDate"){const rd=releaseDateInfo(v);return rd.precision==="day"||rd.precision==="month"?rd.date:""}return String(v??"").trim()}
   function mergeCandidates(field,cands,ctx){
     if(!cands.length)return null;
     const policy=fieldPolicy(field);
