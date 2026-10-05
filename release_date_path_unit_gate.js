@@ -6,7 +6,7 @@ const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const failures=[];
 const req=(c,m)=>{if(!c)failures.push(m)};
-req(pkg.version==='4.13.244',`version mismatch: ${pkg.version}`);
+req(pkg.version==='4.13.245',`version mismatch: ${pkg.version}`);
 // Regression fixtures are expressed as contracts so a future edit cannot silently
 // remove a precision class or cause category used by the real audit.
 const precisionCases=[

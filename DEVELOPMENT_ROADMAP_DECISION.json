@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "release": "4.13.244",
+  "release": "4.13.245",
   "purpose": "Decision record separating stabilization work, next development priorities, deferred roadmap work, and future-only policy items. This is planning truth, not an implementation PASS signal.",
   "principles": [
     "Do not start new feature breadth until current data/projection quality gates remain green.",
