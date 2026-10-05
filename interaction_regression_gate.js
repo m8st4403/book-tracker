@@ -5,7 +5,7 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
 const failures=[];
 const req=(c,m)=>{if(!c)failures.push(m)};
-req(pkg.version==='4.13.245',`version mismatch: ${pkg.version}`);
+req(pkg.version==='4.13.246',`version mismatch: ${pkg.version}`);
 // Diagnostic copy controls: source/result/wiring must all exist. This is a generic
 // interaction regression gate, not a release-date-only feature gate.
 const pairs=[
@@ -30,6 +30,11 @@ req(html.includes('function copyElementText(id,button)'), 'copyElementText missi
 req(html.includes('navigator.clipboard?.writeText'), 'clipboard API path missing');
 req(html.includes('document.execCommand("copy")'), 'legacy clipboard fallback missing');
 req(html.includes('コピーしました ✓'), 'copy success feedback missing');
+req(html.includes('コピー中…'), 'copy action must provide immediate runtime feedback');
+req(html.includes('setTimeout(()=>{if(!finished)fallback()},1000)'), 'clipboard promise timeout fallback missing');
+req(html.includes('role\",\"dialog'), 'visible copy fallback dialog missing');
+req(html.includes('下の内容を長押しして「コピー」してください。'), 'copy fallback instruction missing');
+req(!html.includes("lines=['<b>既存蔵書 発売日不足補完</b>"), 'release-date repair output must not expose raw HTML markup');
 // Year view must include year-only release records in the release list while keeping
 // month grid semantics unchanged.
 req(html.includes('e.releasePrecision==="year"'), 'year-only release records missing from year-view source');

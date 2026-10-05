@@ -3,7 +3,7 @@ const fs=require('fs'),path=require('path'),vm=require('vm');
 const root=process.cwd(), pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
 const failures=[];
 const req=(c,m)=>{if(!c)failures.push(m)};
-req(pkg.version==='4.13.245',`version mismatch: ${pkg.version}`);
+req(pkg.version==='4.13.246',`version mismatch: ${pkg.version}`);
 const src=fs.readFileSync(path.join(root,'api_management.js'),'utf8');
 const ctx={console,performance:{now:()=>0},window:{},document:{createElement:()=>({}),head:{appendChild(){}}},fetch:async()=>{throw new Error('network must not be used by semantic gate')},URLSearchParams,AbortController,DOMException,Error,setTimeout,clearTimeout};
 ctx.globalThis=ctx;ctx.window=ctx;

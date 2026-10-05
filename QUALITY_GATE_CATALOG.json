@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "release": "4.13.245",
+  "release": "4.13.246",
   "purpose": "Single source of truth for release quality stages. Prevents pipeline stage drift and orphaned quality gates.",
   "stages": [
     {
