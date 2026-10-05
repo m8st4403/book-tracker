@@ -162,7 +162,7 @@ if(selectedIndex!==null){
         launch();
         if(completed===cases.length){
           console.log(`MUTATION SUMMARY | cases=${cases.length} | concurrency=${mutationConcurrency} | failed=${failed}`);
-          process.exitCode=failed?1:0;
+          process.exit(failed?1:0);
         }
       });
     }

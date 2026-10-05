@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "release": "4.13.246",
+  "release": "4.13.247",
   "purpose": "Single source of truth for files allowed in GitHubアップロード. Prevents release guard allow-list drift when quality assets are added or removed.",
   "assets": [
     "BIBLIOGRAPHIC_FIELD_CONTRACT.json",
@@ -26,6 +26,9 @@
     "cross_data_projection_gate.js",
     "dev_guard.js",
     "development_roadmap_gate.js",
+    "diagnostic_render_contract_gate.js",
+    "diagnostic_runtime_gate.html",
+    "diagnostic_runtime_gate.js",
     "evidence_reuse_gate.js",
     "feature_coverage_gate.js",
     "feature_depth_gate.js",
@@ -38,6 +41,7 @@
     "package.json",
     "quality_gate_catalog_gate.js",
     "release_artifact_guard.js",
+    "release_bundle.js",
     "release_date_path_gate.js",
     "release_date_path_unit_gate.js",
     "release_date_resolver_semantics_gate.js",

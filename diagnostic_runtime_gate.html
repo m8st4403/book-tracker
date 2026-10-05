@@ -1,0 +1,42 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>診断UI Runtime Gate</title></head><body>
+<div id="status"></div><pre id="result"></pre><iframe id="app" style="width:1px;height:1px;border:0;position:absolute;left:-9999px"></iframe>
+<script>
+const frame=document.getElementById('app'),status=document.getElementById('status'),result=document.getElementById('result');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function main(){
+ try{
+  frame.src='./index.html?diagnosticRuntimeGate=1&ts='+Date.now();
+  await new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(new Error('APP_LOAD_TIMEOUT')),15000);frame.onload=()=>{clearTimeout(t);resolve()}});
+  const w=frame.contentWindow;
+  w.confirm=()=>true;w.alert=()=>{};
+  w.bookTrackerApiManagement={
+   clearResolverCache(){},
+   priority:{isbnSearch:['openBD']},
+   providerEnabled(){return true},
+   async resolveIsbn(isbn){return {date:'202304',fieldEvidence:{releaseDate:{value:'202304',confidence:'VERIFIED',evidence:{provider:'openBD'},decision:{status:'ACCEPT',reason:'POLICY_SATISFIED'}}},resolution:{fields:{releaseDate:{provider:'openBD',confidence:'VERIFIED',decision:{status:'ACCEPT',reason:'POLICY_SATISFIED'}}},attempts:[{provider:'openBD',ok:true,count:1}],providerResults:[{provider:'openBD',releaseDate:'202304',releaseDatePrecision:'month'}]}}}
+  };
+  w.books=[{isbn:'9784253306935',title:'Runtime診断テスト',author:'Gate',publisher:'Test',date:''}];
+  w.persistBooks=()=>true;
+  const repair=w.document.getElementById('releaseDateRepairBtn'); if(!repair)throw new Error('REPAIR_BUTTON_MISSING');
+  repair.click();
+  await sleep(100);
+  await sleep(1200);
+  const box=w.document.getElementById('releaseDateRepairResults');
+  const text=box?.textContent||'';
+  const hasRawMarkup=/<(?:b|br|span|div)(?:\s|>)/i.test(text);
+  if(hasRawMarkup)throw new Error('RAW_HTML_VISIBLE_IN_REPAIR_RESULT');
+  if(!text.includes('既存蔵書 発売日不足補完')||!text.includes('補完:202304'))throw new Error('REPAIR_RESULT_CONTENT_INVALID');
+  const audit=w.document.getElementById('releaseDateAuditBtn'); audit.click();
+  await sleep(1200);
+  const auditText=w.document.getElementById('releaseDateAuditResults')?.textContent||'';
+  if(/<(?:b|br|span|div)(?:\s|>)/i.test(auditText))throw new Error('RAW_HTML_VISIBLE_IN_AUDIT_RESULT');
+  if(!auditText.includes('既存蔵書 発売日経路・カレンダー反映詳細診断')||!auditText.includes('判定'))throw new Error('AUDIT_RESULT_CONTENT_INVALID');
+  const copy=w.document.getElementById('copyReleaseDateRepairBtn');copy.click();await sleep(1200);
+  const dialogText=[...w.document.querySelectorAll('[role="dialog"] textarea')].map(x=>x.value).join('\n');
+  const copySource=w.document.getElementById('releaseDateRepairResults')?.dataset?.diagnosticText||'';
+  if(/<(?:b|br|span|div)(?:\s|>)/i.test(copySource)||/(?:<(?:b|br|span|div)>)/i.test(dialogText))throw new Error('RAW_HTML_IN_COPY_PATH');
+  status.textContent='PASS';result.textContent=JSON.stringify({status:'PASS',repairText:text,auditText:auditText,copyFallbackText:dialogText},null,2);
+ }catch(e){status.textContent='FAIL';result.textContent=JSON.stringify({status:'FAIL',error:String(e?.message||e),stack:String(e?.stack||'')},null,2)}
+}
+main();
+</script></body></html>

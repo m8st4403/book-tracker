@@ -5,7 +5,7 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
 const failures=[];
 const req=(c,m)=>{if(!c)failures.push(m)};
-req(pkg.version==='4.13.246',`version mismatch: ${pkg.version}`);
+req(pkg.version==='4.13.247',`version mismatch: ${pkg.version}`);
 // Diagnostic copy controls: source/result/wiring must all exist. This is a generic
 // interaction regression gate, not a release-date-only feature gate.
 const pairs=[
@@ -27,6 +27,12 @@ for(const [btn,out] of pairs){
 }
 req(html.includes('function copyTextValue(text,button)'), 'copyTextValue missing');
 req(html.includes('function copyElementText(id,button)'), 'copyElementText missing');
+req(html.includes('function renderDiagnosticText(id,text)'), 'generic diagnostic text renderer missing');
+req(html.includes('el.dataset.diagnosticText=value'), 'diagnostic canonical text storage missing');
+req(html.includes('pre.textContent=value'), 'diagnostic renderer must use textContent, not HTML parsing');
+req(html.includes('renderDiagnosticText("releaseDateAuditResults"'), 'release-date audit must use canonical text renderer');
+req(html.includes('renderDiagnosticText("releaseDateRepairResults"'), 'release-date repair must use canonical text renderer');
+req(html.includes('renderDiagnosticText("bibliographyAuditResults"'), 'bibliography audit must use canonical text renderer');
 req(html.includes('navigator.clipboard?.writeText'), 'clipboard API path missing');
 req(html.includes('document.execCommand("copy")'), 'legacy clipboard fallback missing');
 req(html.includes('コピーしました ✓'), 'copy success feedback missing');
