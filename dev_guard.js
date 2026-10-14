@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const http = require('http');
+const net = require('net');
 
 const target = path.resolve(process.argv[2] || 'index.html');
 if (!fs.existsSync(target)) {
@@ -50,6 +51,54 @@ function auditInteractiveOperationCoverage(source) {
   }
   const uncovered = items.filter(x=>!x.covered);
   return {total:items.length, covered:items.length-uncovered.length, uncovered};
+}
+
+// v4.13.249: Every shipped feature gets a feature-specific mutation target.
+// These checks are deliberately narrower than broad static/runtime checks so a mutation
+// cannot be considered protected merely because some unrelated layer failed.
+const featureMutationAnchors={
+  'FEAT-NAV':['id="home"','id="add"','id="library"','id="search"','id="calendar"','id="settings"'],
+  'FEAT-SCAN':['id="scan"','function scan(','function stopScan('],
+  'FEAT-BACKUP':['id="backupDataBtn"','id="restoreDataBtn"','function validateBackupData(','function restoreBackupData('],
+  'FEAT-DETAIL':['window.openBookDetail=function(','id="detailPrice"','id="detailReading"','id="detailFavorite"','id="detailMemo"'],
+  'FEAT-PURCHASE':['purchaseGroups','function setPurchaseGroupForBooks(','function getPurchaseGroupForBook('],
+  'FEAT-REG':['function prepareRegistrationBook(','function prepareRegistrationBatch(','function commitBulkPreparedBooks('],
+  'FEAT-LIB':['function renderLibrary('],
+  'FEAT-SEARCH':['function searchGoogle(','setSearchSort'],
+  'FEAT-CAL':['function renderCalendar(','function addCalendarExtra(','function canonicalReleaseDate('],
+  'FEAT-SET':['function saveSettings','function loadSettings','id="profileSave"'],
+  'FEAT-API':['bookTrackerApiManagement','resolveIsbn'],
+  'FEAT-BIB':['function auditAndFillExistingBibliography','function repairExistingSeries'],
+  'FEAT-DIAG':['function copyElementText(','function clearAllDiagnosticResults(','copyAllDiagnosticReportBtn'],
+  'FEAT-METRIC':['function measureProcessing(','processingMs','userWaitMs'],
+  'FEAT-CROSS':['canonicalIsbn','canonicalReleaseDate','listPriceOf','seriesScope'],
+  'FEAT-UI':['const esc=x=>','scrollWidth<=el.clientWidth']
+};
+const featureAnchorSources=new Map([
+  ['FEAT-API',apiSource],
+  ...Object.keys(featureMutationAnchors).filter(id=>id!=='FEAT-API').map(id=>[id,html])
+]);
+for(const [feature,anchors] of Object.entries(featureMutationAnchors)){
+  const hay=feature==='FEAT-UI'?html+'\n'+fs.readFileSync(__filename,'utf8'):html;
+  const targetAnchor=process.env.MUTATION_TARGET_ANCHOR;
+  if(process.env.MUTATION_TARGET_FEATURE===feature && targetAnchor){
+    const baseline=Number(process.env.MUTATION_TARGET_BASELINE_COUNT)||0;
+    const escaped=targetAnchor.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    const tokenLike=/^[A-Za-z_$][\w$]*$/.test(targetAnchor);
+    const current=tokenLike?((hay.match(new RegExp(`(?<![A-Za-z0-9_$])${escaped}(?![A-Za-z0-9_$])`,'g'))||[]).length):(hay.split(targetAnchor).length-1);
+    check(`MUTATION-TARGET-${feature}`,baseline>0&&current===baseline,`anchor=${targetAnchor} baseline=${baseline} current=${current}`);
+  }else{
+    check(`MUTATION-TARGET-${feature}`,anchors.every(a=>hay.includes(a)),`anchors=${anchors.filter(a=>!hay.includes(a)).join(',')||'all-present'}`);
+  }
+}
+
+// Mutation target-only mode: feature-anchor mutations must be attributed to their
+// intended target guard, not to unrelated static/runtime failures.
+if(process.env.DEV_GUARD_TARGET_ONLY==='1' && process.env.MUTATION_TARGET_FEATURE){
+  const targetResult=results.find(r=>r.name===process.env.MUTATION_TARGET_FEATURE);
+  if(targetResult) console.log(`${targetResult.ok?'PASS':'FAIL'} | ${targetResult.name}${targetResult.detail?` | ${targetResult.detail}`:''}`);
+  else console.log(`FAIL | ${process.env.MUTATION_TARGET_FEATURE} | target result missing`);
+  process.exit(targetResult?.ok?0:1);
 }
 const operationCoverage = auditInteractiveOperationCoverage(html);
 check(
@@ -133,6 +182,15 @@ function auditPositiveTabindex(source){
 }
 const tabindexCoverage=auditPositiveTabindex(html);
 check('STATIC-085 positive-tabindex controls have an operation contract',tabindexCoverage.ok,JSON.stringify(tabindexCoverage));
+check('STATIC-086 home upcoming navigation is wired', /\$\(\"homeUpcomingMore\"\)\.onclick\s*=/.test(html), 'home upcoming more control routes to calendar');
+check('STATIC-087 search unowned-only change handler is wired', /\$\("searchUnownedOnly"\)\.addEventListener\("change"/.test(html), 'unowned-only filter reruns the active book search');
+check('STATIC-088 API list-price tax inclusion policy is enforced', apiSource.includes('if(p.requireTaxIncluded&&e.taxIncludedConfirmed!==true)return {status:"HOLD",reason:"TAX_STATUS_UNKNOWN_OR_NOT_INCLUDED"};'), 'tax-included price evidence is required before accepting list price');
+check('STATIC-089 API provider conflict HOLD policy is enforced', apiSource.includes('if(conflicting.length&&policy.conflict==="HOLD")return'), 'conflicting provider values remain on hold');
+check('STATIC-090 author identity normalization strips bibliographic role prefixes', html.includes(`const withoutRole=raw.replace(AUTHOR_ROLE_PREFIX_RE,"").trim();`), 'author role labels do not become part of the normalized person identity');
+check('STATIC-091 series group applies selected library sort', html.includes('items=sortSeriesGroupItems(items);'), 'series grouping preserves the selected item order');
+check('STATIC-092 series volume invariant rejects zero', html.includes('Number.isInteger(n)&&n>=1?n:null'), 'volume numbers must be positive integers');
+check('STATIC-093 library volume sort uses numeric comparator', html.includes('else if(mode==="volume-asc")r=volumeCompare(x.b,y.b);'), 'library volume ordering is numeric and deterministic');
+check('STATIC-094 search release sort uses canonical release comparator', html.includes('if(appSettings.search?.sort==="release-desc")a.sort((x,y)=>compareReleaseTime(x,y,true));') && html.includes('else if(appSettings.search?.sort==="release-asc")a.sort((x,y)=>compareReleaseTime(x,y,false));'), 'search release-date ordering preserves precision-aware comparison');
 
 const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);
 const dupIds = [...new Set(ids.filter((id,i)=>ids.indexOf(id)!==i))];
@@ -173,6 +231,7 @@ check('STATIC-036 HTTP 429 response body release before retry', html.includes('r
 check('STATIC-037 HTTP 429 retry attempt diagnostic', html.includes('retry-attempt-2') && html.includes('retry-aborted-before-fetch'), '429 retry attempt and abort state are explicitly measured');
 check('STATIC-038 HTTP 429 header diagnostic', html.includes('429-Retry-After=') && html.includes('retry-429-Retry-After='), '429 Retry-After and rate-limit headers are measured without exposing credentials');
 check('STATIC-039 HTTP 429 body diagnostic', html.includes('429-error-reason=') && html.includes('retry-429-error-reason='), '429 public response reason/message are measured without storing the raw body');
+check('STATIC-096 NDL HTTP 429/503 honors bounded Retry-After', /const retryAfter=String\(r\.headers\?\.get\?\.\(\"Retry-After\"\)\|\|\"\"\)\.trim\(\)/.test(apiSource) && /Math\.min\(5000,retryDelay\)/.test(apiSource) && /await r\.body\?\.cancel\?\.\(\)/.test(apiSource), 'NDL throttling releases the response body and honors a bounded Retry-After before retrying');
 check('STATIC-041 daily quota user-facing error is preserved', html.includes('GOOGLE_BOOKS_DAILY_QUOTA_EXCEEDED') && html.includes('Google Books APIの日次クォータ（Queries per day）を超過しています。') && html.includes('daily-quota-no-retry'), 'daily quota error propagation is present');check('STATIC-040 daily Google Books quota classification', html.includes('GOOGLE_BOOKS_DAILY_QUOTA_EXCEEDED') && html.includes('daily-quota-no-retry') && /Queries per day/.test(html), 'daily quota exhaustion is classified and does not perform short-delay retries');
 check('STATIC-032 Abort polling guard exists for WebKit body waits', html.includes('setInterval(()=>{if(opts.signal?.aborted)abortJsonReject()},25)'), 'AbortSignal state is polled as a WebKit-safe fallback');check('STATIC-029 settings version is derived from APP_VERSION', /id=\"appVersionText\"/.test(html) && /renderAppVersion\(\)/.test(html) && /firstChild\.nodeValue=/.test(html), 'Settings version display uses APP_VERSION as the source of truth');
 check('STATIC-027 search performance measurement contract', /bookTrackerSearchMetrics/.test(html) && /検索処理の計測/.test(html) && /追加：ISBN検索/.test(html) && /検索全体：/.test(html) && /Provider別：/.test(html), 'search start-to-result timing and API/provider breakdown are explicit');
@@ -213,6 +272,7 @@ check('STATIC-026 single-book notices are deferred until metrics finish', /defer
 check('STATIC-025 processing measurement receives token', /window\.bookTrackerRegistrationMetrics\.measureProcessing\(metrics,/.test(html) && !/metrics\.measureProcessing\(metrics,/.test(html), 'processing measurement API is called with the registration token');
 check('STATIC-009 global registration lock contract', /registrationBusy/.test(html) && /runRegistrationAction/.test(html) && /data-register-action/.test(html), 'individual/bulk/detail/calendar registration shares one lock');
 check('STATIC-010 search generation contract', /searchGenerations/.test(html) && /runSearchSingleFlight/.test(html) && /isCurrentSearch/.test(html), 'stale search responses cannot overwrite current results');
+check('STATIC-095 author new-release handler rejects stale responses', /search:author-new[\s\S]{0,800}isCurrentSearch\(\"authorResults\",token\)\)return;renderSelectableResults/.test(html), 'author-new result rendering is guarded by the current search generation');
 check('STATIC-011 data operation lock contract', /dataOperationBusy/.test(html) && /setDataOperationUiBusy/.test(html) && /data-data-operation/.test(html), 'registration and series repair share a data-operation lock');
 check('STATIC-062 existing bibliography audit is wired', ['bibliographyAuditBtn','bibliographyAuditResults','copyBibliographyAuditBtn','clearBibliographyAuditBtn'].every(id=>new RegExp('id=\"'+id+'\"').test(html)) && /async function auditAndFillExistingBibliography\(\)/.test(html) && /fillMissingBibliography\(/.test(html), 'existing-library bibliography audit/repair has a single non-overwriting path');
     check('STATIC-063 existing release-date repair is wired', ['releaseDateRepairBtn','releaseDateRepairResults','copyReleaseDateRepairBtn','clearReleaseDateRepairBtn'].every(id=>new RegExp('id=\"'+id+'\"').test(html)) && /async function refreshMissingReleaseDates\(\)/.test(html) && /既存の発売日.*上書きしません/.test(html), 'existing release-date repair has an explicit missing-only non-overwrite path');
@@ -307,11 +367,24 @@ function cdpClient(port) {
 }
 
 async function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
+async function findFreePort(){
+  return await new Promise((resolve,reject)=>{
+    const server=net.createServer();
+    server.once('error',reject);
+    server.listen(0,'127.0.0.1',()=>{const p=server.address().port;server.close(()=>resolve(p));});
+  });
+}
+if(process.env.DEV_GUARD_STATIC_ONLY==='1'){
+  const failed=results.filter(r=>!r.ok);
+  console.log(`\nBook Tracker static guard: ${results.length-failed.length}/${results.length} passed`);
+  for(const r of results) console.log(`${r.ok?'PASS':'FAIL'} | ${r.name}${r.detail?` | ${r.detail}`:''}`);
+  process.exitCode=failed.length?1:0;
+} else {
 async function main(){
-  const port = 9229;
+  const port = Number(process.env.DEV_GUARD_CDP_PORT)||await findFreePort();
   const profile = fs.mkdtempSync('/tmp/book-tracker-guard-');
   const chrome = spawn('/usr/bin/chromium', [
-    '--headless=new','--disable-gpu','--no-sandbox','--disable-dev-shm-usage','--no-proxy-server','--proxy-server=direct://','--proxy-bypass-list=*','--disable-features=BlockInsecurePrivateNetworkRequests',
+    '--headless=new','--disable-gpu','--in-process-gpu','--no-sandbox','--disable-dev-shm-usage','--no-proxy-server','--proxy-server=direct://','--proxy-bypass-list=*','--disable-features=BlockInsecurePrivateNetworkRequests',
     `--remote-debugging-port=${port}`,`--user-data-dir=${profile}`,'about:blank'
   ], {stdio:'ignore'});
   const cdp=cdpClient(port);
@@ -320,7 +393,18 @@ async function main(){
     await cdp.send('Runtime.enable');
     await cdp.send('Page.enable');
     await cdp.send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
-    const evalJS = async expression => (await cdp.send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true})).result?.value;
+    const evalTimeoutMs=Number(process.env.DEV_GUARD_EVAL_TIMEOUT_MS)||8000;
+    const evalJS = async expression => {
+      const timed=await Promise.race([
+        cdp.send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true}).then(x=>({ok:true,value:x.result?.value})),
+        wait(evalTimeoutMs).then(()=>({ok:false,timeout:true}))
+      ]);
+      if(!timed.ok){
+        check('E2E-FATAL',false,`Runtime.evaluate timeout after ${evalTimeoutMs}ms`);
+        return {__guardEvalTimeout:true};
+      }
+      return timed.value;
+    };
     // Use a real HTTPS origin for localStorage/cookies. The application HTML is still the exact release HTML;
     // local JS dependency is inlined only for the browser harness because this sandbox blocks loopback navigation.
     const apiPath=path.join(path.dirname(target),'api_management.js');
@@ -397,6 +481,8 @@ check('E2E-001 all six tabs exist', tabState.every(x=>x.exists), JSON.stringify(
     check('E2E-API-006D NDL normalization maps series/volume/ISBN',apiAdapterContracts?.ndl===true,JSON.stringify(apiAdapterContracts));
     const ndlOpenSearchFixture=await evalJS(`(()=>{const api=window.bookTrackerApiManagement;const xml="<?xml version='1.0'?><rss xmlns:dc='http://purl.org/dc/elements/1.1/' xmlns:dcterms='http://purl.org/dc/terms/' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns:dcndl='http://ndl.go.jp/dcndl/terms/'><channel><item><title>レベルE</title><dc:title>レベルE</dc:title><dc:creator>冨樫義博</dc:creator><dc:publisher>集英社</dc:publisher><dcterms:issued>1996</dcterms:issued><dcndl:volume>3</dcndl:volume><dcndl:volumeTitle>3巻</dcndl:volumeTitle><dcndl:seriesTitle>レベルE</dcndl:seriesTitle><dc:identifier xsi:type='dcndl:ISBN'>9784088720739</dc:identifier></item></channel></rss>";const rows=api.normalizeNDLOpenSearch?.(xml)||[];const x=rows[0]||{};return {ok:rows.length===1&&x.title==='レベルE'&&canonicalIsbn(x.isbn)==='9784088720739'&&x.author==='冨樫義博'&&x.publisher==='集英社'&&x.date==='1996'&&x.series?.name==='レベルE'&&x.series?.volumeNumber===3,rows:rows.map(x=>({title:x.title,isbn:x.isbn,author:x.author,publisher:x.publisher,date:x.date,series:x.series}))};})()`);
     check('E2E-API-006L NDL OpenSearch normalization',ndlOpenSearchFixture?.ok===true,JSON.stringify(ndlOpenSearchFixture));
+    const ndl429Retry=await evalJS(`(async()=>{const api=window.bookTrackerApiManagement,oldFetch=globalThis.fetch;let calls=0;const xml="<?xml version='1.0'?><rss xmlns:dc='http://purl.org/dc/elements/1.1/' xmlns:dcterms='http://purl.org/dc/terms/' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'><channel><item><title>429 retry recovered</title><dc:creator>Retry Test</dc:creator><dc:publisher>Test Press</dc:publisher><dcterms:issued>2026-01</dcterms:issued><dc:identifier xsi:type='ISBN'>9784088720739</dc:identifier></item></channel></rss>";try{globalThis.fetch=async()=>{calls++;if(calls===1)return new Response('rate limited',{status:429,headers:{'Retry-After':'0'}});return new Response(xml,{status:200,headers:{'Content-Type':'application/xml'}})};const rows=await api.adapters.ndl.search('429 retry recovered',5);return {ok:calls===2&&rows.length===1&&rows[0].title==='429 retry recovered',calls,count:rows.length,title:rows[0]?.title};}catch(e){return {ok:false,calls,error:String(e?.message||e)}}finally{globalThis.fetch=oldFetch}})()`);
+    check('E2E-API-006R NDL HTTP 429 Retry-After then success',ndl429Retry?.ok===true,JSON.stringify(ndl429Retry));
     const ndlAuthorityFixture=await evalJS(`(()=>{try{const api=window.bookTrackerApiManagement;const xml="<?xml version='1.0'?><rss xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'><channel><item><title>authority-fixture</title><creator rdf:resource='http://id.ndl.go.jp/auth/ndlna/1001'>佐賀崎しげる</creator><creator rdf:resource='http://id.ndl.go.jp/auth/entity/1001'>佐賀崎 しげる</creator></item></channel></rss>";const rows=api.normalizeNDLOpenSearch?.(xml)||[];const x=rows[0]||{};const es=x.authorEntities||[];return {ok:es.some(e=>e.authorityId==='http://id.ndl.go.jp/auth/ndlna/1001')&&es.some(e=>e.entityId==='http://id.ndl.go.jp/auth/entity/1001'),entities:es}}catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
     check('E2E-API-006P NDL creator authority URI extraction',ndlAuthorityFixture?.ok===true,JSON.stringify(ndlAuthorityFixture));
     const ndlAuthoritySruFixture=await evalJS(`(()=>{try{const api=window.bookTrackerApiManagement;const xml="<?xml version='1.0'?><searchRetrieveResponse xmlns='http://www.loc.gov/zing/srw/' xmlns:dcterms='http://purl.org/dc/terms/' xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'><records><record><recordData><dcterms:title>authority-fixture</dcterms:title><dcterms:creator rdf:resource='http://id.ndl.go.jp/auth/ndlna/1001'>佐賀崎しげる</dcterms:creator></recordData></record></records></searchRetrieveResponse>";const x=api.normalizeNDLFixture?.(xml)?.[0]||{};const es=x.authorEntities||[];return {ok:es.some(e=>e.authorityId==='http://id.ndl.go.jp/auth/ndlna/1001'),entities:es}}catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
@@ -956,6 +1042,30 @@ check('E2E-001 all six tabs exist', tabState.every(x=>x.exists), JSON.stringify(
       return {staleRejected:r[0]===false,currentAccepted:r[1]===true,registrationSecondRejected:rr[1]===false,registrationFirstCompleted:rr[0]==='first'};
     })()`);
     check('E2E-CONCURRENCY-001 stale search response cannot win',concurrencySmoke?.staleRejected===true&&concurrencySmoke?.currentAccepted===true,JSON.stringify(concurrencySmoke));
+    const searchUiRaceSmoke=await evalJS(`(async()=>{
+      const originalSearchGoogle=searchGoogle, originalAuthor=$('author').value, originalHtml=$('authorResults').innerHTML;
+      const originalData=window.authorResultsData;
+      let releaseOld;
+      try{
+        $('author').value='race-test';
+        searchGoogle=(query,label)=>{
+          if(String(label).includes('作家検索'))return new Promise(resolve=>{releaseOld=()=>resolve([{isbn:'9784088720715',title:'STALE_AUTHOR_RESULT',author:'Race Test',date:'2020'}])});
+          if(String(label).includes('作家新刊検索'))return Promise.resolve([{isbn:'9784253306935',title:'CURRENT_NEW_RELEASE',author:'Race Test',date:'2026-10-01'}]);
+          return Promise.resolve([]);
+        };
+        $('authorBtn').click();
+        for(let i=0;i<20&&!releaseOld;i++)await sleep(2);
+        $('authorNewBtn').click();
+        await sleep(20);
+        const currentVisible=($('authorResults').textContent||'').includes('CURRENT_NEW_RELEASE');
+        if(releaseOld)releaseOld();
+        await sleep(20);
+        const text=$('authorResults').textContent||'';
+        return {ok:currentVisible&&text.includes('CURRENT_NEW_RELEASE')&&!text.includes('STALE_AUTHOR_RESULT'),currentVisible,staleVisible:text.includes('STALE_AUTHOR_RESULT'),text:text.slice(0,240)};
+      }catch(e){return {ok:false,error:String(e?.message||e)}}
+      finally{searchGoogle=originalSearchGoogle;$('author').value=originalAuthor;$('authorResults').innerHTML=originalHtml;if(originalData===undefined)delete window.authorResultsData;else window.authorResultsData=originalData;}
+    })()`);
+    check('E2E-CONCURRENCY-005 real author/new-release UI rejects stale response',searchUiRaceSmoke?.ok===true,JSON.stringify(searchUiRaceSmoke));
     check('E2E-CONCURRENCY-002 registration actions are globally serialized',concurrencySmoke?.registrationSecondRejected===true&&concurrencySmoke?.registrationFirstCompleted===true,JSON.stringify(concurrencySmoke));
     const dataLockSmoke=await evalJS(`(async()=>{const before=dataOperationBusy;dataOperationBusy=true;const searchBlocked=await runSearchSingleFlight('guard-data-lock','guard-data-lock-target',null,async()=>true)===null;const regBlocked=await runRegistrationAction(async()=>true)===false;dataOperationBusy=before;return {searchBlocked,regBlocked};})()`);
     check('E2E-CONCURRENCY-003 data operation lock blocks competing actions',dataLockSmoke?.searchBlocked===true&&dataLockSmoke?.regBlocked===true,JSON.stringify(dataLockSmoke));
@@ -1154,6 +1264,30 @@ check('E2E-UI-006 diagnostic copy/clear hierarchy works',diagnosticCopyClearUi?.
 
 
 
+    const releaseDateRepairSmoke=await evalJS(`(async()=>{try{
+      const saved={books:books.slice(),confirm:window.confirm,persist:persistBooks,renderLibrary,renderHome,renderCalendar};
+      const api=window.bookTrackerApiManagement,oldResolve=api.resolveIsbn,oldClear=api.clearResolverCache;
+      const fixture=[
+        {isbn:'9780000000101',title:'月単位は補完',date:''},
+        {isbn:'9780000000118',title:'年だけは保留',date:''},
+        {isbn:'9780000000125',title:'Provider矛盾は保留',date:''},
+        {isbn:'9780000000132',title:'既存日付は維持',date:'2026-09',releaseDateMeta:{source:'old',confidence:'HIGH',precision:'month',updatedAt:'old'}}
+      ];
+      const responses={
+        '9780000000101':{value:'2026-10',confidence:'HIGH',decision:{status:'ACCEPT'},provider:'openBD'},
+        '9780000000118':{value:'2026',confidence:'HIGH',decision:{status:'ACCEPT'},provider:'openBD'},
+        '9780000000125':{value:'2026-11',confidence:'HIGH',decision:{status:'HOLD',reason:'PROVIDER_CONFLICT'},provider:'openBD'}
+      };
+      books=fixture.map(x=>({...x}));window.confirm=()=>true;persistBooks=()=>true;renderLibrary=()=>{};renderHome=()=>{};renderCalendar=()=>{};api.clearResolverCache=()=>{};
+      api.resolveIsbn=async isbn=>{const e=responses[isbn];return {isbn,date:e?.value||'',fieldEvidence:{releaseDate:e?{value:e.value,confidence:e.confidence,decision:e.decision,evidence:{provider:e.provider}}:null},resolution:{fields:{releaseDate:e?{provider:e.provider,confidence:e.confidence,decision:e.decision}:{}},providerResults:[]}}};
+      const result=await refreshMissingReleaseDates();const byIsbn=Object.fromEntries(books.map(b=>[b.isbn,b]));
+      const accepted=byIsbn['9780000000101'],year=byIsbn['9780000000118'],conflict=byIsbn['9780000000125'],existing=byIsbn['9780000000132'];
+      const ok=result?.targets===3&&result?.changed===1&&result?.unavailable===2&&result?.failed===0&&accepted.date==='2026-10'&&accepted.releaseDateMeta?.source==='openBD'&&accepted.releaseDateMeta?.precision==='month'&&year.date===''&&conflict.date===''&&existing.date==='2026-09'&&JSON.stringify(existing.releaseDateMeta)===JSON.stringify(fixture[3].releaseDateMeta);
+      api.resolveIsbn=oldResolve;api.clearResolverCache=oldClear;window.confirm=saved.confirm;persistBooks=saved.persist;renderLibrary=saved.renderLibrary;renderHome=saved.renderHome;renderCalendar=saved.renderCalendar;books=saved.books;
+      return {ok,targets:result?.targets,changed:result?.changed,unavailable:result?.unavailable,failed:result?.failed,acceptedDate:accepted.date,acceptedMeta:accepted.releaseDateMeta,yearDate:year.date,conflictDate:conflict.date,existingDate:existing.date};
+    }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
+    check('E2E-RELEASE-003 missing-only refresh saves accepted month precision, rejects year/conflict, and preserves existing date/provenance',releaseDateRepairSmoke?.ok===true,JSON.stringify(releaseDateRepairSmoke));
+
     const isbnSeriesSourceSmoke=await evalJS(`(async()=>{try{
       const btn=document.getElementById('isbnSeriesSourceBtn'),box=document.getElementById('isbnSeriesSourceResults'),api=window.bookTrackerApiManagement;
       const originalBooks=books, originalEnabled=api.providerEnabled, originals={};
@@ -1266,14 +1400,14 @@ check('E2E-UI-006 diagnostic copy/clear hierarchy works',diagnosticCopyClearUi?.
       out.afterMonthSelect={returnedToMonth:document.getElementById('calendarMonthMode')?.getAttribute('aria-pressed')==='true',yearGridHidden:hidden(document.getElementById('calendarYearGrid')),calendarVisible:visible(document.getElementById('calHead'))&&visible(document.getElementById('calendarGrid')),yearReleaseHidden:hidden(document.getElementById('calendarYearReleases'))};
       document.getElementById('calendarYearMode')?.click();
       const selected=[...document.querySelectorAll('#calendarYearGrid .calendar-year-month.selected-month')];
-      const allNeutral=[...document.querySelectorAll('#calendarYearGrid .calendar-year-month')].every(e=>!e.classList.contains('selected-month')&&e.getAttribute('aria-pressed')==='false');
+      const allOthersNeutral=[...document.querySelectorAll('#calendarYearGrid .calendar-year-month')].filter(e=>!e.classList.contains('selected-month')).every(e=>e.getAttribute('aria-pressed')==='false');
       const yearReleaseVisible=visible(document.getElementById('calendarYearReleases'))&&!!document.getElementById('calendarYearReleasesList');
-      out.roundTrip={selectedCount:selected.length,allNeutral,yearReleaseVisible};
-      return {ok:out.monthInitial.month&&out.monthInitial.year&&out.yearMode.grid&&out.yearMode.calendar&&out.yearMode.monthPressed&&out.yearMode.yearPressed&&out.yearMode.monthControlsHidden&&out.yearMode.twelveButtons===12&&out.afterMonthSelect.returnedToMonth&&out.afterMonthSelect.yearGridHidden&&out.afterMonthSelect.calendarVisible&&out.afterMonthSelect.yearReleaseHidden&&out.roundTrip.selectedCount===0&&out.roundTrip.allNeutral&&out.roundTrip.yearReleaseVisible,details:out};
+      out.roundTrip={selectedCount:selected.length,allOthersNeutral,yearReleaseVisible};
+      return {ok:out.monthInitial.month&&out.monthInitial.year&&out.yearMode.grid&&out.yearMode.calendar&&out.yearMode.monthPressed&&out.yearMode.yearPressed&&out.yearMode.monthControlsHidden&&out.yearMode.twelveButtons===12&&out.afterMonthSelect.returnedToMonth&&out.afterMonthSelect.yearGridHidden&&out.afterMonthSelect.calendarVisible&&out.afterMonthSelect.yearReleaseHidden&&out.roundTrip.selectedCount===1&&out.roundTrip.allOthersNeutral&&out.roundTrip.yearReleaseVisible,details:out};
     }catch(e){return {error:String(e?.message||e)}}})()`);
     check('E2E-UI-STATE-001 generic state-transition audit across calendar view modes',uiStateAudit?.ok===true,JSON.stringify(uiStateAudit));
-    const calendarYearVisualAudit=await evalJS(`(()=>{try{const grid=document.getElementById('calendarYearGrid'),items=[...document.querySelectorAll('#calendarYearGrid .calendar-year-month')],release=document.getElementById('calendarYearReleases');const visible=e=>{if(!e)return false;const r=e.getBoundingClientRect(),s=getComputedStyle(e);return !e.hidden&&r.width>0&&r.height>0&&s.display!=='none'&&s.visibility!=='hidden'};const neutral=items.every(e=>!e.classList.contains('selected-month')&&e.getAttribute('aria-pressed')==='false');const heights=items.map(e=>e.getBoundingClientRect().height);const compact=heights.length===12&&Math.max(...heights)<=60;const gridRect=grid?.getBoundingClientRect();const releaseVisible=visible(release)&&!!document.getElementById('calendarYearReleasesList');return {ok:visible(grid)&&items.length===12&&neutral&&compact&&!!gridRect&&gridRect.height<=130&&releaseVisible,items:items.length,neutral,heights,gridHeight:gridRect?.height,releaseVisible};}catch(e){return {error:String(e?.message||e)}}})()`);
-    check('E2E-UI-CALENDAR-YEAR-001 compact neutral 12-month chooser + annual release list',calendarYearVisualAudit?.ok===true,JSON.stringify(calendarYearVisualAudit));
+    const calendarYearVisualAudit=await evalJS(`(()=>{try{const grid=document.getElementById('calendarYearGrid'),items=[...document.querySelectorAll('#calendarYearGrid .calendar-year-month')],release=document.getElementById('calendarYearReleases');const visible=e=>{if(!e)return false;const r=e.getBoundingClientRect(),s=getComputedStyle(e);return !e.hidden&&r.width>0&&r.height>0&&s.display!=='none'&&s.visibility!=='hidden'};const selected=items.filter(e=>e.classList.contains('selected-month')&&e.getAttribute('aria-pressed')==='true');const othersNeutral=items.filter(e=>!e.classList.contains('selected-month')).every(e=>e.getAttribute('aria-pressed')==='false');const heights=items.map(e=>e.getBoundingClientRect().height);const compact=heights.length===12&&Math.max(...heights)<=60;const gridRect=grid?.getBoundingClientRect();const releaseVisible=visible(release)&&!!document.getElementById('calendarYearReleasesList');return {ok:visible(grid)&&items.length===12&&selected.length===1&&othersNeutral&&compact&&!!gridRect&&gridRect.height<=130&&releaseVisible,items:items.length,selectedCount:selected.length,othersNeutral,heights,gridHeight:gridRect?.height,releaseVisible};}catch(e){return {error:String(e?.message||e)}}})()`);
+    check('E2E-UI-CALENDAR-YEAR-001 compact 12-month chooser with selected-month state + annual release list',calendarYearVisualAudit?.ok===true,JSON.stringify(calendarYearVisualAudit));
 
     // Generic visibility audit for every shipped tab: hidden nodes must not render, visible nodes must
     // have a usable box. This catches CSS-vs-hidden regressions that static checks cannot detect.
@@ -1556,10 +1690,12 @@ check('E2E-UI-006 diagnostic copy/clear hierarchy works',diagnosticCopyClearUi?.
       const asc=sortBooks(rows,'release-asc').map(x=>x.title),desc=sortBooks(rows,'release-desc').map(x=>x.title);
       const sortOk=JSON.stringify(asc)===JSON.stringify(['old','new','unknown'])&&JSON.stringify(desc)===JSON.stringify(['new','old','unknown']);
       const oldBooks=books.slice(),oldExtras=calendarExtras.slice();
-      books=[{isbn:'date-cross-1',title:'ISO日付',date:'2026-04-15T00:00:00+09:00',upcoming:[]},{isbn:'date-cross-2',title:'月だけ',date:'2026-04',upcoming:[]}];calendarExtras=[];
+      books=[{isbn:'date-cross-1',title:'ISO日付',date:'2026-04-15T00:00:00+09:00',upcoming:[]},{isbn:'date-cross-2',title:'月だけ',date:'2026-04',upcoming:[]},{isbn:'date-cross-3',title:'未来日',date:'2099-12-31',upcoming:[]}];calendarExtras=[];
       const events=allEvents(true); const calendarOk=events.some(e=>e.isbn==='date-cross-1'&&e.date==='2026-04-15'&&e.releasePrecision==='day')&&events.some(e=>e.isbn==='date-cross-2'&&e.date==='2026-04'&&e.releasePrecision==='month');
+      const futureDateOk=events.some(e=>e.isbn==='date-cross-3'&&e.date==='2099-12-31'&&e.releasePrecision==='day');
+      books[2].date='2100-01';const changedEvents=allEvents(true);const dateChangeOk=changedEvents.some(e=>e.isbn==='date-cross-3'&&e.date==='2100-01'&&e.releasePrecision==='month')&&!changedEvents.some(e=>e.isbn==='date-cross-3'&&e.date==='2099-12-31');
       books=oldBooks;calendarExtras=oldExtras;
-      return {ok:normalizedOk&&sortOk&&calendarOk,normalized,asc,desc,calendarOk};
+      return {ok:normalizedOk&&sortOk&&calendarOk&&futureDateOk&&dateChangeOk,normalized,asc,desc,calendarOk,futureDateOk,dateChangeOk};
     }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
     check('E2E-CROSS-RELEASE-001 canonical release-date contract',releaseDateContract?.ok===true,JSON.stringify(releaseDateContract));
     const phaseMetricContract=await evalJS(`(()=>{try{const sm=window.bookTrackerSearchMetrics;const t=sm.start('計測テスト','phase');t.addApiPhase('googleBooks','fetch',12);sm.finish(t,true,'',0,[]);return {ok:t.apiPhases?.googleBooks?.fetch===12};}catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
@@ -1594,3 +1730,4 @@ check('E2E-UI-006 diagnostic copy/clear hierarchy works',diagnosticCopyClearUi?.
   process.exitCode=failed.length?1:0;
 }
 main();
+}

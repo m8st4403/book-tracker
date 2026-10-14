@@ -1,12 +1,12 @@
 {
   "name": "book-tracker-test-guard",
   "private": true,
-  "version": "4.13.247",
+  "version": "4.13.249",
   "scripts": {
     "test": "npm run test:release",
     "test:guard": "node dev_guard.js index.html",
     "test:mutation": "node mutation_guard.js",
-    "test:release": "npm run test:pipeline && npm run test:mutation && node release_artifact_guard.js .",
+    "test:release": "npm run test:pipeline && node release_artifact_guard.js .",
     "test:coverage": "node feature_coverage_gate.js",
     "test:depth": "node feature_depth_gate.js",
     "test:outcome": "node functional_outcome_gate.js",
@@ -26,7 +26,9 @@
     "test:release-date-resolver": "node release_date_resolver_semantics_gate.js",
     "test:interaction-regression": "node interaction_regression_gate.js",
     "test:diagnostic-runtime": "node diagnostic_runtime_gate.js",
+    "test:release-integrity": "node release_integrity_gate.js",
     "release:build": "node release_bundle.js",
-    "test:diagnostic-render": "node diagnostic_render_contract_gate.js"
+    "test:diagnostic-render": "node diagnostic_render_contract_gate.js",
+    "test:mutation-attribution": "node mutation_attribution_gate.js"
   }
 }

@@ -229,4 +229,4 @@ NDL SearchのAPIはSRU/OpenSearch/OpenURLを提供するが、利用目的やデ
 | REG-MUTATION-001 | atomic/rollback/duplicateの故障注入を100%検出する | CURRENT |
 
 ### 次の監査順
-シリーズ分類で確立したProperty→Mutation→E2E方式を、次は「検索結果の同一性・古い結果の混入・APIフォールバック・タイムアウト／429・検索結果から登録への受け渡し」へ横展開する。個別ISBN・Providerの追加は、新しい不変条件が発見された場合に限る。
+シリーズ分類で確立したProperty→Mutation→E2E方式を、次は「検索結果の同一性・古い結果の混入・APIフォールバック・タイムアウト／429（Retry-After尊重・応答本文解放・再試行後の正常化）・検索結果から登録への受け渡し」へ横展開する。個別ISBN・Providerの追加は、新しい不変条件が発見された場合に限る。

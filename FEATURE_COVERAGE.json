@@ -1,6 +1,6 @@
 {
   "schemaVersion": 3,
-  "release": "4.13.247",
+  "release": "4.13.249",
   "layers": [
     "入口",
     "操作",
@@ -113,7 +113,7 @@
         "失敗復旧": {
           "status": "required",
           "evidence": [
-            "UI input operation contract",
+            "Search unowned-only change handler",
             "E2E-SCAN-001 camera failure preserves registration input state"
           ]
         }
@@ -420,7 +420,8 @@
         "状態": {
           "status": "required",
           "evidence": [
-            "E2E-CONCURRENCY-001 stale search response cannot win"
+            "E2E-CONCURRENCY-001 stale search response cannot win",
+            "E2E-CONCURRENCY-005 real author/new-release UI rejects stale response"
           ]
         },
         "データ": {
@@ -616,7 +617,8 @@
         "失敗復旧": {
           "status": "required",
           "evidence": [
-            "E2E-API-006H timeout時の自動フェイルオーバー"
+            "E2E-API-006H timeout時の自動フェイルオーバー",
+            "E2E-API-006R NDL HTTP 429 Retry-After then success"
           ]
         }
       },
@@ -836,7 +838,8 @@
         "失敗復旧": {
           "status": "required",
           "evidence": [
-            "E2E-API-006H timeout時の自動フェイルオーバー"
+            "E2E-API-006H timeout時の自動フェイルオーバー",
+            "E2E-API-006R NDL HTTP 429 Retry-After then success"
           ]
         }
       },

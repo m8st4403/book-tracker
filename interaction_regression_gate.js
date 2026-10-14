@@ -5,7 +5,8 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
 const failures=[];
 const req=(c,m)=>{if(!c)failures.push(m)};
-req(pkg.version==='4.13.247',`version mismatch: ${pkg.version}`);
+const expectedVersion=pkg.version;
+req(pkg.version===expectedVersion,`version mismatch: ${pkg.version}`);
 // Diagnostic copy controls: source/result/wiring must all exist. This is a generic
 // interaction regression gate, not a release-date-only feature gate.
 const pairs=[

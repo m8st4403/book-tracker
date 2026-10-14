@@ -21,9 +21,26 @@ req(el.children[0].tagName==='PRE','diagnostic renderer must use PRE');
 req(el.children[0].textContent===sample,'diagnostic renderer must preserve literal text through textContent');
 req(el.dataset.diagnosticText===sample,'canonical diagnostic text was not stored');
 req(sandbox.getDiagnosticText('releaseDateRepairResults')===sample,'copy source did not reuse canonical diagnostic text');
+// Dynamic HTML diagnostic boxes must always copy their current visible text, not a stale prior dataset value.
+el.innerHTML='<div>新しい診断結果</div>';
+el.innerText='新しい診断結果';
+el.dataset.diagnosticText='古い診断結果';
+req(sandbox.getDiagnosticText('releaseDateRepairResults')==='新しい診断結果','copy source must prefer current visible diagnostic text over stale cached data');
+req(el.dataset.diagnosticText==='新しい診断結果','current visible diagnostic text must refresh canonical copy source');
+el.innerHTML='';
+el.innerText='';
+el.textContent='';
+req(sandbox.getDiagnosticText('releaseDateRepairResults')==='','cleared diagnostic output must not expose stale cached text');
+req(el.dataset.diagnosticText==='','cleared diagnostic output must reset canonical copy source');
 req(!block.includes('innerHTML=value'),'diagnostic renderer must not inject diagnostic text as HTML');
 req(html.includes('renderDiagnosticText("releaseDateAuditResults"'),'release-date audit uses generic renderer');
 req(html.includes('renderDiagnosticText("releaseDateRepairResults"'),'release-date repair uses generic renderer');
 req(html.includes('renderDiagnosticText("bibliographyAuditResults"'),'bibliography audit uses generic renderer');
+req(html.includes('function clearDiagnosticOutput(id){'), 'generic diagnostic clear helper missing');
+req(html.includes('delete el.dataset.diagnosticText'), 'diagnostic clear helper must invalidate canonical copy source');
+for (const id of ['seriesCheckResults','seriesDiagnoseResults','bibliographyCompareResults','bibliographyAuditResults','isbnRegistrationPrepResults','seriesRepairResults','ndlProviderScopeResults','ndlSeriesCandidateResults','isbnSeriesSourceResults','releaseDateRepairResults','releaseDateAuditResults']) {
+  req(html.includes(`clearDiagnosticOutput('${id}')`) || html.includes(`clearDiagnosticOutput(\"${id}\")`), `diagnostic clear must invalidate canonical source: ${id}`);
+}
+
 if(fail.length){console.error('DIAGNOSTIC-RENDER-CONTRACT-GATE FAIL');fail.forEach(x=>console.error(' - '+x));process.exit(1)}
 console.log(`DIAGNOSTIC-RENDER-CONTRACT-GATE PASS | release=${pkg.version} | literal HTML safety + canonical copy source verified`);

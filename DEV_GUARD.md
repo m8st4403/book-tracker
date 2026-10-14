@@ -32,3 +32,14 @@ npm run test:release
 
 ### v4.13.230: Functional outcome closure
 All CURRENT features must have a machine-readable operation, observable outcome, failure invariant, primary executable evidence, coverage link, and mutation link in `FUNCTIONAL_OUTCOME_MATRIX.json`. Missing or orphaned entries block release.
+
+## Mutationの検出結果の意味
+
+Mutation Guardは終了コードだけで判定しません。各故障注入について、次を分離します。
+
+1. **executed** — 指定したMutationを実行できたか。
+2. **caught** — Guardが明示的な`FAIL | <check>`を返して意図的な欠陥を検出したか。
+3. **targetDetected** — 狙った`MUTATION-TARGET-*`がFAILしたか。
+4. **fatal** — SyntaxError/ENOENT/E2E-FATAL等でGuard自体が正常判定できなかったか。
+
+したがって「非ゼロ終了」だけではMutation PASSにしません。また、対象層が検出せず別の層だけが検出した場合も、対象層のMutation証拠としてはFAILです。`mutation_attribution_gate.js`でこの判定規則自体を回帰検査します。

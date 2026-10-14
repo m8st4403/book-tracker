@@ -1,6 +1,6 @@
-# 本棚スケジュール 品質契約 / v4.13.247
+# 本棚スケジュール 品質契約 / v4.13.249
 
-## v4.13.247 品質状態棚卸し
+## v4.13.249 品質状態棚卸し
 実装済み16機能の自動契約証拠、実ブラウザRuntime未確認、明示的PLANNED機能を分離して報告する。
 ## 1. 目的
 
@@ -455,3 +455,14 @@ All CURRENT features must have a machine-readable operation, observable outcome,
 
 ## v4.13.230 Release artifact rule
 配布ZIPは展開後も `GitHubアップロード` と `アップロード不要` のUTF-8フォルダ名を保持し、文字化けをRelease阻止条件とする。
+
+## 10.1 Mutation検出と対象層の帰属
+
+Mutationの`FAIL/非ゼロ終了`を、そのまま「Mutation検出成功」とは扱わない。
+
+- **検出成功**: 意図的に壊したコードに対してGuardが失敗し、少なくとも1件の明示的な`FAIL | <check>`が記録される。
+- **クラッシュ/実行失敗**: `SyntaxError`、`ENOENT`、未処理例外、`E2E-FATAL`等でGuard自体が正常判定できない場合はMutation検出成功としない。
+- **対象層検出**: `failedChecks`に、Mutationが狙った`MUTATION-TARGET-*`が含まれることを別途確認する。別の層だけがFAILしても、対象層の検出成功とはみなさない。
+- **複数層FAIL**: 対象層＋別層の双方がFAILした場合は、対象層が含まれていることを確認した上で検出成功とする。
+
+この区別により、`fault=1`は「Mutation evidenceが1件ある」という旧来の集計値に留め、Release判定では`executed / caught / targetDetected / fatal`を分離して扱う。

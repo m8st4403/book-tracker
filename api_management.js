@@ -282,7 +282,23 @@
         try{r=await fetch(url,{cache:"no-store",signal:opts.signal});}
         finally{metricApiPhase(metrics?.activeProvider||"ndl", "fetch", performance.now()-fetchStarted, metrics);}
         if(r.ok){const parseStarted=performance.now();try{return await r.text()}finally{metricApiPhase(metrics?.activeProvider||"ndl","body",performance.now()-parseStarted,metrics)}}
-        if(r.status===429||r.status===503){err=Error("HTTP "+r.status);if(opts.signal?.aborted)throw err;await sleep(700*Math.pow(2,n));continue;}
+        if(r.status===429||r.status===503){
+          err=Error("HTTP "+r.status);
+          if(opts.signal?.aborted)throw err;
+          // Respect Retry-After when present, while bounding the wait so one
+          // throttled provider cannot consume the entire caller deadline.
+          const retryAfter=String(r.headers?.get?.("Retry-After")||"").trim();
+          let retryDelay=Number.NaN;
+          if(retryAfter){
+            const seconds=Number(retryAfter);
+            if(Number.isFinite(seconds)&&seconds>=0)retryDelay=seconds*1000;
+            else {const at=Date.parse(retryAfter);if(Number.isFinite(at))retryDelay=Math.max(0,at-Date.now());}
+          }
+          try{await r.body?.cancel?.()}catch(_){}
+          const delay=Number.isFinite(retryDelay)?Math.min(5000,retryDelay):700*Math.pow(2,n);
+          await sleep(delay);
+          continue;
+        }
         throw Error("HTTP "+r.status);
       }catch(e){err=e;if(opts.signal?.aborted)throw e;if(n<2)await sleep(700*Math.pow(2,n));}
     }

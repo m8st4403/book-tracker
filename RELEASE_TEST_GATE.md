@@ -25,7 +25,7 @@
 - 登録原子性
 - rollback
 - 検索競合
-- API trust / fallback
+- API trust / fallback / timeout / HTTP 429・503 Retry-After
 - 書誌情報採用判定（Evidence / field policy / provider conflict）
 - 計測モデル
 

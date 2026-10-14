@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "release": "4.13.247",
+  "release": "4.13.249",
   "principle": "全投影先を独立検査へ接続し、cross-contract-onlyを残さない。新規投影は独立証拠がない限りRelease GateでFAILとする。",
   "statuses": [
     "named-evidence",
@@ -47,7 +47,7 @@
         "PROJ-001"
       ],
       "verificationRequired": false,
-      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+      "reason": "Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
     },
     {
       "field": "isbn",
@@ -57,7 +57,7 @@
         "PROJ-002"
       ],
       "verificationRequired": false,
-      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+      "reason": "Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
     },
     {
       "field": "title",
@@ -97,7 +97,7 @@
         "PROJ-003"
       ],
       "verificationRequired": false,
-      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+      "reason": "Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
     },
     {
       "field": "author",
@@ -107,7 +107,7 @@
         "PROJ-004"
       ],
       "verificationRequired": false,
-      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+      "reason": "Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
     },
     {
       "field": "author",
@@ -137,7 +137,7 @@
         "PROJ-005"
       ],
       "verificationRequired": false,
-      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+      "reason": "Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
     },
     {
       "field": "publisher",
@@ -147,7 +147,7 @@
         "PROJ-006"
       ],
       "verificationRequired": false,
-      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+      "reason": "Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
     },
     {
       "field": "publisher",
@@ -177,7 +177,7 @@
         "PROJ-007"
       ],
       "verificationRequired": false,
-      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+      "reason": "Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
     },
     {
       "field": "releaseDate",
@@ -197,7 +197,7 @@
         "PROJ-008"
       ],
       "verificationRequired": false,
-      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+      "reason": "Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
     },
     {
       "field": "releaseDate",
@@ -207,7 +207,7 @@
         "PROJ-009"
       ],
       "verificationRequired": false,
-      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+      "reason": "Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
     },
     {
       "field": "releaseDate",
@@ -217,7 +217,7 @@
         "PROJ-010"
       ],
       "verificationRequired": false,
-      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+      "reason": "Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
     },
     {
       "field": "releaseDate",
@@ -237,7 +237,7 @@
         "PROJ-011"
       ],
       "verificationRequired": false,
-      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+      "reason": "Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
     },
     {
       "field": "releaseDate",
@@ -247,7 +247,7 @@
         "PROJ-012"
       ],
       "verificationRequired": false,
-      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+      "reason": "Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
     },
     {
       "field": "listPrice",
@@ -257,7 +257,7 @@
         "PROJ-013"
       ],
       "verificationRequired": false,
-      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+      "reason": "Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
     },
     {
       "field": "listPrice",
@@ -267,7 +267,7 @@
         "PROJ-014"
       ],
       "verificationRequired": false,
-      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+      "reason": "Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
     },
     {
       "field": "listPrice",
@@ -277,7 +277,7 @@
         "PROJ-015"
       ],
       "verificationRequired": false,
-      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+      "reason": "Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
     },
     {
       "field": "listPrice",
@@ -287,7 +287,7 @@
         "PROJ-016"
       ],
       "verificationRequired": false,
-      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+      "reason": "Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
     },
     {
       "field": "seriesName",
@@ -297,7 +297,7 @@
         "PROJ-017"
       ],
       "verificationRequired": false,
-      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+      "reason": "Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
     },
     {
       "field": "seriesName",
@@ -327,7 +327,7 @@
         "PROJ-018"
       ],
       "verificationRequired": false,
-      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+      "reason": "Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
     },
     {
       "field": "volumeNumber",
@@ -337,7 +337,7 @@
         "PROJ-019"
       ],
       "verificationRequired": false,
-      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+      "reason": "Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
     },
     {
       "field": "volumeNumber",
@@ -367,7 +367,7 @@
         "PROJ-020"
       ],
       "verificationRequired": false,
-      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+      "reason": "Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
     },
     {
       "field": "readingStatus",
@@ -377,7 +377,7 @@
         "PROJ-021"
       ],
       "verificationRequired": false,
-      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+      "reason": "Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
     },
     {
       "field": "readingStatus",
@@ -407,7 +407,7 @@
         "PROJ-022"
       ],
       "verificationRequired": false,
-      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+      "reason": "Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
     },
     {
       "field": "favorite",
@@ -417,7 +417,7 @@
         "PROJ-023"
       ],
       "verificationRequired": false,
-      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+      "reason": "Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
     },
     {
       "field": "favorite",
@@ -447,7 +447,7 @@
         "PROJ-024"
       ],
       "verificationRequired": false,
-      "reason": "v4.13.230 Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
+      "reason": "Runtime Spec Guard内の独立投影テストで、fixture→投影先→期待値を確認する。"
     }
   ]
 }

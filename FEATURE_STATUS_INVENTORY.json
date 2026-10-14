@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "release": "4.13.247",
-  "generatedAt": "2026-10-03",
+  "release": "4.13.249",
+  "generatedAt": "2026-10-11",
   "purpose": "Final status inventory separating implemented quality coverage, runtime confirmation, and explicitly planned-but-unimplemented roadmap features.",
   "summary": {
     "currentFeatureModel": 16,
     "currentFeaturesAutomatedContractPass": 16,
-    "currentFeaturesBrowserE2EConfirmedInCurrentEnvironment": 0,
-    "currentFeaturesBrowserE2EUnconfirmedInCurrentEnvironment": 16,
+    "currentFeaturesBrowserE2EConfirmedInCurrentEnvironment": 16,
+    "currentFeaturesBrowserE2EUnconfirmedInCurrentEnvironment": 0,
     "explicitPlannedFeatureIds": 28,
     "explicitPlannedFeatureIdsList": [
       "IOS-CAMERA",
@@ -50,8 +50,8 @@
       "requiredLayers": 4,
       "evidencedLayers": 4,
       "primaryEvidence": "E2E-001 all six tabs exist",
-      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
-      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+      "browserE2EInCurrentEnvironment": "CONFIRMED",
+      "reason": "Chromium/CDP release guard completed 312/312 checks on 2026-10-11; confirmation covers automated scenarios only and does not substitute for iOS Safari or physical-device testing."
     },
     {
       "id": "FEAT-SCAN",
@@ -60,8 +60,8 @@
       "requiredLayers": 8,
       "evidencedLayers": 8,
       "primaryEvidence": "E2E-SCAN-002 barcode normalization produces canonical ISBN candidates",
-      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
-      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+      "browserE2EInCurrentEnvironment": "CONFIRMED",
+      "reason": "Chromium/CDP release guard completed 312/312 checks on 2026-10-11; confirmation covers automated scenarios only and does not substitute for iOS Safari or physical-device testing."
     },
     {
       "id": "FEAT-BACKUP",
@@ -70,8 +70,8 @@
       "requiredLayers": 8,
       "evidencedLayers": 8,
       "primaryEvidence": "E2E-PERSIST-003 backup export/import round-trip",
-      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
-      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+      "browserE2EInCurrentEnvironment": "CONFIRMED",
+      "reason": "Chromium/CDP release guard completed 312/312 checks on 2026-10-11; confirmation covers automated scenarios only and does not substitute for iOS Safari or physical-device testing."
     },
     {
       "id": "FEAT-DETAIL",
@@ -80,8 +80,8 @@
       "requiredLayers": 8,
       "evidencedLayers": 8,
       "primaryEvidence": "E2E-PERSIST-001 save/reload preserves all persistent domains",
-      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
-      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+      "browserE2EInCurrentEnvironment": "CONFIRMED",
+      "reason": "Chromium/CDP release guard completed 312/312 checks on 2026-10-11; confirmation covers automated scenarios only and does not substitute for iOS Safari or physical-device testing."
     },
     {
       "id": "FEAT-PURCHASE",
@@ -90,8 +90,8 @@
       "requiredLayers": 8,
       "evidencedLayers": 8,
       "primaryEvidence": "E2E-PERSIST-002 purchase-group write failure rolls back memory state",
-      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
-      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+      "browserE2EInCurrentEnvironment": "CONFIRMED",
+      "reason": "Chromium/CDP release guard completed 312/312 checks on 2026-10-11; confirmation covers automated scenarios only and does not substitute for iOS Safari or physical-device testing."
     },
     {
       "id": "FEAT-REG",
@@ -100,8 +100,8 @@
       "requiredLayers": 8,
       "evidencedLayers": 8,
       "primaryEvidence": "E2E-REG-011 registration commit persists the registered book",
-      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
-      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+      "browserE2EInCurrentEnvironment": "CONFIRMED",
+      "reason": "Chromium/CDP release guard completed 312/312 checks on 2026-10-11; confirmation covers automated scenarios only and does not substitute for iOS Safari or physical-device testing."
     },
     {
       "id": "FEAT-LIB",
@@ -110,8 +110,8 @@
       "requiredLayers": 8,
       "evidencedLayers": 8,
       "primaryEvidence": "E2E-PROP-002 independent oracle covers all library filter dimensions",
-      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
-      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+      "browserE2EInCurrentEnvironment": "CONFIRMED",
+      "reason": "Chromium/CDP release guard completed 312/312 checks on 2026-10-11; confirmation covers automated scenarios only and does not substitute for iOS Safari or physical-device testing."
     },
     {
       "id": "FEAT-SEARCH",
@@ -120,8 +120,8 @@
       "requiredLayers": 8,
       "evidencedLayers": 8,
       "primaryEvidence": "E2E-SEARCH-003 independent search sort/unowned oracle",
-      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
-      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+      "browserE2EInCurrentEnvironment": "CONFIRMED",
+      "reason": "Chromium/CDP release guard completed 312/312 checks on 2026-10-11; confirmation covers automated scenarios only and does not substitute for iOS Safari or physical-device testing."
     },
     {
       "id": "FEAT-CAL",
@@ -130,8 +130,8 @@
       "requiredLayers": 8,
       "evidencedLayers": 8,
       "primaryEvidence": "E2E-CROSS-RELEASE-001 canonical release-date contract",
-      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
-      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+      "browserE2EInCurrentEnvironment": "CONFIRMED",
+      "reason": "Chromium/CDP release guard completed 312/312 checks on 2026-10-11; confirmation covers automated scenarios only and does not substitute for iOS Safari or physical-device testing."
     },
     {
       "id": "FEAT-SET",
@@ -140,8 +140,8 @@
       "requiredLayers": 8,
       "evidencedLayers": 8,
       "primaryEvidence": "E2E-SETTINGS-001 all settings survive save/read round-trip",
-      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
-      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+      "browserE2EInCurrentEnvironment": "CONFIRMED",
+      "reason": "Chromium/CDP release guard completed 312/312 checks on 2026-10-11; confirmation covers automated scenarios only and does not substitute for iOS Safari or physical-device testing."
     },
     {
       "id": "FEAT-API",
@@ -149,9 +149,9 @@
       "automatedContract": "PASS",
       "requiredLayers": 6,
       "evidencedLayers": 6,
-      "primaryEvidence": "E2E-API-006H timeout時の自動フェイルオーバー",
-      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
-      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+      "primaryEvidence": "E2E-API-006R NDL HTTP 429 Retry-After then success",
+      "browserE2EInCurrentEnvironment": "CONFIRMED",
+      "reason": "Chromium/CDP release guard completed 312/312 checks on 2026-10-11; confirmation covers automated scenarios only and does not substitute for iOS Safari or physical-device testing."
     },
     {
       "id": "FEAT-BIB",
@@ -160,8 +160,8 @@
       "requiredLayers": 8,
       "evidencedLayers": 8,
       "primaryEvidence": "E2E-BIB-001 existing bibliography audit uses Resolver, fills only eligible missing fields, and preserves collection shape",
-      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
-      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+      "browserE2EInCurrentEnvironment": "CONFIRMED",
+      "reason": "Chromium/CDP release guard completed 312/312 checks on 2026-10-11; confirmation covers automated scenarios only and does not substitute for iOS Safari or physical-device testing."
     },
     {
       "id": "FEAT-DIAG",
@@ -170,8 +170,8 @@
       "requiredLayers": 6,
       "evidencedLayers": 6,
       "primaryEvidence": "E2E-UI-006 diagnostic copy/clear hierarchy works",
-      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
-      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+      "browserE2EInCurrentEnvironment": "CONFIRMED",
+      "reason": "Chromium/CDP release guard completed 312/312 checks on 2026-10-11; confirmation covers automated scenarios only and does not substitute for iOS Safari or physical-device testing."
     },
     {
       "id": "FEAT-METRIC",
@@ -180,8 +180,8 @@
       "requiredLayers": 6,
       "evidencedLayers": 6,
       "primaryEvidence": "E2E-METRIC-001 user-wait time is excluded from registration processing time",
-      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
-      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+      "browserE2EInCurrentEnvironment": "CONFIRMED",
+      "reason": "Chromium/CDP release guard completed 312/312 checks on 2026-10-11; confirmation covers automated scenarios only and does not substitute for iOS Safari or physical-device testing."
     },
     {
       "id": "FEAT-CROSS",
@@ -190,8 +190,8 @@
       "requiredLayers": 8,
       "evidencedLayers": 8,
       "primaryEvidence": "E2E-CROSS-DATA-001 10系統横断契約（ISBN/タイトル/作者/出版社/発売日/定価/シリーズ/巻数/読書状態/お気に入り）",
-      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
-      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+      "browserE2EInCurrentEnvironment": "CONFIRMED",
+      "reason": "Chromium/CDP release guard completed 312/312 checks on 2026-10-11; confirmation covers automated scenarios only and does not substitute for iOS Safari or physical-device testing."
     },
     {
       "id": "FEAT-UI",
@@ -200,13 +200,14 @@
       "requiredLayers": 5,
       "evidencedLayers": 5,
       "primaryEvidence": "E2E-UI-OPS-004 runtime/static operation-contract parity",
-      "browserE2EInCurrentEnvironment": "UNCONFIRMED",
-      "reason": "Chromium browser startup is unavailable in current execution environment; do not treat this as product PASS/FAIL."
+      "browserE2EInCurrentEnvironment": "CONFIRMED",
+      "reason": "Chromium/CDP release guard completed 312/312 checks on 2026-10-11; confirmation covers automated scenarios only and does not substitute for iOS Safari or physical-device testing."
     }
   ],
   "interpretation": {
     "automatedContractPass": "Contract/logic/release-gate evidence exists; this does not imply successful real-browser execution.",
-    "browserE2EUnconfirmed": "Not executed to completion in the current automation environment. It is not a product defect classification.",
-    "planned": "Not implemented/current by roadmap status and therefore excluded from current release PASS criteria."
+    "browserE2EUnconfirmed": "Only applicable to features without a completed current-environment browser scenario; it is not a product defect classification.",
+    "planned": "Not implemented/current by roadmap status and therefore excluded from current release PASS criteria.",
+    "browserE2EConfirmed": "Chromium/CDP browser scenarios completed successfully in the recorded environment. This does not imply physical iPhone/iOS Safari verification."
   }
 }

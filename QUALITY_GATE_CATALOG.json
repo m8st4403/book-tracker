@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "release": "4.13.247",
+  "release": "4.13.249",
   "purpose": "Single source of truth for release quality stages. Prevents pipeline stage drift and orphaned quality gates.",
   "stages": [
     {
@@ -22,6 +22,15 @@
       "id": "coverage",
       "script": "feature_coverage_gate.js",
       "scope": "feature contract coverage"
+    },
+    {
+      "id": "mutation-attribution",
+      "script": "mutation_attribution_gate.js",
+      "scope": "mutation detection/target attribution semantics and crash-vs-detection distinction"
+    },
+    {
+      "id": "mutation",
+      "script": "mutation_guard.js"
     },
     {
       "id": "depth",
@@ -86,6 +95,21 @@
       "id": "diagnostic-render-contract",
       "script": "diagnostic_render_contract_gate.js",
       "scope": "canonical diagnostic text rendering and copy-source contract"
+    },
+    {
+      "id": "diagnostic-runtime",
+      "script": "diagnostic_runtime_gate.js",
+      "scope": "real DOM diagnostic rendering, copy controls, year-only calendar display, and version runtime consistency"
+    },
+    {
+      "id": "release-integrity",
+      "script": "release_integrity_gate.js",
+      "scope": "release-wide version consistency and quality-gate catalog completeness"
+    },
+    {
+      "id": "diagnostic-behavior",
+      "script": "diagnostic_behavior_gate.js",
+      "scope": "browser-independent simulation of canonical diagnostic rendering and year-view state contracts"
     }
   ]
 }

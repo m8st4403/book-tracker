@@ -3,6 +3,7 @@
 <script>
 const frame=document.getElementById('app'),status=document.getElementById('status'),result=document.getElementById('result');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const rawTag=/<(?:b|br|span|div)(?:\s|>)/i;
 async function main(){
  try{
   frame.src='./index.html?diagnosticRuntimeGate=1&ts='+Date.now();
@@ -13,29 +14,100 @@ async function main(){
    clearResolverCache(){},
    priority:{isbnSearch:['openBD']},
    providerEnabled(){return true},
-   async resolveIsbn(isbn){return {date:'202304',fieldEvidence:{releaseDate:{value:'202304',confidence:'VERIFIED',evidence:{provider:'openBD'},decision:{status:'ACCEPT',reason:'POLICY_SATISFIED'}}},resolution:{fields:{releaseDate:{provider:'openBD',confidence:'VERIFIED',decision:{status:'ACCEPT',reason:'POLICY_SATISFIED'}}},attempts:[{provider:'openBD',ok:true,count:1}],providerResults:[{provider:'openBD',releaseDate:'202304',releaseDatePrecision:'month'}]}}}
+   async resolveIsbn(){return {date:'202304',fieldEvidence:{releaseDate:{value:'202304',confidence:'VERIFIED',evidence:{provider:'openBD'},decision:{status:'ACCEPT',reason:'POLICY_SATISFIED'}}},resolution:{fields:{releaseDate:{provider:'openBD',confidence:'VERIFIED',decision:{status:'ACCEPT',reason:'POLICY_SATISFIED'}}},attempts:[{provider:'openBD',ok:true,count:1}],providerResults:[{provider:'openBD',releaseDate:'202304',releaseDatePrecision:'month'}]}}}
   };
-  w.books=[{isbn:'9784253306935',title:'Runtime診断テスト',author:'Gate',publisher:'Test',date:''}];
-  w.persistBooks=()=>true;
+  w.eval("books=[{isbn:'9784253306935',title:'発売日補完対象書籍',author:'Gate',publisher:'Test',date:''},{isbn:'9780000000001',title:'年表示テスト',author:'Gate',publisher:'Test',date:'2025'}]");
+  let persistedSnapshot=null;w.persistBooks=()=>{persistedSnapshot=JSON.parse(JSON.stringify(w.eval('books')));return true};
   const repair=w.document.getElementById('releaseDateRepairBtn'); if(!repair)throw new Error('REPAIR_BUTTON_MISSING');
-  repair.click();
-  await sleep(100);
-  await sleep(1200);
+  repair.click(); await sleep(3000);
   const box=w.document.getElementById('releaseDateRepairResults');
   const text=box?.textContent||'';
-  const hasRawMarkup=/<(?:b|br|span|div)(?:\s|>)/i.test(text);
-  if(hasRawMarkup)throw new Error('RAW_HTML_VISIBLE_IN_REPAIR_RESULT');
+  if(rawTag.test(text))throw new Error('RAW_HTML_VISIBLE_IN_REPAIR_RESULT');
   if(!text.includes('既存蔵書 発売日不足補完')||!text.includes('補完:202304'))throw new Error('REPAIR_RESULT_CONTENT_INVALID');
-  const audit=w.document.getElementById('releaseDateAuditBtn'); audit.click();
-  await sleep(1200);
+  const repaired=w.eval('books').find(b=>b.isbn==='9784253306935');
+  if(repaired?.date!=='202304'||!repaired?.releaseDateMeta)throw new Error('REPAIR_VALUE_OR_PROVENANCE_NOT_SAVED:'+JSON.stringify({repaired,persistedSnapshot}));
+  if(w.eval('books').find(b=>b.isbn==='9780000000001')?.date!=='2025')throw new Error('YEAR_ONLY_EXISTING_VALUE_OVERWRITTEN');
+  if(!persistedSnapshot||persistedSnapshot.find(b=>b.isbn==='9784253306935')?.date!=='202304')throw new Error('REPAIR_PERSISTENCE_SNAPSHOT_MISSING');
+  // End-to-end date semantics: month precision stays in the month list, while ICS and notifications require a real day.
+  const dayBook={isbn:'9780000000002',title:'日単位ICSテスト',author:'Gate',publisher:'Test',date:'2026-10-10'};
+  const monthBook={isbn:'9780000000003',title:'月単位ICS除外テスト',author:'Gate',publisher:'Test',date:'2026-10'};
+  w.eval('books.push('+JSON.stringify(dayBook)+','+JSON.stringify(monthBook)+')');
+  const projected=w.allEvents(true);
+  if(!projected.some(e=>e.isbn===monthBook.isbn&&e.date==='2026-10'&&e.releasePrecision==='month'))throw new Error('MONTH_RELEASE_PROJECTION_MISSING');
+  const ics=w.buildICS(projected);
+  if(!ics.includes('SUMMARY:日単位ICSテスト 発売予定')||ics.includes('月単位ICS除外テスト')||ics.includes('年表示テスト'))throw new Error('ICS_DATE_PRECISION_POLICY_BROKEN');
+  w.updateBookMeta(dayBook.isbn,{notify:true});w.updateBookMeta(monthBook.isbn,{notify:true});
+  const notify=w.getReleaseNotificationTargets('2026-10-05',7).map(b=>b.isbn);
+  if(!notify.includes(dayBook.isbn)||notify.includes(monthBook.isbn))throw new Error('NOTIFICATION_DATE_PRECISION_POLICY_BROKEN');
+  const audit=w.document.getElementById('releaseDateAuditBtn'); audit.click(); await sleep(3000);
   const auditText=w.document.getElementById('releaseDateAuditResults')?.textContent||'';
-  if(/<(?:b|br|span|div)(?:\s|>)/i.test(auditText))throw new Error('RAW_HTML_VISIBLE_IN_AUDIT_RESULT');
+  if(rawTag.test(auditText))throw new Error('RAW_HTML_VISIBLE_IN_AUDIT_RESULT');
   if(!auditText.includes('既存蔵書 発売日経路・カレンダー反映詳細診断')||!auditText.includes('判定'))throw new Error('AUDIT_RESULT_CONTENT_INVALID');
-  const copy=w.document.getElementById('copyReleaseDateRepairBtn');copy.click();await sleep(1200);
-  const dialogText=[...w.document.querySelectorAll('[role="dialog"] textarea')].map(x=>x.value).join('\n');
-  const copySource=w.document.getElementById('releaseDateRepairResults')?.dataset?.diagnosticText||'';
-  if(/<(?:b|br|span|div)(?:\s|>)/i.test(copySource)||/(?:<(?:b|br|span|div)>)/i.test(dialogText))throw new Error('RAW_HTML_IN_COPY_PATH');
-  status.textContent='PASS';result.textContent=JSON.stringify({status:'PASS',repairText:text,auditText:auditText,copyFallbackText:dialogText},null,2);
+
+  // Every diagnostic copy control must reuse the canonical text source, not rendered HTML.
+  const pairs=[
+   ['copySeriesCheckResultBtn','seriesCheckResults'],
+   ['copyReleaseDateRepairBtn','releaseDateRepairResults'],['copyReleaseDateAuditBtn','releaseDateAuditResults'],
+   ['copyBibliographyAuditBtn','bibliographyAuditResults'],['copySeriesDiagnosticBtn','seriesDiagnoseResults'],
+   ['copyBibliographyCompareBtn','bibliographyCompareResults'],['copyIsbnRegistrationPrepBtn','isbnRegistrationPrepResults'],
+   ['copySeriesRepairBtn','seriesRepairResults'],['copyNdlProviderScopeBtn','ndlProviderScopeResults'],
+   ['copyIsbnSeriesSourceBtn','isbnSeriesSourceResults'],['copyNdlSeriesCandidateBtn','ndlSeriesCandidateResults'],
+   ['copyDevGuardBtn','devGuardStatus'],['copyRegistrationMetrics','registrationMetricsList'],['copySearchMetrics','searchMetricsList']
+  ];
+  const copyResults=[];
+  for(const [buttonId,resultId] of pairs){
+   const out=w.document.getElementById(resultId),btn=w.document.getElementById(buttonId);
+   if(!out||!btn)throw new Error(`COPY_CONTROL_MISSING:${buttonId}->${resultId}`);
+   w.renderDiagnosticText(resultId,`COPY TEST ${resultId}\n<b>must remain text</b>`);
+   if(out.dataset.diagnosticText!==`COPY TEST ${resultId}\n<b>must remain text</b>`)throw new Error(`CANONICAL_COPY_SOURCE_MISSING:${resultId}`);
+   btn.click();await sleep(80);
+   const dialogs=[...w.document.querySelectorAll('[role="dialog"] textarea')];
+   const dialogText=dialogs.length?dialogs[dialogs.length-1].value:'';
+   if(dialogText && rawTag.test(dialogText)===false)throw new Error(`COPY_CONTENT_LOST:${resultId}`);
+   if(dialogText.includes('<b>must remain text</b>')===false && dialogText!=='')throw new Error(`COPY_SOURCE_CHANGED:${resultId}`);
+   dialogs.forEach(t=>t.closest('[role="dialog"]')?.remove());
+   copyResults.push(resultId);
+  }
+
+  // Clearing a diagnostic must also invalidate its canonical copy source; otherwise a later copy can return stale hidden text.
+  w.renderDiagnosticText('releaseDateRepairResults','STALE COPY TEST');
+  const staleClear=w.document.getElementById('clearReleaseDateRepairBtn');
+  if(!staleClear)throw new Error('CLEAR_CONTROL_MISSING:clearReleaseDateRepairBtn');
+  staleClear.click();
+  const cleared=w.document.getElementById('releaseDateRepairResults');
+  if(cleared.dataset.diagnosticText!==undefined)throw new Error('STALE_CANONICAL_COPY_SOURCE_AFTER_CLEAR');
+  if(w.getDiagnosticText('releaseDateRepairResults')!=='')throw new Error('STALE_COPY_TEXT_AFTER_CLEAR');
+  w.renderDiagnosticText('releaseDateAuditResults','STALE AUDIT COPY TEST');
+  const staleAuditClear=w.document.getElementById('clearReleaseDateAuditBtn');
+  if(!staleAuditClear)throw new Error('CLEAR_CONTROL_MISSING:clearReleaseDateAuditBtn');
+  staleAuditClear.click();
+  const clearedAudit=w.document.getElementById('releaseDateAuditResults');
+  if(clearedAudit.dataset.diagnosticText!==undefined)throw new Error('STALE_AUDIT_CANONICAL_COPY_SOURCE_AFTER_CLEAR');
+  if(w.getDiagnosticText('releaseDateAuditResults')!=='')throw new Error('STALE_AUDIT_COPY_TEXT_AFTER_CLEAR');
+
+  // Year-only release data must be visible in the year release list while not being forced into a month.
+  w.document.getElementById('prevYear').click();
+  w.setCalendarViewMode('year');await sleep(80);
+  const yearList=w.document.getElementById('calendarYearReleasesList')?.textContent||'';
+  if(!yearList.includes('発売年のみ'))throw new Error('YEAR_ONLY_RELEASE_NOT_VISIBLE');
+  if(!yearList.includes('年表示テスト'))throw new Error('YEAR_ONLY_BOOK_NOT_VISIBLE');
+  const yearButtons=[...w.document.querySelectorAll('.calendar-year-month')];
+  if(yearButtons.length!==12)throw new Error(`YEAR_MONTH_BUTTON_COUNT:${yearButtons.length}`);
+  const selected=yearButtons.filter(x=>x.classList.contains('selected-month'));
+  if(selected.length!==1)throw new Error(`YEAR_SELECTED_MONTH_COUNT:${selected.length}`);
+  if(selected[0].getAttribute('aria-pressed')!=='true')throw new Error('YEAR_SELECTED_MONTH_ARIA');
+  const yearOnlyInGrid=yearButtons.some(x=>/年表示テスト/.test(x.textContent));
+  if(yearOnlyInGrid)throw new Error('YEAR_ONLY_LEAKED_INTO_MONTH_GRID');
+  w.setCalendarViewMode('month');await sleep(50);
+  if(!w.document.getElementById('calendarYearGrid').hidden)throw new Error('YEAR_GRID_NOT_HIDDEN_AFTER_MONTH_SWITCH');
+
+  // Version shown to the user must agree with the runtime source of truth.
+  const versionText=w.document.getElementById('appVersionText')?.textContent||'';
+  const appVersion=(w.document.documentElement.innerHTML.match(/const APP_VERSION="([^"]+)"/)||[])[1];
+  if(!appVersion||!versionText.includes(appVersion))throw new Error('RUNTIME_VERSION_MISMATCH');
+
+  status.textContent='PASS';
+  result.textContent=JSON.stringify({status:'PASS',copyControlsChecked:copyResults.length,clearControlsChecked:2,yearOnlyVisible:true,yearSelectedMonthCount:selected.length,releaseDateRepairPersisted:true,existingYearValuePreserved:true,monthPrecisionProjected:true,icsDayOnly:true,notificationsDayOnly:true,version:appVersion},null,2);
  }catch(e){status.textContent='FAIL';result.textContent=JSON.stringify({status:'FAIL',error:String(e?.message||e),stack:String(e?.stack||'')},null,2)}
 }
 main();

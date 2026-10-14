@@ -14,6 +14,9 @@ for(const x of cat.stages){
 const scripts=pkg.scripts||{};
 for(const x of cat.stages){ if(!scripts[`test:${x.id}`] && x.id!=='guard' && x.id!=='mutation'){} }
 if(!pipeline.includes('const catalog = JSON.parse')) errors.push('pipeline catalog preflight missing');
+const mutationSummaryAssignment = /childEnv\.MUTATION_SUMMARY_PATH\s*=\s*mutationSummaryPath/.test(pipeline);
+const mutationResultsAssignment = /childEnv\.MUTATION_RESULTS_PATH\s*=\s*mutationSummaryPath/.test(pipeline);
+if(!mutationSummaryAssignment || !mutationResultsAssignment) errors.push('mutation evidence writer/reader paths are not unified');
 if(errors.length){console.error('QUALITY_GATE_CATALOG:FAIL');errors.forEach(e=>console.error(e));process.exit(1)}
 console.log('QUALITY_GATE_CATALOG:PASS');
 console.log(JSON.stringify({release:pkg.version,stages:cat.stages.length},null,2));
