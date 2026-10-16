@@ -53,7 +53,7 @@ function auditInteractiveOperationCoverage(source) {
   return {total:items.length, covered:items.length-uncovered.length, uncovered};
 }
 
-// v4.13.249: Every shipped feature gets a feature-specific mutation target.
+// v4.13.252: Every shipped feature gets a feature-specific mutation target.
 // These checks are deliberately narrower than broad static/runtime checks so a mutation
 // cannot be considered protected merely because some unrelated layer failed.
 const featureMutationAnchors={
@@ -1236,7 +1236,7 @@ check('E2E-UI-006 diagnostic copy/clear hierarchy works',diagnosticCopyClearUi?.
       books=[{isbn:'9780000000099',title:'監査fixture',author:'著者',publisher:'',date:'',price:null,series:null}];
       const api=window.bookTrackerApiManagement,oldResolve=api.resolveIsbn,oldClear=api.clearResolverCache;
       api.clearResolverCache=()=>{};
-      api.resolveIsbn=async()=>({isbn:'9780000000099',title:'監査fixture',author:'著者',publisher:'出版社',date:'2026-01-02',series:{name:'監査シリーズ',volumeNumber:1,displayVolume:'1',confidence:{seriesName:'VERIFIED',volumeNumber:'VERIFIED'}},resolution:{accepted:{series:true,listPrice:true},fields:{publisher:{provider:'fixture',confidence:'VERIFIED'},releaseDate:{provider:'fixture',confidence:'VERIFIED'},seriesName:{provider:'fixture',confidence:'VERIFIED'},volumeNumber:{provider:'fixture',confidence:'VERIFIED'},listPrice:{provider:'fixture',confidence:'HIGH'}}},fieldEvidence:{publisher:{value:'出版社',confidence:'VERIFIED'},releaseDate:{value:'2026-01-02',confidence:'VERIFIED'},seriesName:{value:'監査シリーズ',confidence:'VERIFIED'},volumeNumber:{value:1,confidence:'VERIFIED'},listPrice:{value:550,confidence:'HIGH',evidence:{provider:'fixture'}}},priceMeta:{listPrice:550,taxIncluded:true}});
+      api.resolveIsbn=async()=>({isbn:'9780000000099',title:'監査fixture',author:'著者',publisher:'出版社',date:'',series:{name:'監査シリーズ',volumeNumber:1,displayVolume:'1',confidence:{seriesName:'VERIFIED',volumeNumber:'VERIFIED'}},resolution:{accepted:{series:true,listPrice:true},fields:{publisher:{provider:'fixture',confidence:'VERIFIED'},releaseDate:{provider:'fixture',confidence:'VERIFIED'},seriesName:{provider:'fixture',confidence:'VERIFIED'},volumeNumber:{provider:'fixture',confidence:'VERIFIED'},listPrice:{provider:'fixture',confidence:'HIGH'}}},fieldEvidence:{publisher:{value:'出版社',confidence:'VERIFIED'},releaseDate:{value:'2026-01-02',confidence:'VERIFIED',decision:{status:'ACCEPT'}},seriesName:{value:'監査シリーズ',confidence:'VERIFIED'},volumeNumber:{value:1,confidence:'VERIFIED'},listPrice:{value:550,confidence:'HIGH',evidence:{provider:'fixture'}}},priceMeta:{listPrice:550,taxIncluded:true}});
       const result=await auditAndFillExistingBibliography();
       const b=books[0];
       const ok=result?.checked===1&&result?.changed===1&&b.publisher==='出版社'&&b.date==='2026-01-02'&&b.series?.name==='監査シリーズ'&&b.price?.status==='confirmed'&&b.price?.listPrice===550;
@@ -1253,7 +1253,7 @@ check('E2E-UI-006 diagnostic copy/clear hierarchy works',diagnosticCopyClearUi?.
     }catch(e){return {ok:false,error:String(e?.message||e)}}})()`);
     check('E2E-RELEASE-001 Resolver adopts provider releaseDate from normalized date field',releaseDateResolverRegression?.ok===true,JSON.stringify(releaseDateResolverRegression));
     const releaseDateFillRegression=await evalJS(`(()=>{try{
-      const resolved={date:'2026-10',fieldEvidence:{releaseDate:{value:'2026-10',confidence:'HIGH',evidence:{provider:'openBD'},decision:{status:'ACCEPT'}}},resolution:{fields:{releaseDate:{provider:'openBD',confidence:'HIGH',decision:{status:'ACCEPT'}}}}};
+      const resolved={date:'',fieldEvidence:{releaseDate:{value:'2026-10',confidence:'HIGH',evidence:{provider:'openBD'},decision:{status:'ACCEPT'}}},resolution:{fields:{releaseDate:{provider:'openBD',confidence:'HIGH',decision:{status:'ACCEPT'}}}}};
       const missing={isbn:'9780000000013',title:'missing',date:''};const existing={isbn:'9780000000014',title:'existing',date:'2026-09',releaseDateMeta:{source:'old',confidence:'HIGH',precision:'month',updatedAt:'old'}};
       const a=fillMissingBibliography(missing,resolved),b=fillMissingBibliography(existing,resolved);
       const ok=a.filled.includes('releaseDate')&&a.book.date==='2026-10'&&a.book.releaseDateMeta?.source==='openBD'&&b.book.date==='2026-09'&&JSON.stringify(b.book.releaseDateMeta)===JSON.stringify(existing.releaseDateMeta)&&!b.filled.includes('releaseDate');

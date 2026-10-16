@@ -1,0 +1,351 @@
+{
+  "schema": 2,
+  "release": "4.13.252",
+  "generatedAt": "2026-10-15T21:57:01.782Z",
+  "sourceFingerprint": "6e2bc3f77d8acbb57c07ff41075b2bd3e8a53c3945201b64a2436a2f12b5d2c1",
+  "complete": false,
+  "cases": [
+    {
+      "index": 0,
+      "name": "Feature anchor: navigation",
+      "status": "PASS",
+      "caught": true,
+      "mutationApplied": true,
+      "failedChecks": [
+        "FEAT-NAV"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false
+    },
+    {
+      "index": 1,
+      "name": "Feature anchor: scan",
+      "status": "PASS",
+      "caught": true,
+      "mutationApplied": true,
+      "failedChecks": [
+        "FEAT-SCAN"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false
+    },
+    {
+      "index": 2,
+      "name": "Feature anchor: backup",
+      "status": "PASS",
+      "caught": true,
+      "mutationApplied": true,
+      "failedChecks": [
+        "FEAT-BACKUP"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false
+    },
+    {
+      "index": 3,
+      "name": "Feature anchor: detail",
+      "status": "PASS",
+      "caught": true,
+      "mutationApplied": true,
+      "failedChecks": [
+        "FEAT-DETAIL"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false
+    },
+    {
+      "index": 4,
+      "name": "Feature anchor: purchase",
+      "status": "PASS",
+      "caught": true,
+      "mutationApplied": true,
+      "failedChecks": [
+        "FEAT-PURCHASE"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false
+    },
+    {
+      "index": 5,
+      "name": "Feature anchor: registration",
+      "status": "PASS",
+      "caught": true,
+      "mutationApplied": true,
+      "failedChecks": [
+        "FEAT-REG"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false
+    },
+    {
+      "index": 6,
+      "name": "Feature anchor: library",
+      "status": "PASS",
+      "caught": true,
+      "mutationApplied": true,
+      "failedChecks": [
+        "FEAT-LIB"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false
+    },
+    {
+      "index": 7,
+      "name": "Feature anchor: search",
+      "status": "PASS",
+      "caught": true,
+      "mutationApplied": true,
+      "failedChecks": [
+        "FEAT-SEARCH"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false
+    },
+    {
+      "index": 8,
+      "name": "Feature anchor: calendar",
+      "status": "PASS",
+      "caught": true,
+      "mutationApplied": true,
+      "failedChecks": [
+        "FEAT-CAL"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false
+    },
+    {
+      "index": 9,
+      "name": "Feature anchor: settings",
+      "status": "PASS",
+      "caught": true,
+      "mutationApplied": true,
+      "failedChecks": [
+        "FEAT-SET"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false
+    },
+    {
+      "index": 10,
+      "name": "Feature anchor: API",
+      "status": "PASS",
+      "caught": true,
+      "mutationApplied": true,
+      "failedChecks": [
+        "FEAT-API"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false
+    },
+    {
+      "index": 11,
+      "name": "Feature anchor: bibliography",
+      "status": "PASS",
+      "caught": true,
+      "mutationApplied": true,
+      "failedChecks": [
+        "FEAT-BIB"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false
+    },
+    {
+      "index": 12,
+      "name": "Feature anchor: diagnostics",
+      "status": "PASS",
+      "caught": true,
+      "mutationApplied": true,
+      "failedChecks": [
+        "FEAT-DIAG"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false
+    },
+    {
+      "index": 13,
+      "name": "Feature anchor: metrics",
+      "status": "PASS",
+      "caught": true,
+      "mutationApplied": true,
+      "failedChecks": [
+        "FEAT-METRIC"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false
+    },
+    {
+      "index": 14,
+      "name": "Feature anchor: cross-data",
+      "status": "PASS",
+      "caught": true,
+      "mutationApplied": true,
+      "failedChecks": [
+        "FEAT-CROSS"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false
+    },
+    {
+      "index": 15,
+      "name": "Feature anchor: UI",
+      "status": "PASS",
+      "caught": true,
+      "mutationApplied": true,
+      "failedChecks": [
+        "FEAT-UI"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false
+    },
+    {
+      "index": 16,
+      "name": "Release-date unknown ordering + precision eligibility",
+      "status": "PASS",
+      "caught": true,
+      "mutationApplied": true,
+      "failedChecks": [
+        "E2E-CROSS-RELEASE-001 canonical release-date contract"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false
+    },
+    {
+      "index": 17,
+      "name": "UI operation wiring",
+      "status": "PASS",
+      "caught": true,
+      "mutationApplied": true,
+      "failedChecks": [
+        "STATIC-086 home upcoming navigation is wired"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false
+    },
+    {
+      "index": 18,
+      "name": "Search unowned-only change handler",
+      "status": "PASS",
+      "caught": true,
+      "mutationApplied": true,
+      "failedChecks": [
+        "STATIC-087 search unowned-only change handler is wired"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false
+    },
+    {
+      "index": 19,
+      "name": "UI generic overflow",
+      "status": "PASS",
+      "caught": true,
+      "mutationApplied": true,
+      "failedChecks": [
+        "E2E-TAB-home-003 no unexpected viewport overflow",
+        "E2E-TAB-add-003 no unexpected viewport overflow",
+        "E2E-TAB-library-003 no unexpected viewport overflow",
+        "E2E-TAB-search-003 no unexpected viewport overflow",
+        "E2E-TAB-calendar-003 no unexpected viewport overflow",
+        "E2E-TAB-settings-003 no unexpected viewport overflow",
+        "E2E-FONT-small-home-002 unexpected viewport overflow",
+        "E2E-FONT-small-add-002 unexpected viewport overflow",
+        "E2E-FONT-small-library-002 unexpected viewport overflow",
+        "E2E-FONT-small-search-002 unexpected viewport overflow",
+        "E2E-FONT-small-calendar-002 unexpected viewport overflow",
+        "E2E-FONT-small-settings-002 unexpected viewport overflow",
+        "E2E-FONT-medium-home-002 unexpected viewport overflow",
+        "E2E-FONT-medium-add-002 unexpected viewport overflow",
+        "E2E-FONT-medium-library-002 unexpected viewport overflow",
+        "E2E-FONT-medium-search-002 unexpected viewport overflow",
+        "E2E-FONT-medium-calendar-002 unexpected viewport overflow",
+        "E2E-FONT-medium-settings-002 unexpected viewport overflow",
+        "E2E-FONT-large-home-002 unexpected viewport overflow",
+        "E2E-FONT-large-add-002 unexpected viewport overflow",
+        "E2E-FONT-large-library-002 unexpected viewport overflow",
+        "E2E-FONT-large-search-002 unexpected viewport overflow",
+        "E2E-FONT-large-calendar-002 unexpected viewport overflow",
+        "E2E-FONT-large-settings-002 unexpected viewport overflow"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false
+    },
+    {
+      "index": 20,
+      "name": "API trust",
+      "status": "PASS",
+      "caught": true,
+      "mutationApplied": true,
+      "failedChecks": [
+        "STATIC-088 API list-price tax inclusion policy is enforced"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false
+    },
+    {
+      "index": 21,
+      "name": "API provider conflict",
+      "status": "PASS",
+      "caught": true,
+      "mutationApplied": true,
+      "failedChecks": [
+        "STATIC-089 API provider conflict HOLD policy is enforced"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false
+    },
+    {
+      "index": 22,
+      "name": "NDL Retry-After policy",
+      "status": "PASS",
+      "caught": true,
+      "mutationApplied": true,
+      "failedChecks": [
+        "STATIC-096 NDL HTTP 429/503 honors bounded Retry-After"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false
+    },
+    {
+      "index": 23,
+      "name": "Purchase-group atomicity",
+      "status": "PASS",
+      "caught": true,
+      "mutationApplied": true,
+      "failedChecks": [
+        "E2E-PERSIST-002 purchase-group write failure rolls back memory state"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false
+    }
+  ],
+  "counts": {
+    "total": 52,
+    "completed": 24,
+    "passed": 24,
+    "failed": 0,
+    "remaining": 28
+  }
+}
